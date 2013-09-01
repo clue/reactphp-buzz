@@ -1,0 +1,19 @@
+{
+    "name": "clue/http-react",
+    "description": "Simple async HTTP client for fetching URLs, talking to APIs, downloads, redirects, cache, etc.",
+    "require": {
+        "react/event-loop": "0.3.*",
+        "react/http-client": "0.3.*",
+        "react/promise": "~1"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Christian Lück",
+            "email": "christian@lueck.tv"
+        }
+    ],
+    "autoload": {
+        "psr-0": { "Clue\\Http\\React": "src/" }
+    }
+}
