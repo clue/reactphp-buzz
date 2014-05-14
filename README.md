@@ -17,8 +17,7 @@ local http server and send some requests:
 
 ```php
 
-$factory = new Factory($loop);
-$client = $factory->createClient();
+$client = new Browser($loop);
 
 $client->get('http://www.google.com/')->then(function (BufferedResponse $result) {
     var_dump($result->getHeaders(), $result->getBody());

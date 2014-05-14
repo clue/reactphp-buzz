@@ -7,14 +7,25 @@ use React\HttpClient\Client as HttpClient;
 use React\EventLoop\LoopInterface;
 use Clue\Http\React\Client\Response\BufferedResponse;
 use Clue\Http\React\Client\Message\Request\Request;
+use React\Dns\Resolver\Factory as ResolverFactory;
+use React\SocketClient\Connector;
+use React\SocketClient\SecureConnector;
 
 class Browser
 {
     private $http;
     private $loop;
 
-    public function __construct(LoopInterface $loop, HttpClient $http)
+    public function __construct(LoopInterface $loop, HttpClient $http = null)
     {
+        if ($http === null) {
+            $dnsResolverFactory = new ResolverFactory();
+            $resolver = $dnsResolverFactory->createCached('8.8.8.8', $loop);
+
+            $connector = new Connector($loop, $resolver);
+            $secureConnector = new SecureConnector($connector, $loop);
+            $http = new HttpClient($loop, $connector, $secureConnector);
+        }
         $this->http = $http;
         $this->loop = $loop;
     }
