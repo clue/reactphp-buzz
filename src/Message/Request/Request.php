@@ -1,6 +1,6 @@
 <?php
 
-namespace Clue\Http\React\Client\Message\Request;
+namespace Clue\React\Buzz\Message\Request;
 
 use React\Promise\PromisorInterface;
 use React\Promise\PromiseInterface;
@@ -10,7 +10,7 @@ use React\Promise\Deferred;
 use React\Promise\FulfilledPromise;
 use Exception;
 use React\HttpClient\Client as HttpClient;
-use Clue\Http\React\Client\Message\Response\BufferedResponse;
+use Clue\React\Buzz\Message\Response\BufferedResponse;
 
 class Request implements PromiseInterface, PromisorInterface
 {

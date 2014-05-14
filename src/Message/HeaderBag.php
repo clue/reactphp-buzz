@@ -1,6 +1,6 @@
 <?php
 
-namespace Clue\Http\React\Client\Message;
+namespace Clue\React\Buzz\Message;
 
 class HeaderBag
 {

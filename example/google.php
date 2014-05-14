@@ -1,7 +1,7 @@
 <?php
 
-use Clue\Http\React\Client\Message\Response\BufferedResponse;
-use Clue\Http\React\Client\Browser;
+use Clue\React\Buzz\Message\Response\BufferedResponse;
+use Clue\React\Buzz\Browser;
 
 require __DIR__ . '/../vendor/autoload.php';
 

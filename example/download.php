@@ -1,7 +1,7 @@
 <?php
 
-use Clue\Http\React\Client\Browser;
-use Clue\Http\React\Client\Message\Response\DownloadResponse;
+use Clue\React\Buzz\Browser;
+use Clue\React\Buzz\Message\Response\DownloadResponse;
 use React\EventLoop\StreamSelectLoop;
 
 require __DIR__ . '/../vendor/autoload.php';

@@ -1,6 +1,6 @@
 <?php
 
-namespace Clue\Http\React\Client\Message\Response;
+namespace Clue\React\Buzz\Message\Response;
 
 abstract class AbstractResponseDecorator implements ResponseInterface
 {

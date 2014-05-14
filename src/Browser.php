@@ -1,12 +1,12 @@
 <?php
 
-namespace Clue\Http\React\Client;
+namespace Clue\React\Buzz;
 
 use React\Stream\Stream;
 use React\HttpClient\Client as HttpClient;
 use React\EventLoop\LoopInterface;
-use Clue\Http\React\Client\Response\BufferedResponse;
-use Clue\Http\React\Client\Message\Request\Request;
+use Clue\React\Buzz\Response\BufferedResponse;
+use Clue\React\Buzz\Message\Request\Request;
 use React\Dns\Resolver\Factory as ResolverFactory;
 use React\SocketClient\Connector;
 use React\SocketClient\SecureConnector;
