@@ -30,6 +30,26 @@ class Request
         $this->headers = $headers;
     }
 
+    public function getMethod()
+    {
+        return $this->method;
+    }
+
+    public function getUrl()
+    {
+        return $this->url;
+    }
+
+    public function getHttpVersion()
+    {
+        return '1.1';
+    }
+
+    public function getRequestLine()
+    {
+        return $this->method . ' ' . $this->url . ' HTTP/' . $this->getHttpVersion();
+    }
+
     public function setHeader($name, $value)
     {
         $this->headers[$name] = $value;
