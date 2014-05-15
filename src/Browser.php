@@ -70,9 +70,11 @@ class Browser
 
     public function request($method, $url, $headers = array(), $content = null)
     {
-        $request = new Request($method, $url, $headers);
-        $request->send($this->http, $content);
+        return $this->send(new Request($method, $url, $headers), $content);
+    }
 
-        return $request;
+    public function send(Request $request, $content = null)
+    {
+        return $request->send($this->http, $content);
     }
 }
