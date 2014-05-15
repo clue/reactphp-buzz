@@ -16,6 +16,9 @@ class Transaction
     private $maxRedirects = 10;
     private $numRequests = 0;
 
+    // context: http.ignore_errors
+    private $obeySuccessCode = true;
+
     public function __construct(Request $request, Browser $browser)
     {
         $this->request = $request;
@@ -59,6 +62,11 @@ class Transaction
             }
 
             return $this->next($request);
+        }
+
+        // only status codes 200-399 are considered to be valid, reject otherwise
+        if ($this->obeySuccessCode && ($response->getCode() < 200 || $response->getCode() >= 400)) {
+            throw new \RuntimeException('HTTP status code ' . $response->getCode() . ' (' . $response->getReasonPhrase() . ')', $response->getCode());
         }
 
         // resolve our initial promise
