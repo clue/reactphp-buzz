@@ -68,36 +68,11 @@ class Browser
         return $this->request($method, $url, $headers, $content);
     }
 
-    public function download($url, $target, $headers = array(), $method = 'GET')
-    {
-        $stream = $this->getTargetStream($target);
-
-        $response = $this->requestStream($method, $url, $headers);
-        $response->pipe($stream);
-
-        return $response;
-    }
-
     public function request($method, $url, $headers = array(), $content = null)
     {
         $request = new Request($method, $url, $headers);
         $request->send($this->http, $content);
 
         return $request;
-    }
-
-    private function getTargetStream($target)
-    {
-        if ($target instanceof Stream) {
-            $stream = $target;
-        } elseif (is_resource($target)) {
-            $stream = new Stream($target, $this->loop);
-        } else {
-            $resource = fopen($target, 'w+');
-            if ($target === false) {
-                throw new \RuntimeException('Unable to open target stream to write output to');
-            }
-            $stream = new Stream($resource, $this->loop);
-        }
     }
 }
