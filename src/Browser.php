@@ -10,6 +10,7 @@ use Clue\React\Buzz\Message\Request\Request;
 use React\Dns\Resolver\Factory as ResolverFactory;
 use React\SocketClient\Connector;
 use React\SocketClient\SecureConnector;
+use Clue\React\Buzz\Message\Transaction;
 
 class Browser
 {
@@ -75,6 +76,13 @@ class Browser
 
     public function send(Request $request, $content = null)
     {
-        return $request->send($this->http, $content);
+        $transaction = new Transaction($request, $this);
+
+        return $transaction->send($content);
+    }
+
+    public function getClient()
+    {
+        return $this->http;
     }
 }
