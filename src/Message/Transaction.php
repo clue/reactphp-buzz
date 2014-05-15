@@ -13,6 +13,9 @@ class Transaction
     private $browser;
     private $request;
 
+    private $maxRedirects = 10;
+    private $numRequests = 0;
+
     public function __construct(Request $request, Browser $browser)
     {
         $this->request = $request;
@@ -29,6 +32,7 @@ class Transaction
         $this->progress('request', array($request));
 
         $that = $this;
+        ++$this->numRequests;
 
         return $request->send($this->browser->getClient(), $content)->then(
             function (BufferedResponse $response) use ($request, $that) {
@@ -49,6 +53,10 @@ class Transaction
             $request = new Request('GET', $location);
 
             $this->progress('redirect', array($request));
+
+            if ($this->numRequests >= $this->maxRedirects) {
+                throw new \RuntimeException('Maximum number of redirects (' . $this->maxRedirects . ') exceeded');
+            }
 
             return $this->next($request);
         }
