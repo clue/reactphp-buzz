@@ -16,7 +16,7 @@ class Transaction
     private $numRequests = 0;
 
     // context: http.follow_location
-    private $followRedirects = false;
+    private $followRedirects = true;
 
     // context: http.max_redirects
     private $maxRedirects = 10;
