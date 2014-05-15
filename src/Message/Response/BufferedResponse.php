@@ -20,6 +20,11 @@ class BufferedResponse implements ResponseInterface
         });
     }
 
+    public function getStatusLine()
+    {
+        return $this->getProtocol() . ' ' . $this->getCode() . ' ' . $this->getReasonPhrase();
+    }
+
     public function getProtocol()
     {
         return $this->response->getProtocol();

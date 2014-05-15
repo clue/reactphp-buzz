@@ -4,6 +4,8 @@ namespace Clue\React\Buzz\Message\Response;
 
 interface ResponseInterface
 {
+    public function getStatusLine();
+
     public function getProtocol();
 
     public function getVersion();
