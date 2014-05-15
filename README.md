@@ -1,7 +1,14 @@
 # clue/buzz-react [![Build Status](https://travis-ci.org/clue/reactphp-buzz.png?branch=master)](https://travis-ci.org/clue/reactphp-buzz)
 
-Simple async HTTP client for fetching URLs, talking to APIs, downloads,
-redirects, cache, etc.
+Simple async HTTP client for concurrently interacting with multiple HTTP servers,
+fetching URLs, talking to RESTful APIs, downloading files, following redirects
+etc. all at the same time.
+
+This library is heavily inspired by the great
+[kriswallsmith/Buzz](https://github.com/kriswallsmith/Buzz)
+project. However, instead of blocking on each request, it relies on
+[react's EventLoop]((https://gitub.com/reactphp/event-loop) to process
+multiple requests in parallel.
 
 This provides a higher level API that is easy to use in order to process
 (i.e. download or stream) multiple HTTP requests concurrently without having to
@@ -41,4 +48,3 @@ The recommended way to install this library is [through composer](http://getcomp
 ## License
 
 MIT
-

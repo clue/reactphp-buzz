@@ -1,12 +1,8 @@
 {
     "name": "clue/buzz-react",
-    "description": "Simple async HTTP client for fetching URLs, talking to APIs, downloads, redirects, cache, etc.",
+    "description": "Simple async HTTP client for fetching URLs, talking to RESTful APIs, downloading, following redirects etc.",
+    "keywords": ["HTTP client", "HTTP requests", "ReactPHP", "async"],
     "homepage": "https://github.com/clue/reactphp-buzz",
-    "require": {
-        "react/event-loop": "0.3.*",
-        "react/http-client": "0.3.*",
-        "react/promise": "~1"
-    },
     "license": "MIT",
     "authors": [
         {
@@ -16,5 +12,10 @@
     ],
     "autoload": {
         "psr-4": { "Clue\\React\\Buzz\\": "src/" }
+    },
+    "require": {
+        "react/event-loop": "0.3.*",
+        "react/http-client": "0.3.*",
+        "react/promise": "~1"
     }
 }
