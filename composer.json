@@ -1,6 +1,7 @@
 {
-    "name": "clue/http-react",
+    "name": "clue/buzz-react",
     "description": "Simple async HTTP client for fetching URLs, talking to APIs, downloads, redirects, cache, etc.",
+    "homepage": "https://github.com/clue/reactphp-buzz",
     "require": {
         "react/event-loop": "0.3.*",
         "react/http-client": "0.3.*",

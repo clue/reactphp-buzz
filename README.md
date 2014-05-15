@@ -1,4 +1,4 @@
-# clue/http-react [![Build Status](https://travis-ci.org/clue/http-react.png?branch=master)](https://travis-ci.org/clue/http-react)
+# clue/buzz-react [![Build Status](https://travis-ci.org/clue/reactphp-buzz.png?branch=master)](https://travis-ci.org/clue/reactphp-buzz)
 
 Simple async HTTP client for fetching URLs, talking to APIs, downloads,
 redirects, cache, etc.
@@ -33,7 +33,7 @@ The recommended way to install this library is [through composer](http://getcomp
 ```JSON
 {
     "require": {
-        "clue/http-react": "dev-master"
+        "clue/buzz-react": "dev-master"
     }
 }
 ```
