@@ -13,8 +13,13 @@ class Transaction
     private $browser;
     private $request;
 
-    private $maxRedirects = 10;
     private $numRequests = 0;
+
+    // context: http.follow_location
+    private $followRedirects = false;
+
+    // context: http.max_redirects
+    private $maxRedirects = 10;
 
     // context: http.ignore_errors
     private $obeySuccessCode = true;
@@ -51,7 +56,7 @@ class Transaction
     {
         $this->progress('response', array($response, $request));
 
-        if ($response->getCode() >= 300 && $response->getCode() < 400 && $location = $response->getHeader('Location')) {
+        if ($this->followRedirects && ($response->getCode() >= 300 && $response->getCode() < 400 && $location = $response->getHeader('Location'))) {
             // naïve approach..
             $request = new Request('GET', $location);
 
