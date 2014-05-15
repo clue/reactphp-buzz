@@ -3,6 +3,7 @@
 namespace Clue\React\Buzz\Message\Response;
 
 use React\HttpClient\Response as ResponseStream;
+use Clue\React\Buzz\Message\HeaderBag;
 
 class BufferedResponse implements ResponseInterface
 {
@@ -42,6 +43,16 @@ class BufferedResponse implements ResponseInterface
     public function getHeaders()
     {
         return $this->response->getHeaders();
+    }
+
+    public function getHeaderBag()
+    {
+        return new HeaderBag($this->getHeaders());
+    }
+
+    public function getHeader($name)
+    {
+        return $this->getHeaderBag()->getHeaderValue($name);
     }
 
     public function getBody()
