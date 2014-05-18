@@ -7,7 +7,7 @@ etc. all at the same time.
 This library is heavily inspired by the great
 [kriswallsmith/Buzz](https://github.com/kriswallsmith/Buzz)
 project. However, instead of blocking on each request, it relies on
-[react's EventLoop]((https://gitub.com/reactphp/event-loop) to process
+[React PHP's EventLoop](https://gitub.com/reactphp/event-loop) to process
 multiple requests in parallel.
 
 This provides a higher level API that is easy to use in order to process
