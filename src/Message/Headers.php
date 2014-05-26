@@ -2,7 +2,7 @@
 
 namespace Clue\React\Buzz\Message;
 
-class HeaderBag
+class Headers
 {
     private $headers;
 

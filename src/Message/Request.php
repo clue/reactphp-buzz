@@ -113,7 +113,7 @@ class Request implements Message
                         $response->getVersion(),
                         $response->getCode(),
                         $response->getReasonPhrase(),
-                        new HeaderBag($response->getHeaders()),
+                        new Headers($response->getHeaders()),
                         new Body($bodyBuffer)
                     ));
                 }
