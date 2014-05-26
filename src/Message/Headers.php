@@ -6,15 +6,7 @@ class Headers
 {
     private $headers;
 
-    public static function factory($headers)
-    {
-        if (!($headers instanceof self)) {
-            $headers = new self($headers);
-        }
-        return $headers;
-    }
-
-    public function __construct(array $headers)
+    public function __construct(array $headers = array())
     {
         $this->headers = $headers;
     }

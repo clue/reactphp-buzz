@@ -11,6 +11,7 @@ use React\SocketClient\Connector;
 use React\SocketClient\SecureConnector;
 use Clue\React\Buzz\Message\Transaction;
 use Clue\React\Buzz\Message\Body;
+use Clue\React\Buzz\Message\Headers;
 
 class Browser
 {
@@ -71,6 +72,9 @@ class Browser
 
     public function request($method, $url, $headers = array(), $content = null)
     {
+        if (!($headers instanceof Headers)) {
+            $headers = new Headers($headers);
+        }
         if (!($content instanceof Body)) {
             $content = new Body($content);
         }

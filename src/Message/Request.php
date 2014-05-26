@@ -24,16 +24,19 @@ class Request implements Message
     /* @var ResponseStream */
     private $responseStream = null;
 
-    public function __construct($method, $url, $headers = array(), Body $body = null)
+    public function __construct($method, $url, Headers $headers = null, Body $body = null)
     {
-        $this->method  = $method;
-        $this->url     = $url;
-        $this->headers = $headers;
-
+        if ($headers === null) {
+            $headers = new Headers();
+        }
         if ($body === null) {
             $body = new Body();
         }
-        $this->body = $body;
+
+        $this->method  = $method;
+        $this->url     = $url;
+        $this->headers = $headers;
+        $this->body    = $body;
     }
 
     public function getMethod()
@@ -56,23 +59,6 @@ class Request implements Message
         return $this->method . ' ' . $this->url . ' HTTP/' . $this->getHttpVersion();
     }
 
-    public function setHeader($name, $value)
-    {
-        $this->headers[$name] = $value;
-    }
-
-    public function setHeaders($headers)
-    {
-        $this->headers = $headers;
-    }
-
-    public function addHeaders($headers)
-    {
-        foreach ($headers as $name => $value) {
-            $this->setHeader($name, $value);
-        }
-    }
-
     public function getHeaders()
     {
         return $this->headers;
@@ -91,7 +77,7 @@ class Request implements Message
 
         $deferred = new Deferred();
 
-        $requestStream = $http->request($this->method, $this->url, $this->headers);
+        $requestStream = $http->request($this->method, $this->url, $this->headers->getAll());
         $requestStream->end((string)$this->body);
 
         $requestStream->on('error', function($error) use ($deferred) {
