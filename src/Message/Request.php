@@ -98,15 +98,24 @@ class Request implements Message
             $deferred->reject($error);
         });
 
-        $requestStream->on('response', function (ResponseStream $responseStream) use ($deferred) {
-            $response = new Response($responseStream);
-            // progress
+        $requestStream->on('response', function (ResponseStream $response) use ($deferred) {
+            $bodyBuffer = '';
+            $response->on('data', function ($data) use (&$bodyBuffer) {
+                $bodyBuffer .= $data;
+                // progress
+            });
 
-            $responseStream->on('end', function ($error = null) use ($deferred, $response) {
+            $response->on('end', function ($error = null) use ($deferred, $response, &$bodyBuffer) {
                 if ($error !== null) {
                     $deferred->reject($error);
                 } else {
-                    $deferred->resolve($response);
+                    $deferred->resolve(new Response(
+                        $response->getVersion(),
+                        $response->getCode(),
+                        $response->getReasonPhrase(),
+                        new HeaderBag($response->getHeaders()),
+                        new Body($bodyBuffer)
+                    ));
                 }
             });
         });

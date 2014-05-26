@@ -2,22 +2,29 @@
 
 namespace Clue\React\Buzz\Message;
 
-use React\HttpClient\Response as ResponseStream;
 use Clue\React\Buzz\Message\HeaderBag;
 
 class Response implements Message
 {
-    private $response;
-    private $body = '';
+    private $protocol;
+    private $code;
+    private $reasonPhrase;
+    private $headers;
+    private $body;
 
-    public function __construct(ResponseStream $response)
+    public function __construct($protocol, $code, $reasonPhrase, HeaderBag $headers = null, Body $body = null)
     {
-        $this->response = $response;
-        $body     =& $this->body;
-        $response->on('data', function ($data) use (&$body) {
-            $body .= $data;
-            // progress
-        });
+        if ($headers === null) {
+            $headers = new HeaderBag();
+        }
+        if ($body === null) {
+            $body = new Body();
+        }
+        $this->protocol = $protocol;
+        $this->code = $code;
+        $this->reasonPhrase = $reasonPhrase;
+        $this->headers = $headers;
+        $this->body = $body;
     }
 
     public function getStatusLine()
@@ -27,41 +34,41 @@ class Response implements Message
 
     public function getProtocol()
     {
-        return $this->response->getProtocol();
+        return 'HTTP/' . $this->protocol;
     }
 
-    public function getVersion()
+    public function getHttpVersion()
     {
-        return $this->response->getVersion();
+       return $this->protocol;
     }
 
     public function getCode()
     {
-        return $this->response->getCode();
+        return $this->code;
     }
 
     public function getReasonPhrase()
     {
-        return $this->response->getReasonPhrase();
+        return $this->reasonPhrase;
     }
 
     public function getHeaders()
     {
-        return $this->response->getHeaders();
+        return $this->headers->getAll();
     }
 
     public function getHeaderBag()
     {
-        return new HeaderBag($this->getHeaders());
+        return $this->headers;
     }
 
     public function getHeader($name)
     {
-        return $this->getHeaderBag()->getHeaderValue($name);
+        return $this->headers->getHeaderValue($name);
     }
 
     public function getBody()
     {
-        return new Body($this->body);
+        return $this->body;
     }
 }
