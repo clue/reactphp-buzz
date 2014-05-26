@@ -44,4 +44,9 @@ class HeaderBag
     {
         return reset($this->getHeaderValues($search));
     }
+
+    public function getAll()
+    {
+        return $this->headers;
+    }
 }
