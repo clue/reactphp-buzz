@@ -30,19 +30,19 @@ class Transaction
         $this->browser = $browser;
     }
 
-    public function send($content = null)
+    public function send()
     {
-        return $this->next($this->request, $content);
+        return $this->next($this->request);
     }
 
-    protected function next(Request $request, $content = null)
+    protected function next(Request $request)
     {
         $this->progress('request', array($request));
 
         $that = $this;
         ++$this->numRequests;
 
-        return $request->send($this->browser->getClient(), $content)->then(
+        return $request->send($this->browser->getClient())->then(
             function (Response $response) use ($request, $that) {
                 return $that->onResponse($response, $request);
             },

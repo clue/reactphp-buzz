@@ -62,6 +62,6 @@ class Response implements Message
 
     public function getBody()
     {
-        return $this->body;
+        return new Body($this->body);
     }
 }

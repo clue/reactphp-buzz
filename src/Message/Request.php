@@ -15,6 +15,7 @@ class Request implements Message
     private $method;
     private $url;
     private $headers;
+    private $body;
 
 
     /* @var RequestStream */
@@ -23,11 +24,16 @@ class Request implements Message
     /* @var ResponseStream */
     private $responseStream = null;
 
-    public function __construct($method, $url, $headers = array())
+    public function __construct($method, $url, $headers = array(), Body $body = null)
     {
         $this->method  = $method;
         $this->url     = $url;
         $this->headers = $headers;
+
+        if ($body === null) {
+            $body = new Body();
+        }
+        $this->body = $body;
     }
 
     public function getMethod()
@@ -74,19 +80,19 @@ class Request implements Message
 
     public function getBody()
     {
-        return '';
+        return $this->body;
     }
 
-    public function send(HttpClient $http, $content = null)
+    public function send(HttpClient $http)
     {
-        if ($content !== null) {
-            $this->setHeader('Content-Length', strlen($content));
+        if (!$this->body->isEmpty()) {
+            $this->setHeader('Content-Length', $this->body->getLength());
         }
 
         $deferred = new Deferred();
 
         $requestStream = $http->request($this->method, $this->url, $this->headers);
-        $requestStream->end($content);
+        $requestStream->end((string)$this->body);
 
         $requestStream->on('error', function($error) use ($deferred) {
             $deferred->reject($error);
