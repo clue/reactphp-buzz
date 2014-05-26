@@ -51,12 +51,12 @@ class Request implements Message
 
     public function getHttpVersion()
     {
-        return '1.1';
+        return 'HTTP/1.1';
     }
 
     public function getRequestLine()
     {
-        return $this->method . ' ' . $this->url . ' HTTP/' . $this->getHttpVersion();
+        return $this->method . ' ' . $this->url . ' ' . $this->getHttpVersion();
     }
 
     public function getHeaders()
@@ -96,7 +96,7 @@ class Request implements Message
                     $deferred->reject($error);
                 } else {
                     $deferred->resolve(new Response(
-                        $response->getVersion(),
+                        'HTTP/' . $response->getVersion(),
                         $response->getCode(),
                         $response->getReasonPhrase(),
                         new Headers($response->getHeaders()),

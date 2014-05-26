@@ -29,12 +29,7 @@ class Response implements Message
 
     public function getStatusLine()
     {
-        return $this->getProtocol() . ' ' . $this->getCode() . ' ' . $this->getReasonPhrase();
-    }
-
-    public function getProtocol()
-    {
-        return 'HTTP/' . $this->protocol;
+        return $this->getHttpVersion() . ' ' . $this->getCode() . ' ' . $this->getReasonPhrase();
     }
 
     public function getHttpVersion()
