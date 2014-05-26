@@ -2,8 +2,8 @@
 
 namespace Clue\React\Buzz\Message;
 
-use Clue\React\Buzz\Message\Request\Request;
-use Clue\React\Buzz\Message\Response\BufferedResponse;
+use Clue\React\Buzz\Message\Request;
+use Clue\React\Buzz\Message\Response;
 use Exception;
 use Clue\React\Buzz\Browser;
 use React\HttpClient\Client as HttpClient;
@@ -43,7 +43,7 @@ class Transaction
         ++$this->numRequests;
 
         return $request->send($this->browser->getClient(), $content)->then(
-            function (BufferedResponse $response) use ($request, $that) {
+            function (Response $response) use ($request, $that) {
                 return $that->onResponse($response, $request);
             },
             function ($error) use ($request, $that) {
@@ -52,7 +52,7 @@ class Transaction
         );
     }
 
-    public function onResponse(BufferedResponse $response, Request $request)
+    public function onResponse(Response $response, Request $request)
     {
         $this->progress('response', array($response, $request));
 
@@ -93,7 +93,7 @@ class Transaction
 
         foreach ($args as $arg) {
             echo ' ';
-            if ($arg instanceof BufferedResponse) {
+            if ($arg instanceof Response) {
                 echo $arg->getStatusLine();
             } elseif ($arg instanceof Request) {
                 echo $arg->getRequestLine();

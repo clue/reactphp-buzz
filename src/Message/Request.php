@@ -1,6 +1,6 @@
 <?php
 
-namespace Clue\React\Buzz\Message\Request;
+namespace Clue\React\Buzz\Message;
 
 use React\HttpClient\Request as RequestStream;
 use React\HttpClient\Response as ResponseStream;
@@ -10,7 +10,7 @@ use Exception;
 use React\HttpClient\Client as HttpClient;
 use Clue\React\Buzz\Message\Response\BufferedResponse;
 
-class Request
+class Request implements Message
 {
     private $method;
     private $url;
@@ -72,6 +72,11 @@ class Request
         return $this->headers;
     }
 
+    public function getBody()
+    {
+        return '';
+    }
+
     public function send(HttpClient $http, $content = null)
     {
         if ($content !== null) {
@@ -88,7 +93,7 @@ class Request
         });
 
         $requestStream->on('response', function (ResponseStream $responseStream) use ($deferred) {
-            $response = new BufferedResponse($responseStream);
+            $response = new Response($responseStream);
             // progress
 
             $responseStream->on('end', function ($error = null) use ($deferred, $response) {

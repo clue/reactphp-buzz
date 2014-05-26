@@ -1,11 +1,11 @@
 <?php
 
-namespace Clue\React\Buzz\Message\Response;
+namespace Clue\React\Buzz\Message;
 
 use React\HttpClient\Response as ResponseStream;
 use Clue\React\Buzz\Message\HeaderBag;
 
-class BufferedResponse implements ResponseInterface
+class Response implements Message
 {
     private $response;
     private $body = '';
