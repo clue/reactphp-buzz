@@ -10,8 +10,15 @@ project. However, instead of blocking on each request, it relies on
 [React PHP's EventLoop](https://gitub.com/reactphp/event-loop) to process
 multiple requests in parallel.
 
-This provides a higher level API that is easy to use in order to process
-(i.e. download or stream) multiple HTTP requests concurrently without having to
+React PHP also provides the package
+[react/http-client](https://gitub.com/reactphp/event-loop) which provides a
+streaming HTTP client implementation.
+That package is ideally suited for accessing streaming APIs or processing huge
+requests, but requires quite a bit of boilerplate code if all you want to do is
+to access a *normal* website or your average RESTful API.
+
+As such, this projects aims at providing a higher level API that is easy to use
+in order to process multiple HTTP requests concurrently without having to
 mess with most of the low level details of the underlying
 [react/http-client](https://gitub.com/reactphp/http-client).
 
@@ -26,7 +33,7 @@ local http server and send some requests:
 
 $client = new Browser($loop);
 
-$client->get('http://www.google.com/')->then(function (BufferedResponse $result) {
+$client->get('http://www.google.com/')->then(function (Response $result) {
     var_dump($result->getHeaders(), $result->getBody());
 });
 
