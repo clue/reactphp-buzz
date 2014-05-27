@@ -12,6 +12,7 @@ use React\SocketClient\SecureConnector;
 use Clue\React\Buzz\Message\Transaction;
 use Clue\React\Buzz\Message\Body;
 use Clue\React\Buzz\Message\Headers;
+use Clue\React\Buzz\Io\Sender;
 
 class Browser
 {
@@ -84,7 +85,7 @@ class Browser
 
     public function send(Request $request)
     {
-        $transaction = new Transaction($request, $this);
+        $transaction = new Transaction($request, new Sender($this));
 
         return $transaction->send();
     }

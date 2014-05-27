@@ -2,14 +2,6 @@
 
 namespace Clue\React\Buzz\Message;
 
-use React\HttpClient\Request as RequestStream;
-use React\HttpClient\Response as ResponseStream;
-use React\Promise\Deferred;
-use React\Promise\FulfilledPromise;
-use Exception;
-use React\HttpClient\Client as HttpClient;
-use Clue\React\Buzz\Message\Response\BufferedResponse;
-
 class Request implements Message
 {
     private $method;
@@ -67,45 +59,5 @@ class Request implements Message
     public function getBody()
     {
         return $this->body;
-    }
-
-    public function send(HttpClient $http)
-    {
-        if (!$this->body->isEmpty()) {
-            $this->setHeader('Content-Length', $this->body->getLength());
-        }
-
-        $deferred = new Deferred();
-
-        $requestStream = $http->request($this->method, $this->url, $this->headers->getAll());
-        $requestStream->end((string)$this->body);
-
-        $requestStream->on('error', function($error) use ($deferred) {
-            $deferred->reject($error);
-        });
-
-        $requestStream->on('response', function (ResponseStream $response) use ($deferred) {
-            $bodyBuffer = '';
-            $response->on('data', function ($data) use (&$bodyBuffer) {
-                $bodyBuffer .= $data;
-                // progress
-            });
-
-            $response->on('end', function ($error = null) use ($deferred, $response, &$bodyBuffer) {
-                if ($error !== null) {
-                    $deferred->reject($error);
-                } else {
-                    $deferred->resolve(new Response(
-                        'HTTP/' . $response->getVersion(),
-                        $response->getCode(),
-                        $response->getReasonPhrase(),
-                        new Headers($response->getHeaders()),
-                        new Body($bodyBuffer)
-                    ));
-                }
-            });
-        });
-
-        return $deferred->promise();
     }
 }

@@ -7,6 +7,7 @@ use Clue\React\Buzz\Message\Response;
 use Exception;
 use Clue\React\Buzz\Browser;
 use React\HttpClient\Client as HttpClient;
+use Clue\React\Buzz\Io\Sender;
 
 class Transaction
 {
@@ -24,10 +25,10 @@ class Transaction
     // context: http.ignore_errors
     private $obeySuccessCode = true;
 
-    public function __construct(Request $request, Browser $browser)
+    public function __construct(Request $request, Sender $sender)
     {
         $this->request = $request;
-        $this->browser = $browser;
+        $this->sender = $sender;
     }
 
     public function send()
@@ -42,7 +43,7 @@ class Transaction
         $that = $this;
         ++$this->numRequests;
 
-        return $request->send($this->browser->getClient())->then(
+        return $this->sender->send($request)->then(
             function (Response $response) use ($request, $that) {
                 return $that->onResponse($response, $request);
             },
