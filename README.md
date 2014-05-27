@@ -26,8 +26,8 @@ mess with most of the low level details of the underlying
 
 ## Quickstart example
 
-Once [installed](#install), you can use the following code to connect to your
-local http server and send some requests:
+Once [installed](#install), you can use the following code to access a
+HTTP webserver and send some simple HTTP GET requests:
 
 ```php
 
