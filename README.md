@@ -22,7 +22,7 @@ in order to process multiple HTTP requests concurrently without having to
 mess with most of the low level details of the underlying
 [react/http-client](https://gitub.com/reactphp/http-client).
 
-> Note: This project is in early alpha stage! Feel free to report any issues you encounter.
+> Note: This project is in beta stage! Feel free to report any issues you encounter.
 
 ## Quickstart example
 
@@ -47,7 +47,7 @@ The recommended way to install this library is [through composer](http://getcomp
 ```JSON
 {
     "require": {
-        "clue/buzz-react": "dev-master"
+        "clue/buzz-react": "0.1.*"
     }
 }
 ```
