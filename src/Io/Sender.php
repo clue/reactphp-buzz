@@ -2,7 +2,7 @@
 
 namespace Clue\React\Buzz\Io;
 
-use Clue\React\Buzz\Browser;
+use React\HttpClient\Client as HttpClient;
 use Clue\React\Buzz\Message\Request;
 use Clue\React\Buzz\Message\Response;
 use React\HttpClient\Request as RequestStream;
@@ -13,11 +13,11 @@ use Clue\React\Buzz\Message\Body;
 
 class Sender
 {
-    private $browser;
+    private $http;
 
-    public function __construct(Browser $browser)
+    public function __construct(HttpClient $http)
     {
-        $this->browser = $browser;
+        $this->http = $http;
     }
 
     public function send(Request $request)
@@ -29,7 +29,7 @@ class Sender
 
         $deferred = new Deferred();
 
-        $requestStream = $this->browser->getClient()->request($request->getMethod(), $request->getUrl(), $request->getHeaders()->getAll());
+        $requestStream = $this->http->request($request->getMethod(), $request->getUrl(), $request->getHeaders()->getAll());
         $requestStream->end((string)$body);
 
         $requestStream->on('error', function($error) use ($deferred) {

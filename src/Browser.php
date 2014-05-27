@@ -16,20 +16,22 @@ use Clue\React\Buzz\Io\Sender;
 
 class Browser
 {
-    private $http;
+    private $sender;
     private $loop;
 
-    public function __construct(LoopInterface $loop, HttpClient $http = null)
+    public function __construct(LoopInterface $loop, Sender $sender = null)
     {
-        if ($http === null) {
+        if ($sender === null) {
             $dnsResolverFactory = new ResolverFactory();
             $resolver = $dnsResolverFactory->createCached('8.8.8.8', $loop);
 
             $connector = new Connector($loop, $resolver);
             $secureConnector = new SecureConnector($connector, $loop);
             $http = new HttpClient($loop, $connector, $secureConnector);
+
+            $sender = new Sender($http);
         }
-        $this->http = $http;
+        $this->sender = $sender;
         $this->loop = $loop;
     }
 
@@ -85,13 +87,8 @@ class Browser
 
     public function send(Request $request)
     {
-        $transaction = new Transaction($request, new Sender($this));
+        $transaction = new Transaction($request, $this->sender);
 
         return $transaction->send();
-    }
-
-    public function getClient()
-    {
-        return $this->http;
     }
 }
