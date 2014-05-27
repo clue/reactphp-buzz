@@ -1,6 +1,6 @@
 <?php
 
-namespace Clue\React\Buzz\Message;
+namespace Clue\React\Buzz\Io;
 
 use Clue\React\Buzz\Message\Request;
 use Clue\React\Buzz\Message\Response;

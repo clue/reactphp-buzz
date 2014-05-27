@@ -9,7 +9,7 @@ use Clue\React\Buzz\Message\Request;
 use React\Dns\Resolver\Factory as ResolverFactory;
 use React\SocketClient\Connector;
 use React\SocketClient\SecureConnector;
-use Clue\React\Buzz\Message\Transaction;
+use Clue\React\Buzz\Io\Transaction;
 use Clue\React\Buzz\Message\Body;
 use Clue\React\Buzz\Message\Headers;
 use Clue\React\Buzz\Io\Sender;
