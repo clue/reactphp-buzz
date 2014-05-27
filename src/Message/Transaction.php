@@ -59,7 +59,8 @@ class Transaction
 
         if ($this->followRedirects && ($response->getCode() >= 300 && $response->getCode() < 400 && $location = $response->getHeader('Location'))) {
             // naïve approach..
-            $request = new Request('GET', $location);
+            $method = ($request->getMethod() === 'HEAD') ? 'HEAD' : 'GET';
+            $request = new Request($method, $location);
 
             $this->progress('redirect', array($request));
 
