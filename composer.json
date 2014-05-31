@@ -14,8 +14,8 @@
         "psr-4": { "Clue\\React\\Buzz\\": "src/" }
     },
     "require": {
-        "react/event-loop": "0.3.*",
-        "react/http-client": "0.3.*",
-        "react/promise": "~1"
+        "react/event-loop": "0.3.*|0.4.*",
+        "react/http-client": "0.3.*|0.4.*",
+        "react/promise": "1.*|2.*"
     }
 }

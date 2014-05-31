@@ -3,7 +3,7 @@
         "This file locks the dependencies of your project to a known state",
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file"
     ],
-    "hash": "be544790e688d25e6c68aa87ffd33674",
+    "hash": "12a9508110a8b49183ac9a1da7c55acd",
     "packages": [
         {
             "name": "evenement/evenement",
@@ -46,43 +46,76 @@
             "time": "2012-05-30 15:01:08"
         },
         {
-            "name": "guzzle/parser",
+            "name": "guzzle/guzzle",
             "version": "v2.8.8",
-            "target-dir": "Guzzle/Parser",
             "source": {
                 "type": "git",
-                "url": "https://github.com/guzzle/parser.git",
-                "reference": "8f5152833af2d9505bcefb0a10c4b6987aa9a6b1"
+                "url": "https://github.com/guzzle/guzzle.git",
+                "reference": "6738770a1d9e299cec6c2079220628ee8c739483"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/parser/zipball/8f5152833af2d9505bcefb0a10c4b6987aa9a6b1",
-                "reference": "8f5152833af2d9505bcefb0a10c4b6987aa9a6b1",
+                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/6738770a1d9e299cec6c2079220628ee8c739483",
+                "reference": "6738770a1d9e299cec6c2079220628ee8c739483",
                 "shasum": ""
             },
             "require": {
-                "php": ">=5.3.2"
+                "ext-curl": "*",
+                "php": ">=5.3.2",
+                "symfony/event-dispatcher": "2.1.*"
+            },
+            "replace": {
+                "guzzle/common": "self.version",
+                "guzzle/http": "self.version",
+                "guzzle/parser": "self.version"
+            },
+            "require-dev": {
+                "doctrine/common": "*",
+                "monolog/monolog": "1.*",
+                "symfony/class-loader": "*",
+                "zend/zend-cache1": "1.12",
+                "zend/zend-log1": "1.12",
+                "zendframework/zend-cache": "2.0.0beta4",
+                "zendframework/zend-eventmanager": "2.0.0beta4",
+                "zendframework/zend-loader": "2.0.0beta4",
+                "zendframework/zend-log": "2.0.0beta4",
+                "zendframework/zend-servicemanager": "2.0.0beta4",
+                "zendframework/zend-stdlib": "2.0.0beta4"
             },
             "type": "library",
             "autoload": {
                 "psr-0": {
-                    "Guzzle\\Parser": ""
+                    "Guzzle\\Tests": "tests/",
+                    "Guzzle": "src/"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
-            "description": "Interchangeable parsers used by Guzzle",
+            "authors": [
+                {
+                    "name": "Michael Dowling",
+                    "email": "mtdowling@gmail.com",
+                    "homepage": "https://github.com/mtdowling"
+                },
+                {
+                    "name": "Guzzle Community",
+                    "homepage": "https://github.com/guzzle/guzzle/contributors"
+                }
+            ],
+            "description": "Guzzle is a PHP HTTP client library and framework for building RESTful web service clients",
             "homepage": "http://guzzlephp.org/",
             "keywords": [
-                "URI Template",
-                "cookie",
+                "client",
+                "curl",
+                "framework",
                 "http",
-                "message",
-                "url"
+                "http client",
+                "rest",
+                "web service"
             ],
-            "time": "2012-09-20 20:28:06"
+            "time": "2012-10-16 00:42:47"
         },
         {
             "name": "react/cache",
@@ -91,12 +124,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/reactphp/cache.git",
-                "reference": "a821f4318e38fc7efd02d81698fcee9d3d34dafe"
+                "reference": "437357102effb562b44dbc0ac4eb2c209c4f572b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/reactphp/cache/zipball/a821f4318e38fc7efd02d81698fcee9d3d34dafe",
-                "reference": "a821f4318e38fc7efd02d81698fcee9d3d34dafe",
+                "url": "https://api.github.com/repos/reactphp/cache/zipball/437357102effb562b44dbc0ac4eb2c209c4f572b",
+                "reference": "437357102effb562b44dbc0ac4eb2c209c4f572b",
                 "shasum": ""
             },
             "require": {
@@ -126,17 +159,17 @@
         },
         {
             "name": "react/dns",
-            "version": "v0.3.2",
+            "version": "v0.3.4",
             "target-dir": "React/Dns",
             "source": {
                 "type": "git",
                 "url": "https://github.com/reactphp/dns.git",
-                "reference": "c8c9c57750cb24e8f7b87bc62fee10750f1f9fbf"
+                "reference": "518e12e12f0a86e63ba482ebd728408391cc883f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/reactphp/dns/zipball/c8c9c57750cb24e8f7b87bc62fee10750f1f9fbf",
-                "reference": "c8c9c57750cb24e8f7b87bc62fee10750f1f9fbf",
+                "url": "https://api.github.com/repos/reactphp/dns/zipball/518e12e12f0a86e63ba482ebd728408391cc883f",
+                "reference": "518e12e12f0a86e63ba482ebd728408391cc883f",
                 "shasum": ""
             },
             "require": {
@@ -174,12 +207,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/reactphp/event-loop.git",
-                "reference": "49208fa3a15c9eae4adf8351ee9caa4064fe550d"
+                "reference": "c75b334ef4a345d6c89954af71a4ef17fce4d04d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/reactphp/event-loop/zipball/49208fa3a15c9eae4adf8351ee9caa4064fe550d",
-                "reference": "49208fa3a15c9eae4adf8351ee9caa4064fe550d",
+                "url": "https://api.github.com/repos/reactphp/event-loop/zipball/c75b334ef4a345d6c89954af71a4ef17fce4d04d",
+                "reference": "c75b334ef4a345d6c89954af71a4ef17fce4d04d",
                 "shasum": ""
             },
             "require": {
@@ -217,12 +250,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/reactphp/http-client.git",
-                "reference": "b96aa5dfa23c83e669de8d4acb717b03ae70c088"
+                "reference": "b5d272a01ff224034f1d28f008df7294d3e03c83"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/reactphp/http-client/zipball/b96aa5dfa23c83e669de8d4acb717b03ae70c088",
-                "reference": "b96aa5dfa23c83e669de8d4acb717b03ae70c088",
+                "url": "https://api.github.com/repos/reactphp/http-client/zipball/b5d272a01ff224034f1d28f008df7294d3e03c83",
+                "reference": "b5d272a01ff224034f1d28f008df7294d3e03c83",
                 "shasum": ""
             },
             "require": {
@@ -297,17 +330,17 @@
         },
         {
             "name": "react/socket",
-            "version": "v0.3.2",
+            "version": "v0.3.4",
             "target-dir": "React/Socket",
             "source": {
                 "type": "git",
                 "url": "https://github.com/reactphp/socket.git",
-                "reference": "9cc32838d25a934ce950d2662cce2ff1b9e9f8aa"
+                "reference": "19bc0c4309243717396022ffb2e59be1cc784327"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/reactphp/socket/zipball/9cc32838d25a934ce950d2662cce2ff1b9e9f8aa",
-                "reference": "9cc32838d25a934ce950d2662cce2ff1b9e9f8aa",
+                "url": "https://api.github.com/repos/reactphp/socket/zipball/19bc0c4309243717396022ffb2e59be1cc784327",
+                "reference": "19bc0c4309243717396022ffb2e59be1cc784327",
                 "shasum": ""
             },
             "require": {
@@ -335,21 +368,21 @@
             "keywords": [
                 "Socket"
             ],
-            "time": "2013-04-26 20:23:10"
+            "time": "2014-02-17 22:32:00"
         },
         {
             "name": "react/socket-client",
-            "version": "v0.3.2",
+            "version": "v0.3.1",
             "target-dir": "React/SocketClient",
             "source": {
                 "type": "git",
                 "url": "https://github.com/reactphp/socket-client.git",
-                "reference": "0696ede9876749dc49670f282aab9f6c8549275b"
+                "reference": "87935a0223362c36cd30cf215cbec33377d31ca4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/reactphp/socket-client/zipball/0696ede9876749dc49670f282aab9f6c8549275b",
-                "reference": "0696ede9876749dc49670f282aab9f6c8549275b",
+                "url": "https://api.github.com/repos/reactphp/socket-client/zipball/87935a0223362c36cd30cf215cbec33377d31ca4",
+                "reference": "87935a0223362c36cd30cf215cbec33377d31ca4",
                 "shasum": ""
             },
             "require": {
@@ -386,12 +419,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/reactphp/stream.git",
-                "reference": "b72900ab00513b591fb101faecad38f9c8eab8da"
+                "reference": "c212d551d021bcc3a172688b7a08219a262e5dfb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/reactphp/stream/zipball/b72900ab00513b591fb101faecad38f9c8eab8da",
-                "reference": "b72900ab00513b591fb101faecad38f9c8eab8da",
+                "url": "https://api.github.com/repos/reactphp/stream/zipball/c212d551d021bcc3a172688b7a08219a262e5dfb",
+                "reference": "c212d551d021bcc3a172688b7a08219a262e5dfb",
                 "shasum": ""
             },
             "require": {
@@ -423,6 +456,57 @@
                 "stream"
             ],
             "time": "2013-07-09 00:44:12"
+        },
+        {
+            "name": "symfony/event-dispatcher",
+            "version": "v2.1.13",
+            "target-dir": "Symfony/Component/EventDispatcher",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/EventDispatcher.git",
+                "reference": "e1d18ff0ff6f3e45ac82f000bc221135df635527"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/EventDispatcher/zipball/e1d18ff0ff6f3e45ac82f000bc221135df635527",
+                "reference": "e1d18ff0ff6f3e45ac82f000bc221135df635527",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.3"
+            },
+            "require-dev": {
+                "symfony/dependency-injection": "2.1.*"
+            },
+            "suggest": {
+                "symfony/dependency-injection": "2.1.*",
+                "symfony/http-kernel": "2.1.*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Symfony\\Component\\EventDispatcher": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Fabien Potencier",
+                    "email": "fabien@symfony.com",
+                    "homepage": "http://fabien.potencier.org",
+                    "role": "Lead Developer"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "http://symfony.com/contributors"
+                }
+            ],
+            "description": "Symfony EventDispatcher Component",
+            "homepage": "http://symfony.com",
+            "time": "2013-02-11 11:26:14"
         }
     ],
     "packages-dev": [

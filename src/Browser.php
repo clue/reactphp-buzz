@@ -27,7 +27,14 @@ class Browser
 
             $connector = new Connector($loop, $resolver);
             $secureConnector = new SecureConnector($connector, $loop);
-            $http = new HttpClient($loop, $connector, $secureConnector);
+
+            $ref = new \ReflectionClass('React\HttpClient\Client');
+            if ($ref->getConstructor()->getNumberOfRequiredParameters() == 2) {
+                // react/http-client:0.4 removed the $loop parameter
+                $http = new HttpClient($connector, $secureConnector);
+            } else {
+                $http = new HttpClient($loop, $connector, $secureConnector);
+            }
 
             $sender = new Sender($http);
         }
