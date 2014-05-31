@@ -6,7 +6,7 @@ you spot any mistakes.
 
 ## 0.1.1 (2014-05-31)
 
-* Compatiblity with React PHP v0.4 (compatiblity with v0.3 preserved)
+* Compatibility with React PHP v0.4 (compatibility with v0.3 preserved)
   ([#11](https://github.com/clue/reactphp-buzz/pull/11))
 
 ## 0.1.0 (2014-05-27)
