@@ -2,7 +2,7 @@
     "name": "clue/buzz-react",
     "description": "Simple async HTTP client for fetching URLs, talking to RESTful APIs, downloading, following redirects etc.",
     "keywords": ["HTTP client", "HTTP requests", "ReactPHP", "async"],
-    "homepage": "https://github.com/clue/reactphp-buzz",
+    "homepage": "https://github.com/clue/php-buzz-react",
     "license": "MIT",
     "authors": [
         {

@@ -1,4 +1,4 @@
-# clue/buzz-react [![Build Status](https://travis-ci.org/clue/reactphp-buzz.png?branch=master)](https://travis-ci.org/clue/reactphp-buzz)
+# clue/buzz-react [![Build Status](https://travis-ci.org/clue/php-buzz-react.svg?branch=master)](https://travis-ci.org/clue/php-buzz-react)
 
 Simple async HTTP client for concurrently interacting with multiple HTTP servers,
 fetching URLs, talking to RESTful APIs, downloading files, following redirects
