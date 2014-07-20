@@ -1,9 +1,10 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file"
+        "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "This file is @generated automatically"
     ],
-    "hash": "12a9508110a8b49183ac9a1da7c55acd",
+    "hash": "d43121c86c7ffad10c17d191135a1fa6",
     "packages": [
         {
             "name": "evenement/evenement",
@@ -159,7 +160,7 @@
         },
         {
             "name": "react/dns",
-            "version": "v0.3.4",
+            "version": "v0.3.2",
             "target-dir": "React/Dns",
             "source": {
                 "type": "git",
@@ -245,7 +246,7 @@
         },
         {
             "name": "react/http-client",
-            "version": "v0.3.2",
+            "version": "v0.3.1",
             "target-dir": "React/HttpClient",
             "source": {
                 "type": "git",
@@ -519,9 +520,9 @@
     "stability-flags": [
 
     ],
-    "platform": [
-
-    ],
+    "platform": {
+        "php": ">=5.3"
+    },
     "platform-dev": [
 
     ]
