@@ -2,7 +2,6 @@
 
 namespace Clue\React\Buzz;
 
-use React\Stream\Stream;
 use React\HttpClient\Client as HttpClient;
 use React\EventLoop\LoopInterface;
 use Clue\React\Buzz\Message\Request;
