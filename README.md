@@ -42,6 +42,14 @@ $loop->run();
 
 See also the [examples](examples).
 
+## Usage
+
+### Via SOCKS server
+
+You can also establish your outgoing connections through a SOCKS proxy server
+by adding a dependency to [clue/socks-react](https://github.com/clue/php-socks-react).
+See the [SOCKS example](examples/socks).
+
 ## Install
 
 The recommended way to install this library is [through composer](http://getcomposer.org). [New to composer?](http://getcomposer.org/doc/00-intro.md)

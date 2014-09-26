@@ -1,0 +1,6 @@
+{
+    "require": {
+        "clue/buzz-react": "~0.1",
+        "clue/socks-react": "~0.1"
+    }
+}
