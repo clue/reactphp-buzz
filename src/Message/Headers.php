@@ -34,7 +34,9 @@ class Headers
 
     public function getHeaderValue($search)
     {
-        return reset($this->getHeaderValues($search));
+        $values = $this->getHeaderValues($search);
+
+        return isset($values[0]) ? $values[0] : null;
     }
 
     public function getAll()
