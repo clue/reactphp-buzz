@@ -4,26 +4,29 @@
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "1883bf8e248534c59a208514c5fdf04a",
+    "hash": "050746f929b309b84ed1fc232bf95b84",
     "packages": [
         {
             "name": "clue/buzz-react",
-            "version": "v0.1.1",
+            "version": "v0.1.2",
             "source": {
                 "type": "git",
-                "url": "https://github.com/clue/reactphp-buzz.git",
-                "reference": "f4675b81a172cc52adeb7617a34d75354614c7b7"
+                "url": "https://github.com/clue/php-buzz-react.git",
+                "reference": "f0ea7c2d51e61965979eba1bbf566392420c66a4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/clue/reactphp-buzz/zipball/f4675b81a172cc52adeb7617a34d75354614c7b7",
-                "reference": "f4675b81a172cc52adeb7617a34d75354614c7b7",
+                "url": "https://api.github.com/repos/clue/php-buzz-react/zipball/f0ea7c2d51e61965979eba1bbf566392420c66a4",
+                "reference": "f0ea7c2d51e61965979eba1bbf566392420c66a4",
                 "shasum": ""
             },
             "require": {
+                "php": ">=5.3",
+                "react/dns": "0.3.*|0.4.*",
                 "react/event-loop": "0.3.*|0.4.*",
                 "react/http-client": "0.3.*|0.4.*",
-                "react/promise": "1.*|2.*"
+                "react/promise": "1.*|2.*",
+                "react/socket-client": "0.3.*|0.4.*"
             },
             "type": "library",
             "autoload": {
@@ -42,34 +45,38 @@
                 }
             ],
             "description": "Simple async HTTP client for fetching URLs, talking to RESTful APIs, downloading, following redirects etc.",
-            "homepage": "https://github.com/clue/reactphp-buzz",
+            "homepage": "https://github.com/clue/php-buzz-react",
             "keywords": [
                 "HTTP requests",
                 "async",
                 "http client",
                 "reactphp"
             ],
-            "time": "2014-05-31 18:30:23"
+            "time": "2014-10-28 14:16:45"
         },
         {
             "name": "clue/socks-react",
-            "version": "v0.1.0",
+            "version": "v0.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/clue/php-socks-react.git",
-                "reference": "f923f1767c81cf70de9566dd39b6e182fcb32f7b"
+                "reference": "14a98b639a9f9ff45e7dda4ed4ee995ff6c46dcd"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/clue/php-socks-react/zipball/f923f1767c81cf70de9566dd39b6e182fcb32f7b",
-                "reference": "f923f1767c81cf70de9566dd39b6e182fcb32f7b",
+                "url": "https://api.github.com/repos/clue/php-socks-react/zipball/14a98b639a9f9ff45e7dda4ed4ee995ff6c46dcd",
+                "reference": "14a98b639a9f9ff45e7dda4ed4ee995ff6c46dcd",
                 "shasum": ""
             },
             "require": {
+                "evenement/evenement": "~1.0",
+                "php": ">=5.3",
+                "react/dns": "0.3.*",
                 "react/event-loop": "0.3.*",
-                "react/http-client": "0.3.*",
+                "react/promise": "~1.0",
                 "react/socket": "0.3.*",
-                "react/socket-client": "0.3.*"
+                "react/socket-client": "0.3.*",
+                "react/stream": "0.3.*"
             },
             "type": "library",
             "autoload": {
@@ -88,7 +95,7 @@
                 }
             ],
             "description": "Async SOCKS proxy client and server (SOCKS4, SOCKS4a and SOCKS5)",
-            "homepage": "https://github.com/clue/reactphp-socks",
+            "homepage": "https://github.com/clue/php-socks-react",
             "keywords": [
                 "async",
                 "react",
@@ -97,7 +104,7 @@
                 "socks server",
                 "tcp tunnel"
             ],
-            "time": "2014-05-19 22:11:53"
+            "time": "2014-09-27 15:32:30"
         },
         {
             "name": "evenement/evenement",
@@ -519,21 +526,11 @@
             "time": "2014-02-16 19:48:52"
         }
     ],
-    "packages-dev": [
-
-    ],
-    "aliases": [
-
-    ],
+    "packages-dev": [],
+    "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [
-
-    ],
+    "stability-flags": [],
     "prefer-stable": false,
-    "platform": [
-
-    ],
-    "platform-dev": [
-
-    ]
+    "platform": [],
+    "platform-dev": []
 }
