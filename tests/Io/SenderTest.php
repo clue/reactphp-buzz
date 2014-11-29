@@ -12,4 +12,14 @@ class SenderTest extends TestCase
 
         $this->assertInstanceOf('Clue\React\Buzz\Io\Sender', $sender);
     }
+
+    public function testCreateFromLoopConnectors()
+    {
+        $loop = $this->getMock('React\EventLoop\LoopInterface');
+        $connector = $this->getMock('React\SocketClient\ConnectorInterface');
+
+        $sender = Sender::createFromLoopConnectors($loop, $connector);
+
+        $this->assertInstanceOf('Clue\React\Buzz\Io\Sender', $sender);
+    }
 }
