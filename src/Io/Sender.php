@@ -77,7 +77,6 @@ class Sender
         $deferred = new Deferred();
 
         $requestStream = $this->http->request($request->getMethod(), $request->getUrl(), $request->getHeaders()->getAll());
-        $requestStream->end((string)$body);
 
         $requestStream->on('error', function($error) use ($deferred) {
             $deferred->reject($error);
@@ -104,6 +103,8 @@ class Sender
                 }
             });
         });
+
+        $requestStream->end((string)$body);
 
         return $deferred->promise();
     }
