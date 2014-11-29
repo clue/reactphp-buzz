@@ -2,12 +2,8 @@
 
 namespace Clue\React\Buzz;
 
-use React\HttpClient\Client as HttpClient;
 use React\EventLoop\LoopInterface;
 use Clue\React\Buzz\Message\Request;
-use React\Dns\Resolver\Factory as ResolverFactory;
-use React\SocketClient\Connector;
-use React\SocketClient\SecureConnector;
 use Clue\React\Buzz\Io\Transaction;
 use Clue\React\Buzz\Message\Body;
 use Clue\React\Buzz\Message\Headers;
@@ -21,21 +17,7 @@ class Browser
     public function __construct(LoopInterface $loop, Sender $sender = null)
     {
         if ($sender === null) {
-            $dnsResolverFactory = new ResolverFactory();
-            $resolver = $dnsResolverFactory->createCached('8.8.8.8', $loop);
-
-            $connector = new Connector($loop, $resolver);
-            $secureConnector = new SecureConnector($connector, $loop);
-
-            $ref = new \ReflectionClass('React\HttpClient\Client');
-            if ($ref->getConstructor()->getNumberOfRequiredParameters() == 2) {
-                // react/http-client:0.4 removed the $loop parameter
-                $http = new HttpClient($connector, $secureConnector);
-            } else {
-                $http = new HttpClient($loop, $connector, $secureConnector);
-            }
-
-            $sender = new Sender($http);
+            $sender = Sender::createFromLoop($loop);
         }
         $this->sender = $sender;
         $this->loop = $loop;
