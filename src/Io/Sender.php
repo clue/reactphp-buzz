@@ -49,6 +49,8 @@ class Sender
             $secureConnector = new SecureConnector($connector, $loop);
         }
 
+        // create HttpClient for React 0.4/0.3 (code coverage will be achieved by testing both versions)
+        // @codeCoverageIgnoreStart
         $ref = new \ReflectionClass('React\HttpClient\Client');
         if ($ref->getConstructor()->getNumberOfRequiredParameters() == 2) {
             // react/http-client:0.4 removed the $loop parameter
@@ -56,6 +58,7 @@ class Sender
         } else {
             $http = new HttpClient($loop, $connector, $secureConnector);
         }
+        // @codeCoverageIgnoreEnd
 
         return new self($http);
     }
