@@ -63,6 +63,20 @@ class Sender
         return new self($http);
     }
 
+    /**
+     * create a sender that sends *everything* through given UNIX socket path
+     *
+     * @param LoopInterface $loop
+     * @param string        $path
+     * @return self
+     */
+    public static function createFromLoopUnix(LoopInterface $loop, $path)
+    {
+        $connector = new UnixConnector($loop, $path);
+
+        return self::createFromLoopConnectors($loop, $connector);
+    }
+
     private $http;
 
     public function __construct(HttpClient $http)
