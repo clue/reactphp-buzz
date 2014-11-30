@@ -50,6 +50,22 @@ You can also establish your outgoing connections through a SOCKS proxy server
 by adding a dependency to [clue/socks-react](https://github.com/clue/php-socks-react).
 See the [SOCKS example](examples/socks).
 
+### UNIX domain sockets
+
+This library also supports connecting to a local UNIX domain socket path.
+You have to explicitly create a `Sender` that passes every request through the
+given UNIX domain socket.
+For consistency reasons you still have to pass full HTTP URLs for every request,
+but the host and port will be ignored when establishing a connection.
+
+```php
+$path = 'unix:///tmp/daemon.sock';
+$sender = Sender::createFromLoopUnix($loop, $path);
+$client = new Browser($loop, $sender);
+
+$client->get('http://localhost/demo');
+```
+
 ## Install
 
 The recommended way to install this library is [through composer](http://getcomposer.org). [New to composer?](http://getcomposer.org/doc/00-intro.md)
