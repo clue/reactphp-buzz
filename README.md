@@ -73,7 +73,7 @@ The recommended way to install this library is [through composer](http://getcomp
 ```JSON
 {
     "require": {
-        "clue/buzz-react": "0.1.*"
+        "clue/buzz-react": "~0.2.0"
     }
 }
 ```
