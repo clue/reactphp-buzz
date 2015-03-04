@@ -30,7 +30,7 @@ Once [installed](#install), you can use the following code to access a
 HTTP webserver and send some simple HTTP GET requests:
 
 ```php
-
+$loop = React\EventLoop\Factory::create();
 $client = new Browser($loop);
 
 $client->get('http://www.google.com/')->then(function (Response $result) {
