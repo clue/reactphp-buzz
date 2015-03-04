@@ -7,10 +7,10 @@ you spot any mistakes.
 ## 0.2.0 (2014-11-30)
 
 * Feature: Support communication via UNIX domain sockets
-  ([#20](https://github.com/clue/php-buzz-react/pull/20)
+  ([#20](https://github.com/clue/php-buzz-react/pull/20))
 
 * Fix: Detect immediately failing connection attempt 
-  ([#19](https://github.com/clue/php-buzz-react/issues/19)
+  ([#19](https://github.com/clue/php-buzz-react/issues/19))
 
 ## 0.1.2 (2014-10-28)
 
