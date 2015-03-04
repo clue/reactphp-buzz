@@ -25,8 +25,14 @@ class Transaction
     // context: http.ignore_errors
     private $obeySuccessCode = true;
 
-    public function __construct(Request $request, Sender $sender)
+    public function __construct(Request $request, Sender $sender, array $options = array())
     {
+        foreach ($options as $name => $value) {
+            if (property_exists($this, $name)) {
+                $this->$name = $value;
+            }
+        }
+
         $this->request = $request;
         $this->sender = $sender;
     }

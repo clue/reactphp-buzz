@@ -13,6 +13,7 @@ class Browser
 {
     private $sender;
     private $loop;
+    private $options = array();
 
     public function __construct(LoopInterface $loop, Sender $sender = null)
     {
@@ -75,8 +76,20 @@ class Browser
 
     public function send(Request $request)
     {
-        $transaction = new Transaction($request, $this->sender);
+        $transaction = new Transaction($request, $this->sender, $this->options);
 
         return $transaction->send();
+    }
+
+    public function withOptions(array $options)
+    {
+        $browser = clone $this;
+
+        // merge all options, but remove those explicitly assigned a null value
+        $browser->options = array_filter($options + $this->options, function ($value) {
+            return ($value !== null);
+        });
+
+        return $browser;
     }
 }
