@@ -7,7 +7,6 @@ use React\Stream\Stream;
 use React\EventLoop\LoopInterface;
 use React\Promise\Deferred;
 use RuntimeException;
-use Guzzle\Common\Exception\InvalidArgumentException;
 
 /**
  * dummy unix domain socket connector
