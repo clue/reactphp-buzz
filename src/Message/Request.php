@@ -49,6 +49,11 @@ class Request implements Message
         return $this->headers;
     }
 
+    public function getHeader($name)
+    {
+        return $this->headers->getHeaderValue($name);
+    }
+
     public function getBody()
     {
         return $this->body;
