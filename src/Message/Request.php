@@ -9,13 +9,6 @@ class Request implements Message
     private $headers;
     private $body;
 
-
-    /* @var RequestStream */
-    private $requestStream = null;
-
-    /* @var ResponseStream */
-    private $responseStream = null;
-
     public function __construct($method, $url, Headers $headers = null, Body $body = null)
     {
         if ($headers === null) {
