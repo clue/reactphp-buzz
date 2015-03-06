@@ -9,13 +9,6 @@ class Request implements Message
     private $headers;
     private $body;
 
-
-    /* @var RequestStream */
-    private $requestStream = null;
-
-    /* @var ResponseStream */
-    private $responseStream = null;
-
     public function __construct($method, $url, Headers $headers = null, Body $body = null)
     {
         if ($headers === null) {
@@ -54,6 +47,11 @@ class Request implements Message
     public function getHeaders()
     {
         return $this->headers;
+    }
+
+    public function getHeader($name)
+    {
+        return $this->headers->getHeaderValue($name);
     }
 
     public function getBody()
