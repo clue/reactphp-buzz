@@ -8,6 +8,9 @@ class FunctionalBrowserTest extends TestCase
     private $loop;
     private $browser;
 
+    /** base url to the httpbin service  **/
+    private $base = 'http://httpbin.org/';
+
     public function setUp()
     {
         $this->loop = Factory::create();
@@ -16,7 +19,14 @@ class FunctionalBrowserTest extends TestCase
 
     public function testSimpleRequest()
     {
-        $this->expectPromiseResolve($this->browser->get('http://www.google.com'));
+        $this->expectPromiseResolve($this->browser->get($this->base . 'get'));
+
+        $this->loop->run();
+    }
+
+    public function testRedirectRequest()
+    {
+        $this->expectPromiseResolve($this->browser->get($this->base . 'redirect-to?url=' . urlencode($this->base . 'get')));
 
         $this->loop->run();
     }
@@ -25,7 +35,7 @@ class FunctionalBrowserTest extends TestCase
     {
         $browser = $this->browser->withOptions(array('followRedirects' => false));
 
-        $this->expectPromiseResolve($browser->get('http://www.google.com'));
+        $this->expectPromiseResolve($browser->get($this->base . 'redirect/3'));
 
         $this->loop->run();
     }
@@ -34,7 +44,7 @@ class FunctionalBrowserTest extends TestCase
     {
         $browser = $this->browser->withOptions(array('maxRedirects' => 0));
 
-        $this->expectPromiseReject($browser->get('http://www.google.com'));
+        $this->expectPromiseReject($browser->get($this->base . 'redirect/3'));
 
         $this->loop->run();
     }
@@ -48,7 +58,7 @@ class FunctionalBrowserTest extends TestCase
 
     public function testInvalidPath()
     {
-        $this->expectPromiseReject($this->browser->get('http://www.google.com/does-not-exist'));
+        $this->expectPromiseReject($this->browser->get($this->base . 'status/404'));
 
         $this->loop->run();
     }
