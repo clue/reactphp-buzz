@@ -2,7 +2,6 @@
 
 use Clue\React\Buzz\Io\Sender;
 use React\Promise\Deferred;
-use Guzzle\Common\Exception\RuntimeException;
 use Clue\React\Buzz\Message\Request;
 
 class SenderTest extends TestCase
