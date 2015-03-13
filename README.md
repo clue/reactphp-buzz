@@ -121,7 +121,8 @@ and the default [`Connector`](https://github.com/reactphp/socket-client) and [DN
 You can also establish your outgoing connections through a SOCKS proxy server
 by adding a dependency to [clue/socks-react](https://github.com/clue/php-socks-react).
 
-The SOCKS protocol operates at the TCP/IP layer and thus requires minimal at the HTTP application layer.
+The SOCKS protocol operates at the TCP/IP layer and thus requires minimal effort at the HTTP application layer.
+This works for both plain HTTP and SSL encrypted HTTPS requests.
 
 See also the [SOCKS example](examples/socks).
 
