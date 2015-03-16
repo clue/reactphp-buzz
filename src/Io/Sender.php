@@ -102,7 +102,7 @@ class Sender
             $deferred->reject($error);
         });
 
-        $requestStream->on('response', function (ResponseStream $response) use ($deferred) {
+        $requestStream->on('response', function (ResponseStream $response) use ($deferred, $requestStream) {
             $bodyBuffer = '';
             $response->on('data', function ($data) use (&$bodyBuffer) {
                 $bodyBuffer .= $data;
@@ -122,6 +122,8 @@ class Sender
                     ));
                 }
             });
+
+            $deferred->progress(array('responseStream' => $response, 'requestStream' => $requestStream));
         });
 
         $requestStream->end((string)$body);
