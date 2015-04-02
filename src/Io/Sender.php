@@ -16,6 +16,7 @@ use React\SocketClient\Connector;
 use React\SocketClient\SecureConnector;
 use RuntimeException;
 use React\SocketClient\ConnectorInterface;
+use React\Dns\Resolver\Resolver;
 
 class Sender
 {
@@ -27,10 +28,24 @@ class Sender
      */
     public static function createFromLoop(LoopInterface $loop)
     {
-        $dnsResolverFactory = new ResolverFactory();
-        $resolver = $dnsResolverFactory->createCached('8.8.8.8', $loop);
+        return self::createFromLoopDns($loop, '8.8.8.8');
+    }
 
-        $connector = new Connector($loop, $resolver);
+    /**
+     * create sender attached to the given event loop and DNS resolver
+     *
+     * @param LoopInterface   $loop
+     * @param Resolver|string $dns  DNS resolver instance or IP address
+     * @return self
+     */
+    public static function createFromLoopDns(LoopInterface $loop, $dns)
+    {
+        if (!($dns instanceof Resolver)) {
+            $dnsResolverFactory = new ResolverFactory();
+            $dns = $dnsResolverFactory->createCached($dns, $loop);
+        }
+
+        $connector = new Connector($loop, $dns);
 
         return self::createFromLoopConnectors($loop, $connector);
     }
