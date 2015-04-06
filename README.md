@@ -58,6 +58,8 @@ $browser = new Browser($loop);
 If you need custom DNS or proxy settings, you can explicitly pass a
 custom [`Sender`](#sender) instance. This is considered *advanced usage*.
 
+#### Methods
+
 The `Browser` offers several methods that resemble the HTTP protocol methods:
 
 ```php
@@ -68,6 +70,10 @@ $browser->delete($url, array $headers = array(), $content = '');
 $browser->put($url, array $headers = array(), $content = '');
 $browser->patch($url, array $headers = array(), $content = '');
 ```
+
+If you need a custom HTTP protocol method, you can use the [`request()`](#request) method.
+
+#### Processing
 
 Sending requests is async (non-blocking), so you can actually send multiple requests in parallel.
 The `Browser` will respond to each request with a [`Response`](#response) message, the order is not guaranteed.
@@ -84,34 +90,40 @@ $browser->get($url)->then(
 });
 ```
 
+#### submit()
+
 The `submit($url, array $fields, $headers = array(), $method = 'POST')` method can be used to submit an array of field values similar to submitting a form (`application/x-www-form-urlencoded`).
 
+#### request()
+
 The `request($method, $url, $headers = array(), $content = '')` method can be used to create and send an arbitrary request.
+
+#### send()
 
 The `send(Request $request)` method can be used to send an arbitrary [`Request` object](#request).
 
 ### Message
 
-The `Message` is an abstract base class for the `Response` and `Request`.
+The `Message` is an abstract base class for the [`Response`](#response) and [`Request`](#request).
 It provides a common interface for these message types.
 
 #### Response
 
-The `Response` value object represents the incoming response received from the `Browser`.
+The `Response` value object represents the incoming response received from the [`Browser`](#browser).
 It shares all properties of the [`Message`](#message) parent class.
 
 #### Request
 
-The `Request` value object represents the outgoing request to be sent via the `Browser`.
+The `Request` value object represents the outgoing request to be sent via the [`Browser`](#browser).
 It shares all properties of the [`Message`](#message) parent class.
 
 ## Advanced
 
 ### Sender
 
-The `Sender` is responsible for passing the `Request` objects to
+The `Sender` is responsible for passing the [`Request`](#request) objects to
 the underlying [`HttpClient`](https://github.com/reactphp/http-client) library
-and keeps track of its transmission and converts its reponses back to `Response` objects.
+and keeps track of its transmission and converts its reponses back to [`Response`](#response) objects.
 
 It also registers everything with the main [`EventLoop`](https://github.com/reactphp/event-loop#usage)
 and the default [`Connector`](https://github.com/reactphp/socket-client) and [DNS `Resolver`](https://github.com/reactphp/dns).
