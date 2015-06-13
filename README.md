@@ -154,6 +154,26 @@ $client = new Browser($loop, $sender);
 $client->get('http://localhost/demo');
 ```
 
+### Options
+
+Note: This API is subject to change.
+
+The [`Browser`](#browser) class exposes several options for the handling of
+HTTP transactions. These options resemble some of PHP's
+[HTTP context options](http://php.net/manual/en/context.http.php) and
+can be controlled via the following API (and their defaults):
+
+```php
+$newBrowser = $browser->withOptions(array(
+    'followRedirects' => true,
+    'maxRedirects' => 10,
+    'obeySuccessCode' => true
+));
+```
+
+Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withOptions()` method
+actually returns a *new* [`Browser`](#browser) instance with the options applied.
+
 ### Streaming
 
 Note: This API is subject to change.
