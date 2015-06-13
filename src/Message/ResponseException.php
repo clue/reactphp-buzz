@@ -15,6 +15,12 @@ class ResponseException extends RuntimeException
 
     public function __construct(Response $response, $message = null, $code = null, $previous = null)
     {
+        if ($message === null) {
+            $message = 'HTTP status code ' . $response->getCode() . ' (' . $response->getReasonPhrase() . ')';
+        }
+        if ($code === null) {
+            $code = $response->getCode();
+        }
         parent::__construct($message, $code, $previous);
 
         $this->response = $response;

@@ -80,7 +80,7 @@ class Transaction
 
         // only status codes 200-399 are considered to be valid, reject otherwise
         if ($this->obeySuccessCode && ($response->getCode() < 200 || $response->getCode() >= 400)) {
-            throw new ResponseException($response, 'HTTP status code ' . $response->getCode() . ' (' . $response->getReasonPhrase() . ')', $response->getCode());
+            throw new ResponseException($response);
         }
 
         // resolve our initial promise
