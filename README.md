@@ -154,6 +154,24 @@ $client = new Browser($loop, $sender);
 $client->get('http://localhost/demo');
 ```
 
+### Streaming
+
+Note: This API is subject to change.
+
+The [`Sender`](#sender) emits a `progress` event array on its `Promise` that can be used
+to intercept the underlying outgoing request stream (`React\HttpClient\Request` in the `requestStream` key)
+and the incoming response stream (`React\HttpClient\Response` in the `responseStream` key).
+
+```php
+$client->get('http://www.google.com/')->then($handler, null, function ($event) {
+    if (isset($event['responseStream'])) {
+        /* @var $stream React\HttpClient\Response */
+        $stream = $event['responseStream'];
+        $stream->on('data', function ($data) { });
+    }
+});
+```
+
 ## Install
 
 The recommended way to install this library is [through composer](http://getcomposer.org). [New to composer?](http://getcomposer.org/doc/00-intro.md)
