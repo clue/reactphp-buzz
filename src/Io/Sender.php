@@ -87,19 +87,22 @@ class Sender
     public function send(Request $request)
     {
         $body = $request->getBody();
-        if (!$body->isEmpty()) {
-            //$request->setHeader('Content-Length', $body->getLength());
+        $headers = $request->getHeaders()->getAll();
+
+        // automatically assign a Content-Length header if the body is not empty
+        if (!$body->isEmpty() && $request->getHeader('Content-Length') === null) {
+            $headers['Content-Length'] = $body->getLength();
         }
 
         $deferred = new Deferred();
 
-        $requestStream = $this->http->request($request->getMethod(), $request->getUrl(), $request->getHeaders()->getAll());
+        $requestStream = $this->http->request($request->getMethod(), $request->getUrl(), $headers);
 
         $requestStream->on('error', function($error) use ($deferred) {
             $deferred->reject($error);
         });
 
-        $requestStream->on('response', function (ResponseStream $response) use ($deferred) {
+        $requestStream->on('response', function (ResponseStream $response) use ($deferred, $requestStream) {
             $bodyBuffer = '';
             $response->on('data', function ($data) use (&$bodyBuffer) {
                 $bodyBuffer .= $data;
@@ -119,6 +122,8 @@ class Sender
                     ));
                 }
             });
+
+            $deferred->progress(array('responseStream' => $response, 'requestStream' => $requestStream));
         });
 
         $requestStream->end((string)$body);

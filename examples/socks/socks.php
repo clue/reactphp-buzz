@@ -16,8 +16,7 @@ $loop = LoopFactory::create();
 $socks = new SocksClient($loop, '127.0.0.1', 9050);
 
 // create a Browser object that uses the SOCKS client for connections
-$http = new HttpClient($loop, $socks->createConnector(), $socks->createSecureConnector());
-$sender = new Sender($http);
+$sender = Sender::createFromLoopConnectors($loop, $socks->createConnector());
 $browser = new Browser($loop, $sender);
 
 // demo fetching HTTP headers (or bail out otherwise)

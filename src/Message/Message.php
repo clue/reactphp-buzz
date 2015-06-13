@@ -8,5 +8,7 @@ interface Message
 
     public function getHeaders();
 
+    public function getHeader($name);
+
     public function getBody();
 }
