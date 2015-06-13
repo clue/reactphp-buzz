@@ -117,6 +117,17 @@ It shares all properties of the [`Message`](#message) parent class.
 The `Request` value object represents the outgoing request to be sent via the [`Browser`](#browser).
 It shares all properties of the [`Message`](#message) parent class.
 
+### ResponseException
+
+The `ResponseException` is an `Exception` sub-class that will be used to reject
+a request promise if the remote server returns a non-success status code
+(anything but 2xx or 3xx).
+You can control this behavior via the ["obeySuccessCode" option](#options).
+
+The `getCode()` method can be used to return the HTTP response status code.
+
+The `getResponse()` method can be used to access its underlying [`Response`](#response) object.
+
 ## Advanced
 
 ### Sender
