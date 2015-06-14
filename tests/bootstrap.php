@@ -1,5 +1,7 @@
 <?php
 
+use React\Promise\Deferred;
+
 require_once __DIR__ . '/../vendor/autoload.php';
 
 error_reporting(-1);
@@ -70,6 +72,14 @@ class TestCase extends PHPUnit_Framework_TestCase
         $promise->then($this->expectCallableNever(), $this->expectCallableOnce());
 
         return $promise;
+    }
+
+    protected function createPromiseResolved($value = null)
+    {
+        $deferred = new Deferred();
+        $deferred->resolve($value);
+
+        return $deferred->promise();
     }
 }
 

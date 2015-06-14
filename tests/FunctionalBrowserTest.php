@@ -56,9 +56,16 @@ class FunctionalBrowserTest extends TestCase
         $this->loop->run();
     }
 
-    public function testInvalidPath()
+    public function testErrorStatusCodeRejectsWithResponseException()
     {
-        $this->expectPromiseReject($this->browser->get($this->base . 'status/404'));
+        $that = $this;
+        $this->expectPromiseReject($this->browser->get($this->base . 'status/404'))->then(null, function ($e) use ($that) {
+            $that->assertInstanceOf('Clue\Buzz\React\Message\ResponseException', $e);
+            $that->assertEquals(404, $e->getCode());
+
+            $that->assertInstanceOf('Clue\Buzz\React\Message\Response', $e->getResponse());
+            $that->assertEquals(404, $e->getResponse()->getCode());
+        });
 
         $this->loop->run();
     }

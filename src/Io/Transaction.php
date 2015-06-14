@@ -8,6 +8,7 @@ use Exception;
 use Clue\React\Buzz\Browser;
 use React\HttpClient\Client as HttpClient;
 use Clue\React\Buzz\Io\Sender;
+use Clue\React\Buzz\Message\ResponseException;
 
 class Transaction
 {
@@ -79,7 +80,7 @@ class Transaction
 
         // only status codes 200-399 are considered to be valid, reject otherwise
         if ($this->obeySuccessCode && ($response->getCode() < 200 || $response->getCode() >= 400)) {
-            throw new \RuntimeException('HTTP status code ' . $response->getCode() . ' (' . $response->getReasonPhrase() . ')', $response->getCode());
+            throw new ResponseException($response);
         }
 
         // resolve our initial promise
