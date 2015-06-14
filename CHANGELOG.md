@@ -1,8 +1,21 @@
-# CHANGELOG
+# Changelog
 
-This file is a manually maintained list of changes for each release. Feel free
-to add your changes here when sending pull requests. Also send corrections if
-you spot any mistakes.
+## 0.3.0 (2015-06-14)
+
+* Expose Response object in case of HTTP errors
+  ([#35](https://github.com/clue/php-buzz-react/pull/35))
+
+* Feature: Add experimental `Transaction` options via `Browser`
+  ([#25](https://github.com/clue/php-buzz-react/pull/25))
+
+* Feature: Add experimental streaming API
+  ([#31](https://github.com/clue/php-buzz-react/pull/31))
+
+* Feature: Automatically assign a "Content-Length" header for outgoing `Request`s
+  ([#29](https://github.com/clue/php-buzz-react/pull/29))
+
+* Feature: Add `Message::getHeader()`, it is now available on both `Request` and `Response`
+  ([#28](https://github.com/clue/php-buzz-react/pull/28))
 
 ## 0.2.0 (2014-11-30)
 
@@ -29,4 +42,3 @@ you spot any mistakes.
 ## 0.0.0 (2013-09-01)
 
 * Initial concept
-
