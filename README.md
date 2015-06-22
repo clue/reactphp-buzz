@@ -71,7 +71,7 @@ $browser->put($url, array $headers = array(), $content = '');
 $browser->patch($url, array $headers = array(), $content = '');
 ```
 
-If you need a custom HTTP protocol method, you can use the [`request()`](#request) method.
+If you need a custom HTTP protocol method, you can use the [`send()`](#send) method.
 
 #### Processing
 
@@ -93,10 +93,6 @@ $browser->get($url)->then(
 #### submit()
 
 The `submit($url, array $fields, $headers = array(), $method = 'POST')` method can be used to submit an array of field values similar to submitting a form (`application/x-www-form-urlencoded`).
-
-#### request()
-
-The `request($method, $url, $headers = array(), $content = '')` method can be used to create and send an arbitrary request.
 
 #### send()
 
