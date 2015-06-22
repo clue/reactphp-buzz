@@ -13,6 +13,7 @@ class RequestTest extends TestCase
         $this->assertEquals('HTTP/1.1', $request->getHttpVersion());
         $this->assertEquals('GET / HTTP/1.1', $request->getRequestLine());
 
+        $this->assertEquals(array(), $request->getHeaders()->getAll());
         $this->assertTrue($request->getBody()->isEmpty());
     }
 }

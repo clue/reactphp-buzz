@@ -12,14 +12,15 @@ class Response implements Message
     private $headers;
     private $body;
 
-    public function __construct($protocol, $code, $reasonPhrase, Headers $headers = null, Body $body = null)
+    public function __construct($protocol, $code, $reasonPhrase, $headers = array(), $body = '')
     {
-        if ($headers === null) {
-            $headers = new Headers();
+        if (!($headers instanceof Headers)) {
+            $headers = new Headers($headers);
         }
-        if ($body === null) {
-            $body = new Body();
+        if (!($body instanceof Body)) {
+            $body = new Body($body);
         }
+
         $this->protocol = $protocol;
         $this->code = $code;
         $this->reasonPhrase = $reasonPhrase;
