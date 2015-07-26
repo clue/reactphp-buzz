@@ -108,4 +108,61 @@ class BrowserTest extends TestCase
     {
         $this->assertEquals('http://example.com/root', $browser->resolve(''));
     }
+
+    /**
+     * @depends testWithBase
+     * @param Browser $browser
+     */
+    public function testResolveUriTemplateWithBase(Browser $browser)
+    {
+        $this->assertEquals('http://example.com/root/?q=test', $browser->resolve('/{?q}', array('q' => 'test')));
+    }
+
+    public function testResolveUriTemplateAbsolute()
+    {
+        $this->assertEquals('http://example.com/?q=test', $this->browser->resolve('http://example.com/{?q}', array('q' => 'test')));
+    }
+
+    public function testWithBaseUriTemplateParameters()
+    {
+        $browser = $this->browser->withBase('http://example.com/{version}/', array('version' => 1));
+
+        return $browser;
+    }
+
+    /**
+     * @depends testWithBaseUriTemplateParameters
+     * @param Browser $browser
+     */
+    public function testResolveUriTemplateWithDefaultParameters(Browser $browser)
+    {
+        $this->assertEquals('http://example.com/1/', $browser->resolve(''));
+    }
+
+    /**
+     * @depends testWithBaseUriTemplateParameters
+     * @param Browser $browser
+     */
+    public function testResolveUriTemplateOverwriteDefaultParameter(Browser $browser)
+    {
+        $this->assertEquals('http://example.com/2/', $browser->resolve('', array('version' => 2)));
+    }
+
+    /**
+     * @depends testWithBaseUriTemplateParameters
+     * @param Browser $browser
+     */
+    public function testResolveUriTemplateUnsetQueryParameter(Browser $browser)
+    {
+        $this->assertEquals('http://example.com/1/test', $browser->resolve('/test{?q}'));
+    }
+
+    /**
+     * @depends testWithBaseUriTemplateParameters
+     * @param Browser $browser
+     */
+    public function testResolveUriTemplateSetQueryParameter(Browser $browser)
+    {
+        $this->assertEquals('http://example.com/1/test?q=hi', $browser->resolve('/test{?q}', array('q' => 'hi')));
+    }
 }

@@ -9,11 +9,13 @@ use Clue\React\Buzz\Message\Body;
 use Clue\React\Buzz\Message\Headers;
 use Clue\React\Buzz\Io\Sender;
 use Clue\React\Buzz\Message\Uri;
+use Rize\UriTemplate;
 
 class Browser
 {
     private $sender;
     private $loop;
+    private $uriTemplate;
     private $baseUri = null;
     private $options = array();
 
@@ -24,6 +26,7 @@ class Browser
         }
         $this->sender = $sender;
         $this->loop = $loop;
+        $this->uriTemplate = new UriTemplate();
     }
 
     public function get($url, $headers = array())
@@ -74,35 +77,40 @@ class Browser
     /**
      * Returns an absolute URI by processing the given relative URI
      *
-     * @param string|Uri $uri relative or absolute URI
+     * @param string|Uri $uri        relative or absolute URI
+     * @param array      $parameters parameters for URI template syntax (RFC 6570)
      * @return Uri absolute URI
      * @see self::withBase()
      */
-    public function resolve($uri)
+    public function resolve($uri, $parameters = array())
     {
         if ($this->baseUri !== null) {
-            return $this->baseUri->expandBase($uri);
+            $uri = $this->baseUri->expandBase($uri);
         }
+
+        $uri = $this->uriTemplate->expand($uri, $parameters);
 
         return new Uri($uri);
     }
 
     /**
-     * Creates a new Browser instance with the given absolute base URI
+     * Creates a new Browser instance with the given absolute base URI, possibly using URI template syntax (RFC 6570)
      *
      * This is mostly useful for use with the `resolve()` method.
      * Any relative URI passed to `uri()` will simply be appended behind the given
      * `$baseUrl`.
      *
      * @param string|Uri $baseUri absolute base URI
+     * @param array      $parameters (optional) default parameters to pass to URI template placeholders
      * @return self
      * @see self::url()
      * @see self::withoutBase()
      */
-    public function withBase($baseUri)
+    public function withBase($baseUri, array $parameters = array())
     {
         $browser = clone $this;
         $browser->baseUri = new Uri($baseUri);
+        $browser->uriTemplate = new UriTemplate('', $parameters);
 
         return $browser;
     }

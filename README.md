@@ -126,7 +126,7 @@ See [`Sender`](#sender) for more details.
 
 #### withBase()
 
-The `withBase($baseUri)` method can be used to change the base URI used to
+The `withBase($baseUri, array $parameters = array())` method can be used to change the base URI used to
 resolve relative URIs to.
 
 ```php
@@ -165,8 +165,10 @@ See also [`withBase()`](#withbase).
 
 #### resolve()
 
-The `resolve($uri)` method can be used to resolve the given relative URI to
+The `resolve($uri, array $parameters = array())` method can be used to resolve the given relative URI to
 an absolute URI by appending it behind the configured base URI.
+It also replaces URI template placerholders with the given `$parameters`
+according to [RFC 6570](http://tools.ietf.org/html/rfc6570).
 It returns a new [`Uri`](#uri) instace which can then be passed
 to the [HTTP methods](#methods).
 
@@ -181,6 +183,31 @@ $newBrowser = $browser->withBase('http://api.example.com/v3');
 echo $newBrowser->resolve('/example');
 // http://api.example.com/v3/example
 ```
+
+The given URI may also contain URI template placeholders:
+
+```php
+echo $browser->resolve('http://example.com/{?first,second,third}', array(
+    'first' => 'a',
+    'third' => 'c'
+));
+// http://example.com/?first=a&third=c
+```
+
+The URI template placeholders can also be combined with a base URI like this:
+
+```php
+echo $newBrowser->resolve('/fetch{/file}{?version,tag}', array(
+    'file' => 'example',
+    'version' => 1.0,
+    'tag' => 'just testing'
+));
+// http://api.example.com/v3/fetch/file?version=1.0&tag=just%20testing
+```
+
+This uses the excellent [rize/uri-template](https://github.com/rize/UriTemplate) library under the hood.
+Please refer to [its documentation](https://github.com/rize/UriTemplate#usage) or
+[RFC 6570](http://tools.ietf.org/html/rfc6570) for more details.
 
 Trying to resolve anything that does not live under the same base URI will
 result in an `UnexpectedValueException`:
