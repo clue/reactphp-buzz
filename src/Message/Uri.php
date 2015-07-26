@@ -8,6 +8,7 @@ class Uri
 {
     private $scheme;
     private $host;
+    private $port;
     private $path;
     private $query;
 
@@ -62,5 +63,56 @@ class Uri
     public function getQuery()
     {
         return $this->query;
+    }
+
+    /**
+     * Reolves the given $uri by appending it behind $this base URI
+     *
+     * @param unknown $uri
+     * @return Uri
+     * @throws UnexpectedValueException
+     * @internal
+     * @see Browser::resolve()
+     */
+    public function expandBase($uri)
+    {
+        if ($uri instanceof self) {
+            return $this->assertBase($uri);
+        }
+
+        try {
+            return $this->assertBase(new self($uri));
+        } catch (\InvalidArgumentException $e) {
+            // not an absolute URI
+        }
+
+        $new = clone $this;
+
+        $pos = strpos($uri, '?');
+        if ($pos !== false) {
+            $new->query = substr($uri, $pos + 1);
+            $uri = substr($uri, 0, $pos);
+        }
+
+        if ($uri !== '' && substr($new->path, -1) !== '/') {
+            $new->path .= '/';
+        }
+
+        if (isset($uri[0]) && $uri[0] === '/') {
+            $uri = substr($uri, 1);
+        }
+
+        $new->path .= $uri;
+
+        return $new;
+    }
+
+    private function assertBase(Uri $new)
+    {
+        if ($new->scheme !== $this->scheme || $new->host !== $this->host || $new->port !== $this->port || strpos($new->path, $this->path) !== 0) {
+            throw new \UnexpectedValueException('Invalid base, "' . $new . '" does not appear to be below "' . $this . '"');
+        }
+
+        return $new;
     }
 }
