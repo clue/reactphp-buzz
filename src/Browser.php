@@ -80,4 +80,12 @@ class Browser
 
         return $browser;
     }
+
+    public function withSender(Sender $sender)
+    {
+        $browser = clone $this;
+        $browser->sender = $sender;
+
+        return $browser;
+    }
 }
