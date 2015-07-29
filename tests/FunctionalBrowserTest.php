@@ -51,7 +51,7 @@ class FunctionalBrowserTest extends TestCase
 
     public function testInvalidPort()
     {
-        $this->expectPromiseReject($this->browser->get('http://www.google.com:443'));
+        $this->expectPromiseReject($this->browser->get('http://www.google.com:443/'));
 
         $this->loop->run();
     }
