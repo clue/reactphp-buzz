@@ -1,6 +1,7 @@
 <?php
 
 use Clue\React\Buzz\Message\Request;
+use Clue\React\Buzz\Message\Uri;
 
 class RequestTest extends TestCase
 {
@@ -9,7 +10,7 @@ class RequestTest extends TestCase
         $request = new Request('GET', 'http://example.com/');
 
         $this->assertEquals('GET', $request->getMethod());
-        $this->assertEquals('http://example.com/', $request->getUrl());
+        $this->assertEquals('http://example.com/', $request->getUri());
         $this->assertEquals('HTTP/1.1', $request->getHttpVersion());
 
         $this->assertEquals(array(), $request->getHeaders()->getAll());
@@ -24,10 +25,20 @@ class RequestTest extends TestCase
         new Request('GET', '/test');
     }
 
-    public function testUrl()
+    public function testUriString()
     {
         $request = new Request('GET', 'http://example.com/demo?just=testing');
 
-        $this->assertEquals('http://example.com/demo?just=testing', $request->getUrl());
+        $this->assertInstanceOf('Clue\React\Buzz\Message\Uri', $request->getUri());
+        $this->assertEquals('http://example.com/demo?just=testing', $request->getUri());
+    }
+
+    public function testUriInstance()
+    {
+        $uri = new Uri('http://example.com/demo?just=testing');
+        $request = new Request('GET', $uri);
+
+        $this->assertSame($uri, $request->getUri());
+        $this->assertEquals('http://example.com/demo?just=testing', $request->getUri());
     }
 }

@@ -40,9 +40,8 @@ class Request implements Message
         return $this->method;
     }
 
-    public function getUrl()
+    public function getUri()
     {
-        // TODO: rename interface
         return $this->uri;
     }
 
