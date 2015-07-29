@@ -9,13 +9,21 @@ class Request implements Message
     private $headers;
     private $body;
 
-    public function __construct($method, $url, Headers $headers = null, Body $body = null)
+    /**
+     * instantiate new Request object
+     *
+     * @param string        $method  all uppercase HTTP method
+     * @param string        $url     full request URL
+     * @param Headers|array $headers HTTP header object or array
+     * @param Body|string   $body    HTTP request message body
+     */
+    public function __construct($method, $url, $headers = array(), $body = '')
     {
-        if ($headers === null) {
-            $headers = new Headers();
+        if (!($headers instanceof Headers)) {
+            $headers = new Headers($headers);
         }
-        if ($body === null) {
-            $body = new Body();
+        if (!($body instanceof Body)) {
+            $body = new Body($body);
         }
 
         $this->method  = $method;
@@ -37,11 +45,6 @@ class Request implements Message
     public function getHttpVersion()
     {
         return 'HTTP/1.1';
-    }
-
-    public function getRequestLine()
-    {
-        return $this->method . ' ' . $this->url . ' ' . $this->getHttpVersion();
     }
 
     public function getHeaders()
