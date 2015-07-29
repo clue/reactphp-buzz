@@ -129,15 +129,40 @@ See [`Sender`](#sender) for more details.
 The `Message` is an abstract base class for the [`Response`](#response) and [`Request`](#request).
 It provides a common interface for these message types.
 
-#### Response
+See its [class outline](src/Message/Message.php) for more details.
+
+### Response
 
 The `Response` value object represents the incoming response received from the [`Browser`](#browser).
 It shares all properties of the [`Message`](#message) parent class.
 
-#### Request
+See its [class outline](src/Message/Response.php) for more details.
+
+### Request
 
 The `Request` value object represents the outgoing request to be sent via the [`Browser`](#browser).
 It shares all properties of the [`Message`](#message) parent class.
+
+See its [class outline](src/Message/Request.php) for more details.
+
+#### getUri()
+
+The `getUri()` method can be used to get its [`Uri`](#sender) instance.
+
+### Uri
+
+Each [`Request`](#request) contains a (full) absolute request URI.
+
+```
+$request = new Request('GET', 'http://www.google.com/');
+$uri = $request->getUri();
+
+assert('http' == $uri->getScheme());
+assert('www.google.com' == $uri->getHost());
+assert('/' == $uri->getPath());
+```
+
+See its [class outline](src/Message/Uri.php) for more details.
 
 ### ResponseException
 

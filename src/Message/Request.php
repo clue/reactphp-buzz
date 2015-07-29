@@ -5,7 +5,7 @@ namespace Clue\React\Buzz\Message;
 class Request implements Message
 {
     private $method;
-    private $url;
+    private $uri;
     private $headers;
     private $body;
 
@@ -13,12 +13,15 @@ class Request implements Message
      * instantiate new Request object
      *
      * @param string        $method  all uppercase HTTP method
-     * @param string        $url     full request URL
+     * @param Uri|string    $uri     full request URI
      * @param Headers|array $headers HTTP header object or array
      * @param Body|string   $body    HTTP request message body
      */
-    public function __construct($method, $url, $headers = array(), $body = '')
+    public function __construct($method, $uri, $headers = array(), $body = '')
     {
+        if (!($uri instanceof Uri)) {
+            $uri = new Uri($uri);
+        }
         if (!($headers instanceof Headers)) {
             $headers = new Headers($headers);
         }
@@ -27,7 +30,7 @@ class Request implements Message
         }
 
         $this->method  = $method;
-        $this->url     = $url;
+        $this->uri     = $uri;
         $this->headers = $headers;
         $this->body    = $body;
     }
@@ -37,9 +40,9 @@ class Request implements Message
         return $this->method;
     }
 
-    public function getUrl()
+    public function getUri()
     {
-        return $this->url;
+        return $this->uri;
     }
 
     public function getHttpVersion()
