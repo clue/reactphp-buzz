@@ -28,11 +28,6 @@ class Response implements Message
         $this->body = $body;
     }
 
-    public function getStatusLine()
-    {
-        return $this->getHttpVersion() . ' ' . $this->getCode() . ' ' . $this->getReasonPhrase();
-    }
-
     public function getHttpVersion()
     {
        return $this->protocol;

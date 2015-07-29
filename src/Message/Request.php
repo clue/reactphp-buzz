@@ -47,11 +47,6 @@ class Request implements Message
         return 'HTTP/1.1';
     }
 
-    public function getRequestLine()
-    {
-        return $this->method . ' ' . $this->url . ' ' . $this->getHttpVersion();
-    }
-
     public function getHeaders()
     {
         return $this->headers;

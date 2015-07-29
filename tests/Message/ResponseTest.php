@@ -11,7 +11,6 @@ class ReponseTest extends TestCase
         $this->assertEquals('HTTP/1.1', $response->getHttpVersion());
         $this->assertEquals(200, $response->getCode());
         $this->assertEquals('OK', $response->getReasonPhrase());
-        $this->assertEquals('HTTP/1.1 200 OK', $response->getStatusLine());
 
         $this->assertEquals(array(), $response->getHeaders()->getAll());
         $this->assertTrue($response->getBody()->isEmpty());
