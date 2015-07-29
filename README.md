@@ -163,6 +163,24 @@ and the default [`Connector`](https://github.com/reactphp/socket-client) and [DN
 
 See also [`Browser::withSender()`](#withsender) for changing the `Sender` instance during runtime.
 
+### DNS
+
+The [`Sender`](#sender) is also resposible for creating the underlying TCP/IP
+connection to the remove HTTP server and hence has to orchestrate DNS lookups.
+By default, it uses a `Connector` instance which uses Google's public DNS servers
+(`8.8.8.8`).
+
+If you need custom DNS settings, you explicitly create a [`Sender`](#sender) instance
+with your DNS server address (or `React\Dns\Resolver` instance) like this:
+
+```php
+$dns = '127.0.0.1';
+$sender = Sender::createFromLoopDns($loop, $dns);
+$browser = $browser->withSender($sender);
+```
+
+See also [`Browser::withSender()`](#withsender) for more details.
+
 ### SOCKS proxy
 
 You can also establish your outgoing connections through a SOCKS proxy server
