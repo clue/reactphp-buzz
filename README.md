@@ -102,6 +102,32 @@ The `request($method, $url, $headers = array(), $content = '')` method can be us
 
 The `send(Request $request)` method can be used to send an arbitrary [`Request` object](#request).
 
+#### withOptions()
+
+The `withOptions(array $options)` method can be used to change the [options](#options) to use:
+
+```php
+$newBrowser = $browser->withOptions($options);
+```
+
+Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withOptions()` method
+actually returns a *new* [`Browser`](#browser) instance with the [options](#options) applied.
+
+See [options](#options) for more details.
+
+#### withSender()
+
+The `withSender(Sender $sender)` method can be used to change the [`Sender`](#sender) instance to use:
+
+```php
+$newBrowser = $browser->withSender($sender);
+```
+
+Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withSender()` method
+actually returns a *new* [`Browser`](#browser) instance with the given [`Sender`](#sender) applied.
+
+See [`Sender`](#sender) for more details.
+
 ### Message
 
 The `Message` is an abstract base class for the [`Response`](#response) and [`Request`](#request).
@@ -138,6 +164,8 @@ and keeps track of its transmission and converts its reponses back to [`Response
 
 It also registers everything with the main [`EventLoop`](https://github.com/reactphp/event-loop#usage)
 and the default [`Connector`](https://github.com/reactphp/socket-client) and [DNS `Resolver`](https://github.com/reactphp/dns).
+
+See also [`Browser::withSender()`](#withsender) for changing the `Sender` instance during runtime.
 
 ### SOCKS proxy
 
