@@ -124,6 +124,80 @@ actually returns a *new* [`Browser`](#browser) instance with the given [`Sender`
 
 See [`Sender`](#sender) for more details.
 
+#### withBase()
+
+The `withBase($baseUri)` method can be used to change the base URI used to
+resolve relative URIs to.
+
+```php
+$newBrowser = $browser->withBase('http://api.example.com/v3');
+```
+
+Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withBase()` method
+actually returns a *new* [`Browser`](#browser) instance with the given base URI applied.
+
+Any requests to relative URIs will then be processed by first prepending the
+base URI.
+Please note that this merely prepends the base URI and does *not* resolve any
+relative path references.
+This is mostly useful for API calls where all endpoints (URIs) are located
+under a common base URI scheme.
+
+```php
+// will request http://api.example.com/v3/example
+$newBrowser->get('/example')->then(…);
+```
+
+See also [`resolve()`](#resolve).
+
+#### withoutBase()
+
+The `withoutBase()` method can be used to remove the base URI.
+
+```php
+$newBrowser = $browser->withoutBase();
+```
+
+Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withoutBase()` method
+actually returns a *new* [`Browser`](#browser) instance without any base URI applied.
+
+See also [`withBase()`](#withbase).
+
+#### resolve()
+
+The `resolve($uri)` method can be used to resolve the given relative URI to
+an absolute URI by appending it behind the configured base URI.
+It returns a new [`Uri`](#uri) instace which can then be passed
+to the [HTTP methods](#methods).
+
+Please note that this merely prepends the base URI and does *not* resolve any
+relative path references.
+This is mostly useful for API calls where all endpoints (URIs) are located
+under a common base URI:
+
+```php
+$newBrowser = $browser->withBase('http://api.example.com/v3');
+
+echo $newBrowser->resolve('/example');
+// http://api.example.com/v3/example
+```
+
+Trying to resolve anything that does not live under the same base URI will
+result in an `UnexpectedValueException`:
+
+```php
+$newBrowser->resolve('http://www.example.com/');
+// throws UnexpectedValueException
+```
+
+Similarily, if you do not have a base URI configured, passing a relative URI
+will result in an `InvalidArgumentException`:
+
+```php
+$browser->resolve('/example');
+// throws InvalidArgumentException
+```
+
 ### Message
 
 The `Message` is an abstract base class for the [`Response`](#response) and [`Request`](#request).
@@ -147,7 +221,7 @@ See its [class outline](src/Message/Request.php) for more details.
 
 #### getUri()
 
-The `getUri()` method can be used to get its [`Uri`](#sender) instance.
+The `getUri()` method can be used to get its [`Uri`](#uri) instance.
 
 ### Uri
 
