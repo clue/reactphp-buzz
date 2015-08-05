@@ -20,6 +20,7 @@
         "react/socket-client": "0.3.*|0.4.*",
         "react/dns": "0.3.*|0.4.*",
         "react/promise": "1.*|2.*",
-        "rize/uri-template": "~0.3.0"
+        "rize/uri-template": "~0.3.0",
+        "ml/iri": "~1.0"
     }
 }

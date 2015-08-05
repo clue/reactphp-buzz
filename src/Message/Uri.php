@@ -3,6 +3,7 @@
 namespace Clue\React\Buzz\Message;
 
 use InvalidArgumentException;
+use ML\IRI\IRI;
 
 class Uri
 {
@@ -67,6 +68,21 @@ class Uri
     public function getQuery()
     {
         return $this->query;
+    }
+
+    /**
+     * Resolve a (relative) URI reference against this URI
+     *
+     * @param string|Uri $uri relative or absolute URI
+     * @return Uri absolute URI
+     * @link http://tools.ietf.org/html/rfc3986#section-5.2
+     * @uses IRI::resolve()
+     */
+    public function resolve($uri)
+    {
+        $iri = new IRI((string)$this);
+
+        return new Uri($iri->resolve((string)$uri));
     }
 
     /**
