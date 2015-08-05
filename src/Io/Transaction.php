@@ -64,18 +64,8 @@ class Transaction
     {
         $this->progress('response', array($response, $request));
 
-        if ($this->followRedirects && ($response->getCode() >= 300 && $response->getCode() < 400 && $location = $response->getHeader('Location'))) {
-            // naïve approach..
-            $method = ($request->getMethod() === 'HEAD') ? 'HEAD' : 'GET';
-            $request = new Request($method, $location);
-
-            $this->progress('redirect', array($request));
-
-            if ($this->numRequests >= $this->maxRedirects) {
-                throw new \RuntimeException('Maximum number of redirects (' . $this->maxRedirects . ') exceeded');
-            }
-
-            return $this->next($request);
+        if ($this->followRedirects && ($response->getCode() >= 300 && $response->getCode() < 400)) {
+            return $this->onResponseRedirect($response, $request);
         }
 
         // only status codes 200-399 are considered to be valid, reject otherwise
@@ -92,6 +82,23 @@ class Transaction
         $this->progress('error', array($error, $request));
 
         throw $error;
+    }
+
+    private function onResponseRedirect(Response $response, Request $request)
+    {
+        $location = $request->getUri()->resolve($response->getHeader('Location'));
+
+        // naïve approach..
+        $method = ($request->getMethod() === 'HEAD') ? 'HEAD' : 'GET';
+        $request = new Request($method, $location);
+
+        $this->progress('redirect', array($request));
+
+        if ($this->numRequests >= $this->maxRedirects) {
+            throw new \RuntimeException('Maximum number of redirects (' . $this->maxRedirects . ') exceeded');
+        }
+
+        return $this->next($request);
     }
 
     private function progress($name, array $args = array())

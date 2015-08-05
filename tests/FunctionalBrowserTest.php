@@ -24,7 +24,14 @@ class FunctionalBrowserTest extends TestCase
         $this->loop->run();
     }
 
-    public function testRedirectRequest()
+    public function testRedirectRequestRelative()
+    {
+        $this->expectPromiseResolve($this->browser->get($this->base . 'redirect-to?url=get'));
+
+        $this->loop->run();
+    }
+
+    public function testRedirectRequestAbsolute()
     {
         $this->expectPromiseResolve($this->browser->get($this->base . 'redirect-to?url=' . urlencode($this->base . 'get')));
 
