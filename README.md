@@ -265,6 +265,8 @@ assert('/' == $uri->getPath());
 
 See its [class outline](src/Message/Uri.php) for more details.
 
+Internally, this class uses the excellent [ml/iri](https://github.com/lanthaler/IRI) library under the hood.
+
 ### ResponseException
 
 The `ResponseException` is an `Exception` sub-class that will be used to reject

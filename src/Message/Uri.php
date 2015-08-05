@@ -7,16 +7,15 @@ use ML\IRI\IRI;
 
 class Uri
 {
-    private $scheme;
-    private $host;
-    private $port;
-    private $path;
-    private $query;
+    private $iri;
 
     public function __construct($uri)
     {
-        $parts = parse_url($uri);
-        if (!$parts || !isset($parts['scheme'], $parts['host'], $parts['path'])) {
+        if (!$uri instanceof IRI) {
+            $uri = new IRI($uri);
+        }
+
+        if (!$uri->isAbsolute() || $uri->getHost() === '' || $uri->getPath() === '') {
             throw new InvalidArgumentException('Not a valid absolute URI');
         }
 
@@ -24,50 +23,37 @@ class Uri
             throw new \InvalidArgumentException('Contains placeholders');
         }
 
-        $this->scheme = $parts['scheme'];
-        $this->host = $parts['host'];
-        $this->port = isset($parts['port']) ? $parts['port'] : null;
-        $this->path = $parts['path'];
-        $this->query = isset($parts['query']) ? $parts['query'] : '';
+        $this->iri = $uri;
     }
 
     public function __toString()
     {
-        $url = $this->scheme . '://' . $this->host;
-        if ($this->port !== null) {
-            $url .= ':' . $this->port;
-        }
-        $url .= $this->path;
-        if ($this->query !== '') {
-            $url .= '?' . $this->query;
-        }
-
-        return $url;
+        return (string)$this->iri;
     }
 
     public function getScheme()
     {
-        return $this->scheme;
+        return $this->iri->getScheme();
     }
 
     public function getHost()
     {
-        return $this->host;
+        return $this->iri->getHost();
     }
 
     public function getPort()
     {
-        return $this->port;
+        return $this->iri->getPort();
     }
 
     public function getPath()
     {
-        return $this->path;
+        return $this->iri->getPath();
     }
 
     public function getQuery()
     {
-        return $this->query;
+        return $this->iri->getQuery();
     }
 
     /**
@@ -80,9 +66,10 @@ class Uri
      */
     public function resolve($uri)
     {
-        $iri = new IRI((string)$this);
-
-        return new Uri($iri->resolve((string)$uri));
+        if ($uri instanceof self) {
+            $uri = (string)$uri;
+        }
+        return new self($this->iri->resolve($uri));
     }
 
     /**
@@ -111,25 +98,17 @@ class Uri
             return $uri;
         }
 
-        $new = clone $this;
+        $base = (string)$this;
 
-        $pos = strpos($uri, '?');
-        if ($pos !== false) {
-            $new->query = substr($uri, $pos + 1);
-            $uri = substr($uri, 0, $pos);
-        }
-
-        if ($uri !== '' && substr($new->path, -1) !== '/') {
-            $new->path .= '/';
+        if ($uri !== '' && substr($base, -1) !== '/' && substr($uri, 0, 1) !== '?') {
+            $base .= '/';
         }
 
         if (isset($uri[0]) && $uri[0] === '/') {
             $uri = substr($uri, 1);
         }
 
-        $new->path .= $uri;
-
-        return (string)$new;
+        return $base . $uri;
     }
 
     /**
@@ -143,7 +122,7 @@ class Uri
      */
     public function assertBaseOf(Uri $new)
     {
-        if ($new->scheme !== $this->scheme || $new->host !== $this->host || $new->port !== $this->port || strpos($new->path, $this->path) !== 0) {
+        if (strpos((string)$new, (string)$this) !== 0) {
             throw new \UnexpectedValueException('Invalid base, "' . $new . '" does not appear to be below "' . $this . '"');
         }
 
