@@ -12,7 +12,7 @@ $client->head('http://www.github.com/clue/http-react')->then(function (Response 
     var_dump($result->getHeaders(), $result->getBody());
 });
 
-$client->get('http://google.com')->then(function (Response $response) {
+$client->get('http://google.com/')->then(function (Response $response) {
     var_dump($response->getHeaders(), $response->getBody());
 });
 
