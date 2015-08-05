@@ -19,6 +19,10 @@ class Uri
             throw new InvalidArgumentException('Not a valid absolute URI');
         }
 
+        if (strpos($uri, '{') !== false) {
+            throw new \InvalidArgumentException('Contains placeholders');
+        }
+
         $this->scheme = $parts['scheme'];
         $this->host = $parts['host'];
         $this->port = isset($parts['port']) ? $parts['port'] : null;
@@ -66,24 +70,29 @@ class Uri
     }
 
     /**
-     * Reolves the given $uri by appending it behind $this base URI
+     * Resolves the given relative or absolute $uri by appending it behind $this base URI
      *
-     * @param unknown $uri
-     * @return Uri
-     * @throws UnexpectedValueException
+     * The given $uri parameter can be either a relative or absolute URI string
+     * which can optionally contain URI template placeholders.
+     *
+     * As such, its value or the outcome of this method does not neccessarily
+     * have to represent a valid, absolute URI. Hence, it will be returned as
+     * a string value instead of an `Uri` instance.
+     *
+     * If the given $uri is a relative URI, it will simply be appended behind $this base URI.
+     *
+     * If the given $uri is an absolute URI, it will simply be returned,
+     * irrespective of the current base URI.
+     *
+     * @param string $uri
+     * @return string
      * @internal
      * @see Browser::resolve()
      */
     public function expandBase($uri)
     {
-        if ($uri instanceof self) {
-            return $this->assertBase($uri);
-        }
-
-        try {
-            return $this->assertBase(new self($uri));
-        } catch (\InvalidArgumentException $e) {
-            // not an absolute URI
+        if (strpos($uri, '://') !== false) {
+            return $uri;
         }
 
         $new = clone $this;
@@ -104,10 +113,19 @@ class Uri
 
         $new->path .= $uri;
 
-        return $new;
+        return (string)$new;
     }
 
-    private function assertBase(Uri $new)
+    /**
+     * Asserts that $this base URI is the base of the given $new Uri instance, i.e. the given $new URI is *below* this base URI
+     *
+     * @param Uri $new
+     * @throws \UnexpectedValueException
+     * @return Uri
+     * @internal
+     * @see Browser::resolve()
+     */
+    public function assertBaseOf(Uri $new)
     {
         if ($new->scheme !== $this->scheme || $new->host !== $this->host || $new->port !== $this->port || strpos($new->path, $this->path) !== 0) {
             throw new \UnexpectedValueException('Invalid base, "' . $new . '" does not appear to be below "' . $this . '"');

@@ -35,6 +35,14 @@ class UriTest extends TestCase
         new Uri('invalid');
     }
 
+    /**
+     * @expectedException InvalidArgumentException
+     */
+    public function testInvalidPlaceholderUri()
+    {
+        new Uri('http://example.com/{version}');
+    }
+
     public function testUriExpandBaseEndsWithoutSlash()
     {
         $base = new Uri('http://example.com/base');
@@ -53,29 +61,6 @@ class UriTest extends TestCase
         return $base;
     }
 
-    public function provideOtherBaseUris()
-    {
-        return array(
-            'other domain' => array('http://example.org/base'),
-            'other scheme' => array('https://example.com/base'),
-            'other port' => array('http://example.com:81/base'),
-
-            'other domain instance' => array(new Uri('http://example.org/base'))
-        );
-    }
-
-    /**
-     * @param string|Uri $other
-     * @param Uri $base
-     * @dataProvider provideOtherBaseUris
-     * @depends testUriExpandBaseEndsWithoutSlash
-     * @expectedException UnexpectedValueException
-     */
-    public function testUriExpandBaseWithOtherBase($other, Uri $base)
-    {
-        $base->expandBase($other);
-    }
-
     public function testUriExpandBaseEndsWithSlash()
     {
         $base = new Uri('http://example.com/base/');
@@ -90,5 +75,35 @@ class UriTest extends TestCase
 
         $this->assertEquals('http://example.com/base/', $base->expandBase('http://example.com/base/'));
         $this->assertEquals('http://example.com/base/another', $base->expandBase('http://example.com/base/another'));
+    }
+
+    public function testAssertBase()
+    {
+        $base = new Uri('http://example.com/base');
+
+        $base->assertBaseOf(new Uri('http://example.com/base'));
+        $base->assertBaseOf(new Uri('http://example.com/base/'));
+        $base->assertBaseOf(new Uri('http://example.com/base?test'));
+    }
+
+    public function provideOtherBaseUris()
+    {
+        return array(
+            'other domain' => array('http://example.org/base'),
+            'other scheme' => array('https://example.com/base'),
+            'other port' => array('http://example.com:81/base'),
+        );
+    }
+
+    /**
+     * @param string $other
+     * @dataProvider provideOtherBaseUris
+     * @expectedException UnexpectedValueException
+     */
+    public function testAssertNotBase($other)
+    {
+        $base = new Uri('http://example.com/base');
+
+        $base->assertBaseOf(new Uri($other));
     }
 }
