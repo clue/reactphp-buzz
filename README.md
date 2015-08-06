@@ -126,7 +126,7 @@ See [`Sender`](#sender) for more details.
 
 #### withBase()
 
-The `withBase($baseUri, array $parameters = array())` method can be used to change the base URI used to
+The `withBase($baseUri)` method can be used to change the base URI used to
 resolve relative URIs to.
 
 ```php
@@ -139,7 +139,7 @@ actually returns a *new* [`Browser`](#browser) instance with the given base URI 
 Any requests to relative URIs will then be processed by first prepending the
 base URI.
 Please note that this merely prepends the base URI and does *not* resolve any
-relative path references.
+relative path references (like `../` etc.).
 This is mostly useful for API calls where all endpoints (URIs) are located
 under a common base URI scheme.
 
@@ -167,13 +167,26 @@ See also [`withBase()`](#withbase).
 
 The `resolve($uri, array $parameters = array())` method can be used to resolve the given relative URI to
 an absolute URI by appending it behind the configured base URI.
-It also replaces URI template placerholders with the given `$parameters`
+It also replaces URI template placeholders with the given `$parameters`
 according to [RFC 6570](http://tools.ietf.org/html/rfc6570).
-It returns a new [`Uri`](#uri) instace which can then be passed
+It returns a new [`Uri`](#uri) instance which can then be passed
 to the [HTTP methods](#methods).
 
+URI template placeholders in the given URI string will be replaced according to
+[RFC 6570](http://tools.ietf.org/html/rfc6570):
+
+```php
+echo $browser->resolve('http://example.com/{?first,second,third}', array(
+    'first' => 'a',
+    'third' => 'c'
+));
+// http://example.com/?first=a&third=c
+```
+
+If you pass in a relative URI string, then it will be resolved relative to the
+configured base URI.
 Please note that this merely prepends the base URI and does *not* resolve any
-relative path references.
+relative path references (like `../` etc.).
 This is mostly useful for API calls where all endpoints (URIs) are located
 under a common base URI:
 
@@ -184,16 +197,6 @@ echo $newBrowser->resolve('/example');
 // http://api.example.com/v3/example
 ```
 
-The given URI may also contain URI template placeholders:
-
-```php
-echo $browser->resolve('http://example.com/{?first,second,third}', array(
-    'first' => 'a',
-    'third' => 'c'
-));
-// http://example.com/?first=a&third=c
-```
-
 The URI template placeholders can also be combined with a base URI like this:
 
 ```php
@@ -202,7 +205,7 @@ echo $newBrowser->resolve('/fetch{/file}{?version,tag}', array(
     'version' => 1.0,
     'tag' => 'just testing'
 ));
-// http://api.example.com/v3/fetch/file?version=1.0&tag=just%20testing
+// http://api.example.com/v3/fetch/example?version=1.0&tag=just%20testing
 ```
 
 This uses the excellent [rize/uri-template](https://github.com/rize/UriTemplate) library under the hood.
