@@ -19,14 +19,17 @@ class Browser
     private $baseUri = null;
     private $options = array();
 
-    public function __construct(LoopInterface $loop, Sender $sender = null)
+    public function __construct(LoopInterface $loop, Sender $sender = null, UriTemplate $uriTemplate = null)
     {
         if ($sender === null) {
             $sender = Sender::createFromLoop($loop);
         }
+        if ($uriTemplate === null) {
+            $uriTemplate = new UriTemplate();
+        }
         $this->sender = $sender;
         $this->loop = $loop;
-        $this->uriTemplate = new UriTemplate();
+        $this->uriTemplate = $uriTemplate;
     }
 
     public function get($url, $headers = array())
@@ -75,42 +78,63 @@ class Browser
     }
 
     /**
-     * Returns an absolute URI by processing the given relative URI
+     * Returns an absolute URI by processing the given relative URI, possibly using URI template syntax (RFC 6570)
+     *
+     * You can either pass in a relative or absolute URI, which may or may not
+     * contain any number of URI template placeholders.
+     *
+     * A relative URI can be given as a string value which may contain placeholders.
+     * An absolute URI can be given as a string value which may contain placeholders.
+     *
+     * You can also pass in an `Uri` instance. By definition of this library,
+     * an `Uri` instance is always absolute and can not contain any placeholders.
+     * As such, it is safe to pass the result of this method as input to this method.
      *
      * @param string|Uri $uri        relative or absolute URI
-     * @param array      $parameters parameters for URI template syntax (RFC 6570)
+     * @param array      $parameters (optional) parameters for URI template placeholders (RFC 6570)
      * @return Uri absolute URI
      * @see self::withBase()
      */
     public function resolve($uri, $parameters = array())
     {
-        if ($this->baseUri !== null) {
-            $uri = $this->baseUri->expandBase($uri);
+        // not already an absolute `Uri` instance?
+        if (!($uri instanceof Uri)) {
+            // relative URIs should be prefixed with base URI
+            if ($this->baseUri !== null) {
+                $uri = $this->baseUri->expandBase($uri);
+            }
+
+            // replace all URI template placeholders (RFC 6570)
+            $uri = $this->uriTemplate->expand($uri, $parameters);
+
+            // ensure this is actually a valid, absolute URI instance
+            $uri = new Uri($uri);
         }
 
-        $uri = $this->uriTemplate->expand($uri, $parameters);
+        // ensure we're actually below the base URI
+        if ($this->baseUri !== null) {
+            $this->baseUri->assertBaseOf($uri);
+        }
 
-        return new Uri($uri);
+        return $uri;
     }
 
     /**
-     * Creates a new Browser instance with the given absolute base URI, possibly using URI template syntax (RFC 6570)
+     * Creates a new Browser instance with the given absolute base URI
      *
      * This is mostly useful for use with the `resolve()` method.
-     * Any relative URI passed to `uri()` will simply be appended behind the given
-     * `$baseUrl`.
+     * Any relative URI passed to `resolve()` will simply be appended behind the given
+     * `$baseUri`.
      *
      * @param string|Uri $baseUri absolute base URI
-     * @param array      $parameters (optional) default parameters to pass to URI template placeholders
      * @return self
      * @see self::url()
      * @see self::withoutBase()
      */
-    public function withBase($baseUri, array $parameters = array())
+    public function withBase($baseUri)
     {
         $browser = clone $this;
         $browser->baseUri = new Uri($baseUri);
-        $browser->uriTemplate = new UriTemplate('', $parameters);
 
         return $browser;
     }
