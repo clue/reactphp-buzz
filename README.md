@@ -255,6 +255,11 @@ The `getUri()` method can be used to get its [`Uri`](#uri) instance.
 
 ### Uri
 
+An `Uri` represents an absolute URI (aka URL).
+
+By definition of this library, an `Uri` instance is always absolute and can not contain any placeholders.
+As such, any incomplete/relative URI will be rejected with an `InvalidArgumentException`.
+
 Each [`Request`](#request) contains a (full) absolute request URI.
 
 ```
@@ -267,6 +272,8 @@ assert('/' == $uri->getPath());
 ```
 
 See its [class outline](src/Message/Uri.php) for more details.
+
+Internally, this class uses the excellent [ml/iri](https://github.com/lanthaler/IRI) library under the hood.
 
 ### ResponseException
 

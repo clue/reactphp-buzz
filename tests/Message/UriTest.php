@@ -106,4 +106,29 @@ class UriTest extends TestCase
 
         $base->assertBaseOf(new Uri($other));
     }
+
+    public function testResolveRelative()
+    {
+        $base = new Uri('http://example.com/base/');
+
+        $this->assertEquals('http://example.com/base/', $base->resolve(''));
+        $this->assertEquals('http://example.com/', $base->resolve('/'));
+
+        $this->assertEquals('http://example.com/base/a', $base->resolve('a'));
+        $this->assertEquals('http://example.com/a', $base->resolve('../a'));
+    }
+
+    public function testResolveAbsolute()
+    {
+        $base = new Uri('http://example.org/');
+
+        $this->assertEquals('http://www.example.com/', $base->resolve('http://www.example.com/'));
+    }
+
+    public function testResolveUri()
+    {
+        $base = new Uri('http://example.org/');
+
+        $this->assertEquals('http://www.example.com/', $base->resolve(new Uri('http://www.example.com/')));
+    }
 }
