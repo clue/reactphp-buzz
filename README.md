@@ -106,13 +106,15 @@ you should look into also using [clue/block-react](https://github.com/clue/php-b
 The resulting blocking code could look something like this:
 
 ```php
+use Clue\React\Block;
+
 $loop = React\EventLoop\Factory::create();
 $browser = new Clue\React\Buzz\Browser($loop);
 
 $promise = $browser->get('http://example.com/');
 
 try {
-    $response = Clue\React\Block\await($promise);
+    $response = Block\await($promise, $loop);
     // response successfully received
 } catch (Exception $e) {
     // an error occured while performing the request
@@ -127,10 +129,10 @@ $promises = array(
     $browser->get('http://www.example.org/'),
 );
 
-$responses = Clue\React\Block\awaitAll($promises);
+$responses = Block\awaitAll($promises, $loop);
 ```
 
-Refer to [clue/block-react](https://github.com/clue/php-block-react#readme) for more details.
+Please refer to [clue/block-react](https://github.com/clue/php-block-react#readme) for more details.
 
 #### submit()
 
