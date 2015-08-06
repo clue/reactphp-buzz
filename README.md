@@ -73,7 +73,11 @@ $browser->patch($url, array $headers = array(), $content = '');
 
 If you need a custom HTTP protocol method, you can use the [`send()`](#send) method.
 
-#### Processing
+Each of the above methods supports async operation and either *resolves* with a [`Response`](#response) or
+*rejects* with an `Exception`.
+Please see the following chapter about [promises](#promises) for more details.
+
+#### Promises
 
 Sending requests is async (non-blocking), so you can actually send multiple requests in parallel.
 The `Browser` will respond to each request with a [`Response`](#response) message, the order is not guaranteed.
@@ -89,6 +93,44 @@ $browser->get($url)->then(
     }
 });
 ```
+
+If this looks strange to you, you can also use the more traditional [blocking API](#blocking).
+
+#### Blocking
+
+As stated above, this library provides you a powerful, async API by default.
+
+If, however, you want to integrate this into your traditional, blocking environment,
+you should look into also using [clue/block-react](https://github.com/clue/php-block-react).
+
+The resulting blocking code could look something like this:
+
+```php
+$loop = React\EventLoop\Factory::create();
+$browser = new Clue\React\Buzz\Browser($loop);
+
+$promise = $browser->get('http://example.com/');
+
+try {
+    $response = Clue\React\Block\await($promise);
+    // response successfully received
+} catch (Exception $e) {
+    // an error occured while performing the request
+}
+```
+
+Similarly, you can also process multiple requests concurrently and await an array of `Response` objects:
+
+```php
+$promises = array(
+    $browser->get('http://example.com/'),
+    $browser->get('http://www.example.org/'),
+);
+
+$responses = Clue\React\Block\awaitAll($promises);
+```
+
+Refer to [clue/block-react](https://github.com/clue/php-block-react#readme) for more details.
 
 #### submit()
 
