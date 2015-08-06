@@ -252,6 +252,11 @@ The `getUri()` method can be used to get its [`Uri`](#uri) instance.
 
 ### Uri
 
+An `Uri` represents an absolute URI (aka URL).
+
+By definition of this library, an `Uri` instance is always absolute and can not contain any placeholders.
+As such, any incomplete/relative URI will be rejected with an `InvalidArgumentException`.
+
 Each [`Request`](#request) contains a (full) absolute request URI.
 
 ```

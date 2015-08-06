@@ -5,10 +5,24 @@ namespace Clue\React\Buzz\Message;
 use InvalidArgumentException;
 use ML\IRI\IRI;
 
+/**
+ * An `Uri` represents an absolute URI (aka URL).
+ *
+ * By definition of this library, an `Uri` instance is always absolute and can not contain any placeholders.
+ */
 class Uri
 {
     private $iri;
 
+    /**
+     * Instantiate new absolute URI instance
+     *
+     * By definition of this library, an `Uri` instance is always absolute and can not contain any placeholders.
+     * As such, any incomplete/relative URI will be rejected with an `InvalidArgumentException`.
+     *
+     * @param string|Uri|IRI $uri
+     * @throws InvalidArgumentException for incomplete/relative URIs
+     */
     public function __construct($uri)
     {
         if (!$uri instanceof IRI) {
@@ -20,7 +34,7 @@ class Uri
         }
 
         if (strpos($uri, '{') !== false) {
-            throw new \InvalidArgumentException('Contains placeholders');
+            throw new InvalidArgumentException('Contains placeholders');
         }
 
         $this->iri = $uri;
