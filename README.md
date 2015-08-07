@@ -27,6 +27,36 @@ mess with most of the low-level details.
 * **Good test coverage** -
   Comes with an automated tests suite and is regularly tested in the *real world*
 
+**Table of contents**
+
+* [Quickstart example](#quickstart-example)
+* [Usage](#usage)
+  * [Browser](#browser)
+    * [Methods](#methods)
+    * [Promises](#promises)
+    * [Blocking](#blocking)
+    * [submit()](#submit)
+    * [send()](#send)
+    * [withOptions()](#withoptions)
+    * [withSender()](#withsender)
+    * [withBase()](#withbase)
+    * [withoutBase()](#withoutbase)
+    * [resolve()](#resolve)
+  * [Message](#message)
+  * [Response](#response)
+  * [Request](#request)
+    * [getUri()](#geturi)
+  * [Uri](#uri)
+  * [ResponseException](#responseexception)
+* [Advanced](#advanced)
+  * [Sender](#sender)
+  * [DNS](#dns)
+  * [SOCKS proxy](#socks-proxy)
+  * [UNIX domain sockets](#unix-domain-sockets)
+  * [Options](#options)
+  * [Streaming](#streaming)
+* [Install](#install)
+* [License](#license)
 
 ## Quickstart example
 
