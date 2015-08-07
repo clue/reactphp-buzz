@@ -1,28 +1,32 @@
 # clue/buzz-react [![Build Status](https://travis-ci.org/clue/php-buzz-react.svg?branch=master)](https://travis-ci.org/clue/php-buzz-react)
 
-Simple async HTTP client for concurrently interacting with multiple HTTP servers,
-fetching URLs, talking to RESTful APIs, downloading files, following redirects
-etc. all at the same time.
+Simple, async HTTP client for concurrently processing any number of HTTP requests,
+built on top of [React PHP](http://reactphp.org/).
 
 This library is heavily inspired by the great
 [kriswallsmith/Buzz](https://github.com/kriswallsmith/Buzz)
 project. However, instead of blocking on each request, it relies on
 [React PHP's EventLoop](https://github.com/reactphp/event-loop) to process
 multiple requests in parallel.
-
-React PHP also provides the package
-[react/http-client](https://github.com/reactphp/http-client) which provides a
-streaming HTTP client implementation.
-That package is ideally suited for accessing streaming APIs or processing huge
-requests, but requires quite a bit of boilerplate code if all you want to do is
-to access a *normal* website or your average RESTful API.
-
-As such, this projects aims at providing a higher level API that is easy to use
+This allows you to interact with multiple HTTP servers
+(fetch URLs, talk to RESTful APIs, follow redirects etc.)
+at the same time.
+Unlike the underlying [react/http-client](https://github.com/reactphp/http-client),
+this project aims at providing a higher-level API that is easy to use
 in order to process multiple HTTP requests concurrently without having to
-mess with most of the low level details of the underlying
-[react/http-client](https://github.com/reactphp/http-client).
+mess with most of the low-level details.
 
-> Note: This project is in beta stage! Feel free to report any issues you encounter.
+* **Async execution of HTTP requests** -
+  Send any number of HTTP requests to any number of HTTP servers in parallel and
+  process their responses as soon as results come in.
+  The Promise-based design provides a *sane* interface to working with out of bound responses.
+* **Lightweight, SOLID design** -
+  Provides a thin abstraction that is [*just good enough*](http://en.wikipedia.org/wiki/Principle_of_good_enough)
+  and does not get in your way.
+  Builds on top of well-tested components and well-established concepts instead of reinventing the wheel.
+* **Good test coverage** -
+  Comes with an automated tests suite and is regularly tested in the *real world*
+
 
 ## Quickstart example
 
