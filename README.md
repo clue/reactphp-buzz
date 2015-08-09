@@ -379,8 +379,8 @@ See also [`Browser::withSender()`](#withsender) for changing the `Sender` instan
 
 ### DNS
 
-The [`Sender`](#sender) is also resposible for creating the underlying TCP/IP
-connection to the remove HTTP server and hence has to orchestrate DNS lookups.
+The [`Sender`](#sender) is also responsible for creating the underlying TCP/IP
+connection to the remote HTTP server and hence has to orchestrate DNS lookups.
 By default, it uses a `Connector` instance which uses Google's public DNS servers
 (`8.8.8.8`).
 
