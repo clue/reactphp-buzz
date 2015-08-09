@@ -1,8 +1,54 @@
 # Changelog
 
+## 0.4.0 (2015-08-09)
+
+* Feature: Resolve relative URIs, add withBase() and resolve()
+  ([#41](https://github.com/clue/php-buzz-react/pull/41), [#44](https://github.com/clue/php-buzz-react/pull/44))
+
+  ```php
+$browser = $browser->withBase('http://example.com/');
+$browser->post('/');
+```
+
+* Feature: Resolve URI template placeholders according to RFC 6570
+  ([#42](https://github.com/clue/php-buzz-react/pull/42), [#44](https://github.com/clue/php-buzz-react/pull/44))
+
+  ```php
+$browser->post($browser->resolve('/{+path}{?version}', array(
+    'path' => 'demo.json',
+    'version' => '4'
+)));
+```
+
+* Feature: Resolve and follow redirects to relative URIs
+  ([#45](https://github.com/clue/php-buzz-react/pull/45))
+
+* Feature / BC break: Simplify Request and Response objects.
+  Remove Browser::request(), use Browser::send() instead.
+  ([#37](https://github.com/clue/php-buzz-react/pull/37))
+  
+  ```php
+// old
+$browser->request('GET', 'http://www.example.com/');
+
+// new
+$browser->send(new Request('GET', 'http://www.example.com/'));
+```
+
+* Feature / Bc break: Enforce absolute URIs via new Uri class
+  ([#40](https://github.com/clue/php-buzz-react/pull/40), [#44](https://github.com/clue/php-buzz-react/pull/44))
+
+* Feature: Add Browser::withSender() method
+  ([#38](https://github.com/clue/php-buzz-react/pull/38))
+
+* Feature: Add Sender::createFromLoopDns() function
+  ([#39](https://github.com/clue/php-buzz-react/pull/39))
+
+* Improve documentation and test suite
+
 ## 0.3.0 (2015-06-14)
 
-* Expose Response object in case of HTTP errors
+* Feature: Expose Response object in case of HTTP errors
   ([#35](https://github.com/clue/php-buzz-react/pull/35))
 
 * Feature: Add experimental `Transaction` options via `Browser`
