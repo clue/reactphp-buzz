@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.4.1 (2015-09-05)
+
+* Fix: Replace URI placeholders before applying base URI, in order to avoid
+  duplicate slashes introduced due to URI placeholders.
+  ([#48](https://github.com/clue/php-buzz-react/pull/48))
+
+  ```php
+// returns "http://example.com/path" instead of "http://example.com//path"
+$browser = $browser->withBase('http://example.com/');
+echo $browser->resolve('{+path}', array('path' => '/path'));
+
+// returns "http://example.com/path?q=test" instead of "http://example.com/path/?q=test"
+$browser = $browser->withBase('http://example.com/path');
+echo $browser->resolve('{?q}', array('q' => 'test'));
+```
+
 ## 0.4.0 (2015-08-09)
 
 * Feature: Resolve relative URIs, add withBase() and resolve()
