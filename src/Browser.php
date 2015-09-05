@@ -99,16 +99,16 @@ class Browser
     {
         // not already an absolute `Uri` instance?
         if (!($uri instanceof Uri)) {
-            // relative URIs should be prefixed with base URI
-            if ($this->baseUri !== null) {
-                $uri = $this->baseUri->expandBase($uri);
-            }
-
             // replace all URI template placeholders (RFC 6570)
             $uri = $this->uriTemplate->expand($uri, $parameters);
 
-            // ensure this is actually a valid, absolute URI instance
-            $uri = new Uri($uri);
+            if ($this->baseUri !== null) {
+                // relative URIs should be prefixed with base URI
+                $uri = $this->baseUri->expandBase($uri);
+            } else {
+                // ensure this is actually a valid, absolute URI instance
+                $uri = new Uri($uri);
+            }
         }
 
         // ensure we're actually below the base URI
