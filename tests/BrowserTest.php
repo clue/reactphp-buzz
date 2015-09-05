@@ -113,14 +113,37 @@ class BrowserTest extends TestCase
      * @depends testWithBase
      * @param Browser $browser
      */
-    public function testResolveUriTemplateWithBase(Browser $browser)
+    public function testResolveUriTemplateWithBaseLeadingSlash(Browser $browser)
     {
         $this->assertEquals('http://example.com/root/?q=test', $browser->resolve('/{?q}', array('q' => 'test')));
+    }
+
+    /**
+     * @depends testWithBase
+     * @param Browser $browser
+     */
+    public function testResolveUriTemplateWithBaseQueryStringOnly(Browser $browser)
+    {
+        $this->assertEquals('http://example.com/root?q=test', $browser->resolve('{?q}', array('q' => 'test')));
     }
 
     public function testResolveUriTemplateAbsolute()
     {
         $this->assertEquals('http://example.com/?q=test', $this->browser->resolve('http://example.com/{?q}', array('q' => 'test')));
+    }
+
+    public function testWithBaseSlash()
+    {
+        $browser = $this->browser->withBase('http://example.com/root/');
+
+        $this->assertEquals('http://example.com/root/', $browser->resolve(''));
+        $this->assertEquals('http://example.com/root/', $browser->resolve('/'));
+
+        $this->assertEquals('http://example.com/root/test', $browser->resolve('test'));
+        $this->assertEquals('http://example.com/root/test', $browser->resolve('/test'));
+
+        $this->assertEquals('http://example.com/root/test', $browser->resolve('{+path}', array('path' => 'test')));
+        $this->assertEquals('http://example.com/root/test', $browser->resolve('{+path}', array('path' => '/test')));
     }
 
     /**

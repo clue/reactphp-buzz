@@ -89,12 +89,11 @@ class Uri
     /**
      * Resolves the given relative or absolute $uri by appending it behind $this base URI
      *
-     * The given $uri parameter can be either a relative or absolute URI string
-     * which can optionally contain URI template placeholders.
+     * The given $uri parameter can be either a relative or absolute URI and
+     * MUST NOT contain any URI template placeholders.
      *
-     * As such, its value or the outcome of this method does not neccessarily
-     * have to represent a valid, absolute URI. Hence, it will be returned as
-     * a string value instead of an `Uri` instance.
+     * As such, the outcome of this method represents a valid, absolute URI
+     * which will be returned as an `Uri` instance.
      *
      * If the given $uri is a relative URI, it will simply be appended behind $this base URI.
      *
@@ -102,14 +101,14 @@ class Uri
      * irrespective of the current base URI.
      *
      * @param string $uri
-     * @return string
+     * @return self
      * @internal
      * @see Browser::resolve()
      */
     public function expandBase($uri)
     {
         if (strpos($uri, '://') !== false) {
-            return $uri;
+            return new self($uri);
         }
 
         $base = (string)$this;
@@ -122,7 +121,7 @@ class Uri
             $uri = substr($uri, 1);
         }
 
-        return $base . $uri;
+        return new self($base . $uri);
     }
 
     /**
