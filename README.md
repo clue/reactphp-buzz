@@ -384,7 +384,7 @@ connection to the remote HTTP server and hence has to orchestrate DNS lookups.
 By default, it uses a `Connector` instance which uses Google's public DNS servers
 (`8.8.8.8`).
 
-If you need custom DNS settings, you explicitly create a [`Sender`](#sender) instance
+If you need custom DNS settings, you can explicitly create a [`Sender`](#sender) instance
 with your DNS server address (or `React\Dns\Resolver` instance) like this:
 
 ```php
