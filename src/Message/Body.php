@@ -23,6 +23,11 @@ class Body
 
     public function __toString()
     {
+        return (string) $this->message;
+    }
+    
+    public function getContents()
+    {
         return $this->message;
     }
 }
