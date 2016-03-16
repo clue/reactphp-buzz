@@ -44,9 +44,8 @@ mess with most of the low-level details.
     * [resolve()](#resolve)
   * [Message](#message)
   * [Response](#response)
-  * [Request](#request)
-    * [getUri()](#geturi)
-  * [Uri](#uri)
+  * [RequestInterface](#requestinterface)
+  * [UriInterface](#uriinterface)
   * [ResponseException](#responseexception)
 * [Advanced](#advanced)
   * [Sender](#sender)
@@ -175,7 +174,8 @@ The `submit($url, array $fields, $headers = array(), $method = 'POST')` method c
 
 #### send()
 
-The `send(Request $request)` method can be used to send an arbitrary [`Request` object](#request).
+The `send(RequestInterface $request)` method can be used to send an arbitrary
+instance implementing the [`RequestInterface`](#requestinterface) (PSR-7).
 
 #### withOptions()
 
@@ -248,8 +248,8 @@ The `resolve($uri, array $parameters = array())` method can be used to resolve t
 an absolute URI by appending it behind the configured base URI.
 It also replaces URI template placeholders with the given `$parameters`
 according to [RFC 6570](http://tools.ietf.org/html/rfc6570).
-It returns a new [`Uri`](#uri) instance which can then be passed
-to the [HTTP methods](#methods).
+It returns a new instance implementing [`UriInterface`](#uriinterface) which can
+then be passed to the [HTTP methods](#methods).
 
 URI template placeholders in the given URI string will be replaced according to
 [RFC 6570](http://tools.ietf.org/html/rfc6570):
@@ -309,8 +309,8 @@ $browser->resolve('/example');
 
 ### Message
 
-The `Message` is an abstract base class for the [`Response`](#response) and [`Request`](#request).
-It provides a common interface for these message types.
+The `Message` is an abstract base class for the [`Response`](#response).
+It provides a common interface for this message type.
 
 See its [class outline](src/Message/Message.php) for more details.
 
@@ -321,38 +321,23 @@ It shares all properties of the [`Message`](#message) parent class.
 
 See its [class outline](src/Message/Response.php) for more details.
 
-### Request
+### RequestInterface
 
-The `Request` value object represents the outgoing request to be sent via the [`Browser`](#browser).
-It shares all properties of the [`Message`](#message) parent class.
+The `Psr\Http\Message\RequestInterface` represents the outgoing request to be sent via the [`Browser`](#browser).
 
-See its [class outline](src/Message/Request.php) for more details.
+This is a standard interface defined in [PSR-7: HTTP message interfaces]
+(http://www.php-fig.org/psr/psr-7/), see its [`RequestInterface` definition]
+(http://www.php-fig.org/psr/psr-7/#3-2-psr-http-message-requestinterface)
+which in turn extends the [`MessageInterface` definition]
+(http://www.php-fig.org/psr/psr-7/#3-1-psr-http-message-messageinterface).
 
-#### getUri()
+### UriInterface
 
-The `getUri()` method can be used to get its [`Uri`](#uri) instance.
+The `Psr\Http\Message\UriInterface` represents an absolute or relative URI (aka URL).
 
-### Uri
-
-An `Uri` represents an absolute URI (aka URL).
-
-By definition of this library, an `Uri` instance is always absolute and can not contain any placeholders.
-As such, any incomplete/relative URI will be rejected with an `InvalidArgumentException`.
-
-Each [`Request`](#request) contains a (full) absolute request URI.
-
-```
-$request = new Request('GET', 'http://www.google.com/');
-$uri = $request->getUri();
-
-assert('http' == $uri->getScheme());
-assert('www.google.com' == $uri->getHost());
-assert('/' == $uri->getPath());
-```
-
-See its [class outline](src/Message/Uri.php) for more details.
-
-Internally, this class uses the excellent [ml/iri](https://github.com/lanthaler/IRI) library under the hood.
+This is a standard interface defined in [PSR-7: HTTP message interfaces]
+(http://www.php-fig.org/psr/psr-7/), see its [`UriInterface` definition]
+(http://www.php-fig.org/psr/psr-7/#3-5-psr-http-message-uriinterface).
 
 ### ResponseException
 
@@ -369,7 +354,7 @@ The `getResponse()` method can be used to access its underlying [`Response`](#re
 
 ### Sender
 
-The `Sender` is responsible for passing the [`Request`](#request) objects to
+The `Sender` is responsible for passing the [`RequestInterface`](#requestinterface) objects to
 the underlying [`HttpClient`](https://github.com/reactphp/http-client) library
 and keeps track of its transmission and converts its reponses back to [`Response`](#response) objects.
 

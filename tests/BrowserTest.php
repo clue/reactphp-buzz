@@ -1,7 +1,7 @@
 <?php
 
 use Clue\React\Buzz\Browser;
-use Clue\React\Buzz\Message\Uri;
+use RingCentral\Psr7\Uri;
 
 class BrowserTest extends TestCase
 {
@@ -132,25 +132,90 @@ class BrowserTest extends TestCase
         $this->assertEquals('http://example.com/?q=test', $this->browser->resolve('http://example.com/{?q}', array('q' => 'test')));
     }
 
-    public function testWithBaseSlash()
+    public function testResolveUriWithBaseEndsWithoutSlash()
     {
-        $browser = $this->browser->withBase('http://example.com/root/');
+        $browser = $this->browser->withBase('http://example.com/base');
 
-        $this->assertEquals('http://example.com/root/', $browser->resolve(''));
-        $this->assertEquals('http://example.com/root/', $browser->resolve('/'));
+        $this->assertEquals('http://example.com/base', $browser->resolve(''));
+        $this->assertEquals('http://example.com/base/', $browser->resolve('/'));
 
-        $this->assertEquals('http://example.com/root/test', $browser->resolve('test'));
-        $this->assertEquals('http://example.com/root/test', $browser->resolve('/test'));
+        $this->assertEquals('http://example.com/base/test', $browser->resolve('test'));
+        $this->assertEquals('http://example.com/base/test', $browser->resolve('/test'));
 
-        $this->assertEquals('http://example.com/root/test', $browser->resolve('{+path}', array('path' => 'test')));
-        $this->assertEquals('http://example.com/root/test', $browser->resolve('{+path}', array('path' => '/test')));
+        $this->assertEquals('http://example.com/base?key=value', $browser->resolve('?key=value'));
+        $this->assertEquals('http://example.com/base/?key=value', $browser->resolve('/?key=value'));
+
+        $this->assertEquals('http://example.com/base/test', $browser->resolve('{+path}', array('path' => 'test')));
+        $this->assertEquals('http://example.com/base/test', $browser->resolve('{+path}', array('path' => '/test')));
+
+        $this->assertEquals('http://example.com/base', $browser->resolve('http://example.com/base'));
+        $this->assertEquals('http://example.com/base/another', $browser->resolve('http://example.com/base/another'));
+        $this->assertEquals('http://example.com/base?test', $browser->resolve('http://example.com/base?test'));
+    }
+
+    public function testResolveUriWithBaseEndsWithSlash()
+    {
+        $browser = $this->browser->withBase('http://example.com/base/');
+
+        $this->assertEquals('http://example.com/base/', $browser->resolve(''));
+        $this->assertEquals('http://example.com/base/', $browser->resolve('/'));
+
+        $this->assertEquals('http://example.com/base/test', $browser->resolve('test'));
+        $this->assertEquals('http://example.com/base/test', $browser->resolve('/test'));
+
+        $this->assertEquals('http://example.com/base/?key=value', $browser->resolve('?key=value'));
+        $this->assertEquals('http://example.com/base/?key=value', $browser->resolve('/?key=value'));
+
+        $this->assertEquals('http://example.com/base/test', $browser->resolve('{+path}', array('path' => 'test')));
+        $this->assertEquals('http://example.com/base/test', $browser->resolve('{+path}', array('path' => '/test')));
+
+        $this->assertEquals('http://example.com/base/', $browser->resolve('http://example.com/base/'));
+        $this->assertEquals('http://example.com/base/another', $browser->resolve('http://example.com/base/another'));
+        $this->assertEquals('http://example.com/base/?test', $browser->resolve('http://example.com/base/?test'));
+    }
+
+    public function provideOtherBaseUris()
+    {
+        return array(
+            'other domain' => array('http://example.org/base'),
+            'other scheme' => array('https://example.com/base'),
+            'other port' => array('http://example.com:81/base'),
+        );
+    }
+
+    /**
+     * @param string $other
+     * @dataProvider provideOtherBaseUris
+     * @expectedException UnexpectedValueException
+     */
+    public function testAssertNotBase($other)
+    {
+        $browser = $this->browser->withBase('http://example.com/base');
+
+        $browser->resolve($other);
     }
 
     /**
      * @expectedException InvalidArgumentException
      */
-    public function testWithBaseUriTemplateParametersFails()
+    public function testWithBaseUriNotAbsoluteFails()
     {
-        $this->browser->withBase('http://example.com/{version}/');
+        $this->browser->withBase('hello');
+    }
+
+    public function testWithBaseUriInstanceTemplateParametersWillStayEscaped()
+    {
+        $uri = new Uri('http://example.com/{version}/');
+        $this->assertEquals('http://example.com/%7Bversion%7D/', $uri);
+
+        $browser = $this->browser->withBase($uri);
+        $this->assertEquals('http://example.com/%7Bversion%7D/', $browser->resolve('', array('version' => 1)));
+    }
+
+    public function testWithBaseUriTemplateParametersWillBeEscaped()
+    {
+        $browser = $this->browser->withBase('http://example.com/{version}/');
+
+        $this->assertEquals('http://example.com/%7Bversion%7D/', $browser->resolve('', array('version' => 1)));
     }
 }

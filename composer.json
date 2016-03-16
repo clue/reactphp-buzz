@@ -21,7 +21,8 @@
         "react/dns": "0.3.*|0.4.*",
         "react/promise": "^2 || ^1.1",
         "rize/uri-template": "~0.3.0",
-        "ml/iri": "~1.0"
+        "psr/http-message": "~1.0",
+        "ringcentral/psr7": "~1.2"
     },
     "require-dev": {
         "clue/block-react": "~1.0"

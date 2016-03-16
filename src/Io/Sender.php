@@ -3,7 +3,7 @@
 namespace Clue\React\Buzz\Io;
 
 use React\HttpClient\Client as HttpClient;
-use Clue\React\Buzz\Message\Request;
+use Psr\Http\Message\RequestInterface;
 use Clue\React\Buzz\Message\Response;
 use React\HttpClient\Request as RequestStream;
 use React\HttpClient\Response as ResponseStream;
@@ -17,6 +17,7 @@ use React\SocketClient\SecureConnector;
 use RuntimeException;
 use React\SocketClient\ConnectorInterface;
 use React\Dns\Resolver\Resolver;
+use React\Promise;
 
 class Sender
 {
@@ -99,19 +100,30 @@ class Sender
         $this->http = $http;
     }
 
-    public function send(Request $request)
+    public function send(RequestInterface $request)
     {
-        $body = $request->getBody();
-        $headers = $request->getHeaders()->getAll();
+        $uri = $request->getUri();
+
+        // URIs are required to be absolute for the HttpClient to work
+        if ($uri->getScheme() === '' || $uri->getHost() === '') {
+            return Promise\reject(new \InvalidArgumentException('Sending request requires absolute URI with scheme and host'));
+        }
+
+        $body = (string)$request->getBody();
 
         // automatically assign a Content-Length header if the body is not empty
-        if (!$body->isEmpty() && $request->getHeader('Content-Length') === null) {
-            $headers['Content-Length'] = $body->getLength();
+        if ($body !== '' && $request->hasHeader('Content-Length') !== null) {
+            $request = $request->withHeader('Content-Length', strlen($body));
+        }
+
+        $headers = array();
+        foreach ($request->getHeaders() as $name => $values) {
+            $headers[$name] = implode(', ', $values);
         }
 
         $deferred = new Deferred();
 
-        $requestStream = $this->http->request($request->getMethod(), (string)$request->getUri(), $headers);
+        $requestStream = $this->http->request($request->getMethod(), (string)$uri, $headers);
 
         $requestStream->on('error', function($error) use ($deferred) {
             $deferred->reject($error);
@@ -141,7 +153,7 @@ class Sender
             $deferred->progress(array('responseStream' => $response, 'requestStream' => $requestStream));
         });
 
-        $requestStream->end((string)$body);
+        $requestStream->end($body);
 
         return $deferred->promise();
     }

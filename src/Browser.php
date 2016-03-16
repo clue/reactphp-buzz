@@ -3,23 +3,25 @@
 namespace Clue\React\Buzz;
 
 use React\EventLoop\LoopInterface;
-use Clue\React\Buzz\Message\Request;
+use Psr\Http\Message\RequestInterface;
 use Clue\React\Buzz\Io\Transaction;
 use Clue\React\Buzz\Message\Body;
 use Clue\React\Buzz\Message\Headers;
 use Clue\React\Buzz\Io\Sender;
-use Clue\React\Buzz\Message\Uri;
+use Psr\Http\Message\UriInterface;
 use Rize\UriTemplate;
+use Clue\React\Buzz\Message\MessageFactory;
 
 class Browser
 {
     private $sender;
     private $loop;
     private $uriTemplate;
+    private $messageFactory;
     private $baseUri = null;
     private $options = array();
 
-    public function __construct(LoopInterface $loop, Sender $sender = null, UriTemplate $uriTemplate = null)
+    public function __construct(LoopInterface $loop, Sender $sender = null, UriTemplate $uriTemplate = null, MessageFactory $messageFactory = null)
     {
         if ($sender === null) {
             $sender = Sender::createFromLoop($loop);
@@ -27,39 +29,43 @@ class Browser
         if ($uriTemplate === null) {
             $uriTemplate = new UriTemplate();
         }
+        if ($messageFactory === null) {
+            $messageFactory = new MessageFactory();
+        }
         $this->sender = $sender;
         $this->loop = $loop;
         $this->uriTemplate = $uriTemplate;
+        $this->messageFactory = $messageFactory;
     }
 
     public function get($url, $headers = array())
     {
-        return $this->send(new Request('GET', $this->resolve($url), $headers));
+        return $this->send($this->messageFactory->request('GET', $url, $headers));
     }
 
     public function post($url, $headers = array(), $content = '')
     {
-        return $this->send(new Request('POST', $this->resolve($url), $headers, $content));
+        return $this->send($this->messageFactory->request('POST', $url, $headers, $content));
     }
 
     public function head($url, $headers = array())
     {
-        return $this->send(new Request('HEAD', $this->resolve($url), $headers));
+        return $this->send($this->messageFactory->request('HEAD', $url, $headers));
     }
 
     public function patch($url, $headers = array(), $content = '')
     {
-        return $this->send(new Request('PATCH', $this->resolve($url) , $headers, $content));
+        return $this->send($this->messageFactory->request('PATCH', $url , $headers, $content));
     }
 
     public function put($url, $headers = array(), $content = '')
     {
-        return $this->send(new Request('PUT', $this->resolve($url), $headers, $content));
+        return $this->send($this->messageFactory->request('PUT', $url, $headers, $content));
     }
 
     public function delete($url, $headers = array(), $content = '')
     {
-        return $this->send(new Request('DELETE', $this->resolve($url), $headers, $content));
+        return $this->send($this->messageFactory->request('DELETE', $url, $headers, $content));
     }
 
     public function submit($url, array $fields, $headers = array(), $method = 'POST')
@@ -67,12 +73,12 @@ class Browser
         $headers['Content-Type'] = 'application/x-www-form-urlencoded';
         $content = http_build_query($fields);
 
-        return $this->send(new Request($method, $this->resolve($url), $headers, $content));
+        return $this->send($this->messageFactory->request($method, $url, $headers, $content));
     }
 
-    public function send(Request $request)
+    public function send(RequestInterface $request)
     {
-        $transaction = new Transaction($request, $this->sender, $this->options);
+        $transaction = new Transaction($request, $this->sender, $this->options, $this->messageFactory);
 
         return $transaction->send();
     }
@@ -86,34 +92,32 @@ class Browser
      * A relative URI can be given as a string value which may contain placeholders.
      * An absolute URI can be given as a string value which may contain placeholders.
      *
-     * You can also pass in an `Uri` instance. By definition of this library,
-     * an `Uri` instance is always absolute and can not contain any placeholders.
+     * You can also pass in an instance implementing `UriInterface`.
+     * By definition of this library, such an instance can not contain any placeholders.
      * As such, it is safe to pass the result of this method as input to this method.
      *
-     * @param string|Uri $uri        relative or absolute URI
-     * @param array      $parameters (optional) parameters for URI template placeholders (RFC 6570)
-     * @return Uri absolute URI
+     * @param string|UriInterface $uri        relative or absolute URI
+     * @param array               $parameters (optional) parameters for URI template placeholders (RFC 6570)
+     * @return UriInterface absolute URI
      * @see self::withBase()
      */
     public function resolve($uri, $parameters = array())
     {
-        // not already an absolute `Uri` instance?
-        if (!($uri instanceof Uri)) {
-            // replace all URI template placeholders (RFC 6570)
-            $uri = $this->uriTemplate->expand($uri, $parameters);
-
-            if ($this->baseUri !== null) {
-                // relative URIs should be prefixed with base URI
-                $uri = $this->baseUri->expandBase($uri);
-            } else {
-                // ensure this is actually a valid, absolute URI instance
-                $uri = new Uri($uri);
-            }
+        // only string URIs may contain URI template placeholders (RFC 6570)
+        if (!($uri instanceof UriInterface)) {
+            $uri = $this->messageFactory->uri(
+                $this->uriTemplate->expand($uri, $parameters)
+            );
         }
 
-        // ensure we're actually below the base URI
         if ($this->baseUri !== null) {
-            $this->baseUri->assertBaseOf($uri);
+            // ensure we're actually below the base URI
+            $uri = $this->messageFactory->expandBase($uri, $this->baseUri);
+        } else {
+            // ensure this is actually a valid, absolute URI instance
+            if ($uri->getScheme() === '' || $uri->getHost() === '') {
+                throw new \InvalidArgumentException('Given URI does not resolve to an absolute URI');
+            }
         }
 
         return $uri;
@@ -126,15 +130,23 @@ class Browser
      * Any relative URI passed to `resolve()` will simply be appended behind the given
      * `$baseUri`.
      *
-     * @param string|Uri $baseUri absolute base URI
+     * By definition of this library, a given base URI MUST always absolute and
+     * can not contain any placeholders.
+     *
+     * @param string|UriInterface $baseUri absolute base URI
      * @return self
-     * @see self::url()
+     * @throws InvalidArgumentException if the given $baseUri is not a valid absolute URI
+     * @see self::resolve()
      * @see self::withoutBase()
      */
     public function withBase($baseUri)
     {
         $browser = clone $this;
-        $browser->baseUri = new Uri($baseUri);
+        $browser->baseUri = $this->messageFactory->uri($baseUri);
+
+        if ($browser->baseUri->getScheme() === '' || $browser->baseUri->getHost() === '') {
+            throw new \InvalidArgumentException('Base URI must be absolute');
+        }
 
         return $browser;
     }

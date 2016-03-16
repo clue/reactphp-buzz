@@ -1,7 +1,7 @@
 <?php
 
 use Clue\React\Buzz\Io\Sender;
-use Clue\React\Buzz\Message\Request;
+use RingCentral\Psr7\Request;
 use React\Promise;
 use Clue\React\Block;
 

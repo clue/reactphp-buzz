@@ -2,18 +2,20 @@
 
 namespace Clue\React\Buzz\Io;
 
-use Clue\React\Buzz\Message\Request;
+use Psr\Http\Message\RequestInterface;
 use Clue\React\Buzz\Message\Response;
 use Exception;
 use Clue\React\Buzz\Browser;
 use React\HttpClient\Client as HttpClient;
 use Clue\React\Buzz\Io\Sender;
 use Clue\React\Buzz\Message\ResponseException;
+use Clue\React\Buzz\Message\MessageFactory;
 
 class Transaction
 {
     private $browser;
     private $request;
+    private $messageFactory;
 
     private $numRequests = 0;
 
@@ -26,7 +28,7 @@ class Transaction
     // context: http.ignore_errors
     private $obeySuccessCode = true;
 
-    public function __construct(Request $request, Sender $sender, array $options = array())
+    public function __construct(RequestInterface $request, Sender $sender, array $options = array(), MessageFactory $messageFactory)
     {
         foreach ($options as $name => $value) {
             if (property_exists($this, $name)) {
@@ -36,6 +38,7 @@ class Transaction
 
         $this->request = $request;
         $this->sender = $sender;
+        $this->messageFactory = $messageFactory;
     }
 
     public function send()
@@ -43,7 +46,7 @@ class Transaction
         return $this->next($this->request);
     }
 
-    protected function next(Request $request)
+    protected function next(RequestInterface $request)
     {
         $this->progress('request', array($request));
 
@@ -60,7 +63,7 @@ class Transaction
         );
     }
 
-    public function onResponse(Response $response, Request $request)
+    public function onResponse(Response $response, RequestInterface $request)
     {
         $this->progress('response', array($response, $request));
 
@@ -77,20 +80,21 @@ class Transaction
         return $response;
     }
 
-    public function onError(Exception $error, Request $request)
+    public function onError(Exception $error, RequestInterface $request)
     {
         $this->progress('error', array($error, $request));
 
         throw $error;
     }
 
-    private function onResponseRedirect(Response $response, Request $request)
+    private function onResponseRedirect(Response $response, RequestInterface $request)
     {
-        $location = $request->getUri()->resolve($response->getHeader('Location'));
+        // resolve location relative to last request URI
+        $location = $this->messageFactory->uriRelative($request->getUri(), $response->getHeader('Location'));
 
         // naïve approach..
         $method = ($request->getMethod() === 'HEAD') ? 'HEAD' : 'GET';
-        $request = new Request($method, $location);
+        $request = $this->messageFactory->request($method, $location);
 
         $this->progress('redirect', array($request));
 
@@ -111,7 +115,7 @@ class Transaction
             echo ' ';
             if ($arg instanceof Response) {
                 echo $arg->getStatusLine();
-            } elseif ($arg instanceof Request) {
+            } elseif ($arg instanceof RequestInterface) {
                 echo $arg->getRequestLine();
             } else {
                 echo $arg;
