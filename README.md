@@ -244,15 +244,11 @@ See also [`withBase()`](#withbase).
 
 #### resolve()
 
-The `resolve($uri, array $parameters = array())` method can be used to resolve the given relative URI to
-an absolute URI by appending it behind the configured base URI.
-It also replaces URI template placeholders with the given `$parameters`
-according to [RFC 6570](http://tools.ietf.org/html/rfc6570).
-It returns a new instance implementing [`UriInterface`](#uriinterface) which can
+The `resolve($uri, array $parameters)` method can be used to replace URI
+template placeholders with the given `$parameters` according to
+[RFC 6570](http://tools.ietf.org/html/rfc6570).
+It returns a string URI which can
 then be passed to the [HTTP methods](#methods).
-
-URI template placeholders in the given URI string will be replaced according to
-[RFC 6570](http://tools.ietf.org/html/rfc6570):
 
 ```php
 echo $browser->resolve('http://example.com/{?first,second,third}', array(
@@ -262,50 +258,28 @@ echo $browser->resolve('http://example.com/{?first,second,third}', array(
 // http://example.com/?first=a&third=c
 ```
 
-If you pass in a relative URI string, then it will be resolved relative to the
-configured base URI.
-Please note that this merely prepends the base URI and does *not* resolve any
-relative path references (like `../` etc.).
-This is mostly useful for API calls where all endpoints (URIs) are located
+If you pass in a relative URI string, then it will also return a relative URI
+string.
+Please note that this method only proccesses URI template placeholders and does not
+take relative path referencess (such as `../` etc.) or the base URI into account.
+
+This ofen makes sense for API calls where all endpoints (URIs) are located
 under a common base URI:
 
 ```php
-$newBrowser = $browser->withBase('http://api.example.com/v3');
+$browser = $browser->withBase('http://api.example.com/v3');
 
-echo $newBrowser->resolve('/example');
-// http://api.example.com/v3/example
-```
-
-The URI template placeholders can also be combined with a base URI like this:
-
-```php
-echo $newBrowser->resolve('/fetch{/file}{?version,tag}', array(
+$browser->get($browser->resolve('/fetch{/file}{?version,tag}', array(
     'file' => 'example',
     'version' => 1.0,
     'tag' => 'just testing'
-));
+)));
 // http://api.example.com/v3/fetch/example?version=1.0&tag=just%20testing
 ```
 
 This uses the excellent [rize/uri-template](https://github.com/rize/UriTemplate) library under the hood.
 Please refer to [its documentation](https://github.com/rize/UriTemplate#usage) or
 [RFC 6570](http://tools.ietf.org/html/rfc6570) for more details.
-
-Trying to resolve anything that does not live under the same base URI will
-result in an `UnexpectedValueException`:
-
-```php
-$newBrowser->resolve('http://www.example.com/');
-// throws UnexpectedValueException
-```
-
-Similarily, if you do not have a base URI configured, passing a relative URI
-will result in an `InvalidArgumentException`:
-
-```php
-$browser->resolve('/example');
-// throws InvalidArgumentException
-```
 
 ### Message
 

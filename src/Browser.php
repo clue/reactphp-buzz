@@ -78,57 +78,38 @@ class Browser
 
     public function send(RequestInterface $request)
     {
+        if ($this->baseUri !== null) {
+            // ensure we're actually below the base URI
+            $request = $request->withUri($this->messageFactory->expandBase($request->getUri(), $this->baseUri));
+        }
+
         $transaction = new Transaction($request, $this->sender, $this->options, $this->messageFactory);
 
         return $transaction->send();
     }
 
     /**
-     * Returns an absolute URI by processing the given relative URI, possibly using URI template syntax (RFC 6570)
+     * Resolves a relative or absolute URI by processing URI template placeholders according to RFC 6570
      *
      * You can either pass in a relative or absolute URI, which may or may not
      * contain any number of URI template placeholders.
      *
-     * A relative URI can be given as a string value which may contain placeholders.
-     * An absolute URI can be given as a string value which may contain placeholders.
-     *
-     * You can also pass in an instance implementing `UriInterface`.
-     * By definition of this library, such an instance can not contain any placeholders.
-     * As such, it is safe to pass the result of this method as input to this method.
-     *
-     * @param string|UriInterface $uri        relative or absolute URI
-     * @param array               $parameters (optional) parameters for URI template placeholders (RFC 6570)
-     * @return UriInterface absolute URI
-     * @see self::withBase()
+     * @param string $uri        relative or absolute URI with URI template placeholders (RFC 6570)
+     * @param array  $parameters parameters for URI template placeholders
+     * @return string relative or absolute URI with URI template placeholders resolved according to RFC 6570
      */
-    public function resolve($uri, $parameters = array())
+    public function resolve($uri, array $parameters)
     {
         // only string URIs may contain URI template placeholders (RFC 6570)
-        if (!($uri instanceof UriInterface)) {
-            $uri = $this->messageFactory->uri(
-                $this->uriTemplate->expand($uri, $parameters)
-            );
-        }
-
-        if ($this->baseUri !== null) {
-            // ensure we're actually below the base URI
-            $uri = $this->messageFactory->expandBase($uri, $this->baseUri);
-        } else {
-            // ensure this is actually a valid, absolute URI instance
-            if ($uri->getScheme() === '' || $uri->getHost() === '') {
-                throw new \InvalidArgumentException('Given URI does not resolve to an absolute URI');
-            }
-        }
-
-        return $uri;
+        return $this->uriTemplate->expand($uri, $parameters);
     }
 
     /**
      * Creates a new Browser instance with the given absolute base URI
      *
-     * This is mostly useful for use with the `resolve()` method.
-     * Any relative URI passed to `resolve()` will simply be appended behind the given
-     * `$baseUri`.
+     * This is mostly useful for using (RESTful) HTTP APIs.
+     * Any relative URI passed to any of the request methods will simply be
+     * appended behind the given `$baseUri`.
      *
      * By definition of this library, a given base URI MUST always absolute and
      * can not contain any placeholders.
@@ -136,7 +117,6 @@ class Browser
      * @param string|UriInterface $baseUri absolute base URI
      * @return self
      * @throws InvalidArgumentException if the given $baseUri is not a valid absolute URI
-     * @see self::resolve()
      * @see self::withoutBase()
      */
     public function withBase($baseUri)
