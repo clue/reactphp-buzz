@@ -4,7 +4,9 @@ namespace Clue\React\Buzz\Message;
 
 use RingCentral\Psr7\Request;
 use RingCentral\Psr7\Uri;
+use RingCentral\Psr7\Response;
 use Psr\Http\Message\UriInterface;
+use RingCentral;
 
 /**
  * @internal
@@ -23,6 +25,32 @@ class MessageFactory
     public function request($method, $uri, $headers = array(), $content = '')
     {
         return new Request($method, $uri, $headers, $content);
+    }
+
+    /**
+     * Creates a new instance of ResponseInterface for the given response parameters
+     *
+     * @param string $version
+     * @param int    $status
+     * @param string $reason
+     * @param array  $headers
+     * @param string $body
+     * @return ResponseInterface
+     */
+    public function response($version, $status, $reason, $headers = array(), $body = '')
+    {
+        return new Response($status, $headers, $body, $version, $reason);
+    }
+
+    /**
+     * Creates a new instance of StreamInterface for the given body contents
+     *
+     * @param string $body
+     * @return StreamInterface
+     */
+    public function body($body)
+    {
+        return RingCentral\Psr7\stream_for($body);
     }
 
     /**

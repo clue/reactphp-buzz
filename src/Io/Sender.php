@@ -4,12 +4,10 @@ namespace Clue\React\Buzz\Io;
 
 use React\HttpClient\Client as HttpClient;
 use Psr\Http\Message\RequestInterface;
-use Clue\React\Buzz\Message\Response;
+use Psr\Http\Message\ResponseInterface;
 use React\HttpClient\Request as RequestStream;
 use React\HttpClient\Response as ResponseStream;
 use React\Promise\Deferred;
-use Clue\React\Buzz\Message\Headers;
-use Clue\React\Buzz\Message\Body;
 use React\EventLoop\LoopInterface;
 use React\Dns\Resolver\Factory as ResolverFactory;
 use React\SocketClient\Connector;
@@ -18,6 +16,7 @@ use RuntimeException;
 use React\SocketClient\ConnectorInterface;
 use React\Dns\Resolver\Resolver;
 use React\Promise;
+use Clue\React\Buzz\Message\MessageFactory;
 
 class Sender
 {
@@ -100,7 +99,14 @@ class Sender
         $this->http = $http;
     }
 
-    public function send(RequestInterface $request)
+    /**
+     *
+     * @internal
+     * @param RequestInterface $request
+     * @param MessageFactory $messageFactory
+     * @return PromiseInterface Promise<ResponseInterface, Exception>
+     */
+    public function send(RequestInterface $request, MessageFactory $messageFactory)
     {
         $uri = $request->getUri();
 
@@ -129,28 +135,35 @@ class Sender
             $deferred->reject($error);
         });
 
-        $requestStream->on('response', function (ResponseStream $response) use ($deferred, $requestStream) {
+        $requestStream->on('response', function (ResponseStream $responseStream) use ($deferred, $requestStream, $messageFactory) {
+            // apply response header values from response stream
+            $response = $messageFactory->response(
+                $responseStream->getVersion(),
+                $responseStream->getCode(),
+                $responseStream->getReasonPhrase(),
+                $responseStream->getHeaders()
+            );
+
+            // keep buffering body until end of stream
             $bodyBuffer = '';
-            $response->on('data', function ($data) use (&$bodyBuffer) {
+            $responseStream->on('data', function ($data) use (&$bodyBuffer) {
                 $bodyBuffer .= $data;
-                // progress
             });
 
-            $response->on('end', function ($error = null) use ($deferred, $response, &$bodyBuffer) {
+            $responseStream->on('end', function ($error = null) use ($deferred, &$bodyBuffer, $response, $messageFactory) {
                 if ($error !== null) {
                     $deferred->reject($error);
                 } else {
-                    $deferred->resolve(new Response(
-                        'HTTP/' . $response->getVersion(),
-                        $response->getCode(),
-                        $response->getReasonPhrase(),
-                        new Headers($response->getHeaders()),
-                        new Body($bodyBuffer)
-                    ));
+                    $deferred->resolve(
+                        $response->withBody(
+                            $messageFactory->body($bodyBuffer)
+                        )
+                    );
+                    $bodyBuffer = '';
                 }
             });
 
-            $deferred->progress(array('responseStream' => $response, 'requestStream' => $requestStream));
+            $deferred->progress(array('responseStream' => $responseStream, 'requestStream' => $requestStream));
         });
 
         $requestStream->end($body);

@@ -1,13 +1,15 @@
 <?php
 
-use Clue\React\Buzz\Message\Response;
 use Clue\React\Buzz\Message\ResponseException;
+use RingCentral\Psr7\Response;
 
 class ResponseExceptionTest extends TestCase
 {
     public function testCtorDefaults()
     {
-        $response = new Response('HTTP/1.0', 404, 'File not found');
+        $response = new Response();
+        $response = $response->withStatus(404, 'File not found');
+
         $e = new ResponseException($response);
 
         $this->assertEquals(404, $e->getCode());

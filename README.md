@@ -42,8 +42,7 @@ mess with most of the low-level details.
     * [withBase()](#withbase)
     * [withoutBase()](#withoutbase)
     * [resolve()](#resolve)
-  * [Message](#message)
-  * [Response](#response)
+  * [ResponseInterface](#responseinterface)
   * [RequestInterface](#requestinterface)
   * [UriInterface](#uriinterface)
   * [ResponseException](#responseexception)
@@ -67,8 +66,8 @@ HTTP webserver and send some simple HTTP GET requests:
 $loop = React\EventLoop\Factory::create();
 $client = new Browser($loop);
 
-$client->get('http://www.google.com/')->then(function (Response $result) {
-    var_dump($result->getHeaders(), $result->getBody());
+$client->get('http://www.google.com/')->then(function (ResponseInterface $response) {
+    var_dump($response->getHeaders(), (string)$response->getBody());
 });
 
 $loop->run();
@@ -107,19 +106,19 @@ $browser->patch($url, array $headers = array(), $content = '');
 
 If you need a custom HTTP protocol method, you can use the [`send()`](#send) method.
 
-Each of the above methods supports async operation and either *resolves* with a [`Response`](#response) or
+Each of the above methods supports async operation and either *resolves* with a [`ResponseInterface`](#responseinterface) or
 *rejects* with an `Exception`.
 Please see the following chapter about [promises](#promises) for more details.
 
 #### Promises
 
 Sending requests is async (non-blocking), so you can actually send multiple requests in parallel.
-The `Browser` will respond to each request with a [`Response`](#response) message, the order is not guaranteed.
+The `Browser` will respond to each request with a [`ResponseInterface`](#responseinterface) message, the order is not guaranteed.
 Sending requests uses a [Promise](https://github.com/reactphp/promise)-based interface that makes it easy to react to when a transaction is fulfilled (i.e. either successfully resolved or rejected with an error):
 
 ```php
 $browser->get($url)->then(
-    function ($response) {
+    function (ResponseInterface $response) {
         var_dump('Response received', $response);
     },
     function (Exception $error) {
@@ -281,19 +280,15 @@ This uses the excellent [rize/uri-template](https://github.com/rize/UriTemplate)
 Please refer to [its documentation](https://github.com/rize/UriTemplate#usage) or
 [RFC 6570](http://tools.ietf.org/html/rfc6570) for more details.
 
-### Message
+### ResponseInterface
 
-The `Message` is an abstract base class for the [`Response`](#response).
-It provides a common interface for this message type.
+The `Psr\Http\Message\ResponseInterface` represents the incoming response received from the [`Browser`](#browser).
 
-See its [class outline](src/Message/Message.php) for more details.
-
-### Response
-
-The `Response` value object represents the incoming response received from the [`Browser`](#browser).
-It shares all properties of the [`Message`](#message) parent class.
-
-See its [class outline](src/Message/Response.php) for more details.
+This is a standard interface defined in [PSR-7: HTTP message interfaces]
+(http://www.php-fig.org/psr/psr-7/), see its [`ResponseInterface` definition]
+(http://www.php-fig.org/psr/psr-7/#3-3-psr-http-message-responseinterface)
+which in turn extends the [`MessageInterface` definition]
+(http://www.php-fig.org/psr/psr-7/#3-1-psr-http-message-messageinterface).
 
 ### RequestInterface
 
@@ -322,7 +317,7 @@ You can control this behavior via the ["obeySuccessCode" option](#options).
 
 The `getCode()` method can be used to return the HTTP response status code.
 
-The `getResponse()` method can be used to access its underlying [`Response`](#response) object.
+The `getResponse()` method can be used to access its underlying [`ResponseInteface`](#responseinterface) object.
 
 ## Advanced
 
@@ -330,7 +325,7 @@ The `getResponse()` method can be used to access its underlying [`Response`](#re
 
 The `Sender` is responsible for passing the [`RequestInterface`](#requestinterface) objects to
 the underlying [`HttpClient`](https://github.com/reactphp/http-client) library
-and keeps track of its transmission and converts its reponses back to [`Response`](#response) objects.
+and keeps track of its transmission and converts its reponses back to [`ResponseInterface`](#responseinterfae) objects.
 
 It also registers everything with the main [`EventLoop`](https://github.com/reactphp/event-loop#usage)
 and the default [`Connector`](https://github.com/reactphp/socket-client) and [DNS `Resolver`](https://github.com/reactphp/dns).

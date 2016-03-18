@@ -46,7 +46,7 @@ class SenderTest extends TestCase
 
         $request = new Request('GET', 'http://www.google.com/');
 
-        $promise = $sender->send($request);
+        $promise = $sender->send($request, $this->getMock('Clue\React\Buzz\Message\MessageFactory'));
 
         $this->setExpectedException('RuntimeException');
         Block\await($promise, $this->loop);

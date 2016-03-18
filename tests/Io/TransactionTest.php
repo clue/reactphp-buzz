@@ -1,8 +1,8 @@
 <?php
 
 use Clue\React\Buzz\Io\Transaction;
-use Clue\React\Buzz\Message\Response;
 use Clue\React\Buzz\Message\ResponseException;
+use RingCentral\Psr7\Response;
 use Clue\React\Buzz\Message\MessageFactory;
 use React\Promise;
 use Clue\React\Block;
@@ -12,7 +12,7 @@ class TransactionTest extends TestCase
     public function testReceivingErrorResponseWillRejectWithResponseException()
     {
         $request = $this->getMock('Psr\Http\Message\RequestInterface');
-        $response = new Response('HTTP/1.0', 404, 'File not found');
+        $response = new Response(404);
 
         // mock sender to resolve promise with the given $response in response to the given $request
         $sender = $this->getMockBuilder('Clue\React\Buzz\Io\Sender')->disableOriginalConstructor()->getMock();
