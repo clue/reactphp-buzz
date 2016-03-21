@@ -51,6 +51,7 @@ mess with most of the low-level details.
 * [Advanced](#advanced)
   * [Sender](#sender)
   * [DNS](#dns)
+  * [Connection options](#connection-options)
   * [SOCKS proxy](#socks-proxy)
   * [UNIX domain sockets](#unix-domain-sockets)
   * [Options](#options)
@@ -394,6 +395,50 @@ $browser = $browser->withSender($sender);
 ```
 
 See also [`Browser::withSender()`](#withsender) for more details.
+
+### Connection options
+
+If you need custom connector settings (DNS resolution, SSL/TLS parameters, timeouts etc.), you can explicitly pass a
+custom instance of the [`ConnectorInterface`](https://github.com/reactphp/socket-client#connectorinterface).
+
+The below examples assume you've installed the latest SocketClient version:
+
+```bash
+$ composer require react/socket-client:^0.5
+```
+
+You can optionally pass additional
+[socket context options](http://php.net/manual/en/context.socket.php)
+to the constructor like this:
+
+```php
+// use local DNS server
+$dnsResolverFactory = new DnsFactory();
+$resolver = $dnsResolverFactory->createCached('127.0.0.1', $loop);
+
+// outgoing connections via interface 192.168.10.1
+$tcp = new DnsConnector(
+    new TcpConnector($loop, array('bindto' => '192.168.10.1:0')),
+    $resolver
+);
+
+$sender = Sender::createFromLoopConnectors($loop, $tcp);
+$browser = $browser->withSender($sender);
+```
+
+You can optionally pass additional
+[SSL context options](http://php.net/manual/en/context.ssl.php)
+to the constructor like this:
+
+```php
+$ssl = new SecureConnector($tcp, $loop, array(
+    'verify_peer' => false,
+    'verify_peer_name' => false
+));
+
+$sender = Sender::createFromLoopConnectors($loop, $tcp, $ssl);
+$browser = $browser->withSender($sender);
+```
 
 ### SOCKS proxy
 
