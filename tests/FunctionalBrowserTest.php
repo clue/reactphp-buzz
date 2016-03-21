@@ -63,6 +63,10 @@ class FunctionalBrowserTest extends TestCase
 
     public function testCanAccessHttps()
     {
+        if (!function_exists('stream_socket_enable_crypto')) {
+            $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
+        }
+
         $this->expectPromiseResolve($this->browser->get('https://www.google.com/'));
 
         $this->loop->run();
@@ -70,6 +74,10 @@ class FunctionalBrowserTest extends TestCase
 
     public function testVerifyPeerEnabledForBadSslRejects()
     {
+        if (!function_exists('stream_socket_enable_crypto')) {
+            $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
+        }
+
         if (!class_exists('React\SocketClient\TcpConnector')) {
             $this->markTestSkipped('Test requires SocketClient:0.5');
         }
@@ -92,6 +100,10 @@ class FunctionalBrowserTest extends TestCase
 
     public function testVerifyPeerDisabledForBadSslResolves()
     {
+        if (!function_exists('stream_socket_enable_crypto')) {
+            $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
+        }
+
         if (!class_exists('React\SocketClient\TcpConnector')) {
             $this->markTestSkipped('Test requires SocketClient:0.5');
         }
