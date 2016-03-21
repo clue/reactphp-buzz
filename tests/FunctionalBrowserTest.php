@@ -61,6 +61,13 @@ class FunctionalBrowserTest extends TestCase
         $this->loop->run();
     }
 
+    public function testCanAccessHttps()
+    {
+        $this->expectPromiseResolve($this->browser->get('https://www.google.com/'));
+
+        $this->loop->run();
+    }
+
     public function testVerifyPeerEnabledForBadSslRejects()
     {
         if (!class_exists('React\SocketClient\TcpConnector')) {
