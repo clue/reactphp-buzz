@@ -19,8 +19,11 @@
         "react/http-client": "0.3.*|0.4.*",
         "react/socket-client": "^0.5 || ^0.4 || ^0.3",
         "react/dns": "0.3.*|0.4.*",
-        "react/promise": "1.*|2.*",
+        "react/promise": "^2 || ^1.1",
         "rize/uri-template": "~0.3.0",
         "ml/iri": "~1.0"
+    },
+    "require-dev": {
+        "clue/block-react": "~1.0"
     }
 }

@@ -1,8 +1,9 @@
 <?php
 
 use Clue\React\Buzz\Io\Sender;
-use React\Promise\Deferred;
 use Clue\React\Buzz\Message\Request;
+use React\Promise;
+use Clue\React\Block;
 
 class SenderTest extends TestCase
 {
@@ -39,7 +40,7 @@ class SenderTest extends TestCase
     public function testSenderRejection()
     {
         $connector = $this->getMock('React\SocketClient\ConnectorInterface');
-        $connector->expects($this->once())->method('create')->will($this->returnValue($this->createRejected(new RuntimeException('Rejected'))));
+        $connector->expects($this->once())->method('create')->willReturn(Promise\reject(new RuntimeException('Rejected')));
 
         $sender = Sender::createFromLoopConnectors($this->loop, $connector);
 
@@ -47,13 +48,7 @@ class SenderTest extends TestCase
 
         $promise = $sender->send($request);
 
-        $this->expectPromiseReject($promise);
-    }
-
-    private function createRejected($value)
-    {
-        $deferred = new Deferred();
-        $deferred->reject($value);
-        return $deferred->promise();
+        $this->setExpectedException('RuntimeException');
+        Block\await($promise, $this->loop);
     }
 }

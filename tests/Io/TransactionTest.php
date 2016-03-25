@@ -2,6 +2,9 @@
 
 use Clue\React\Buzz\Io\Transaction;
 use Clue\React\Buzz\Message\Response;
+use Clue\React\Buzz\Message\ResponseException;
+use React\Promise;
+use Clue\React\Block;
 
 class TransactionTest extends TestCase
 {
@@ -12,16 +15,17 @@ class TransactionTest extends TestCase
 
         // mock sender to resolve promise with the given $response in response to the given $request
         $sender = $this->getMockBuilder('Clue\React\Buzz\Io\Sender')->disableOriginalConstructor()->getMock();
-        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->will($this->returnValue($this->createPromiseResolved($response)));
+        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(Promise\resolve($response));
 
         $transaction = new Transaction($request, $sender);
         $promise = $transaction->send();
 
-        $that = $this;
-        $this->expectPromiseReject($promise)->then(null, function ($exception) use ($that, $response) {
-            $that->assertInstanceOf('Clue\React\Buzz\Message\ResponseException', $exception);
-            $that->assertEquals(404, $exception->getCode());
-            $that->assertSame($response, $exception->getResponse());
-        });
+        try {
+            Block\await($promise, $this->getMock('React\EventLoop\LoopInterface'));
+            $this->fail();
+        } catch (ResponseException $exception) {
+            $this->assertEquals(404, $exception->getCode());
+            $this->assertSame($response, $exception->getResponse());
+        }
     }
 }
