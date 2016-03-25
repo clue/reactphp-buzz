@@ -2,6 +2,7 @@
 
 use Clue\React\Buzz\Io\UnixConnector;
 use React\EventLoop\Factory as LoopFactory;
+use Clue\React\Block;
 
 class UnixConnectorTest extends TestCase
 {
@@ -14,7 +15,8 @@ class UnixConnectorTest extends TestCase
 
         $promise = $connector->create('localhost', 80);
 
-        $this->expectPromiseReject($promise);
+        $this->setExpectedException('RuntimeException');
+        Block\await($promise, $loop);
     }
 
     public function testValid()
@@ -33,7 +35,9 @@ class UnixConnectorTest extends TestCase
 
         $promise = $connector->create('localhost', 80);
 
-        $this->expectPromiseResolve($promise);
+        $stream = Block\await($promise, $loop);
+        /* @var $stream React\Stream\Stream */
+        $stream->close();
 
         fclose($server);
         unlink($path);

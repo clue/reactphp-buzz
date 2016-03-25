@@ -60,9 +60,7 @@ class FunctionalBrowserTest extends TestCase
             $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
         }
 
-        $this->expectPromiseResolve($this->browser->get('https://www.google.com/'));
-
-        $this->loop->run();
+        Block\await($this->browser->get('https://www.google.com/'), $this->loop);
     }
 
     public function testVerifyPeerEnabledForBadSslRejects()
@@ -86,9 +84,8 @@ class FunctionalBrowserTest extends TestCase
         $sender = Sender::createFromLoopConnectors($this->loop, $tcp, $ssl);
         $browser = $this->browser->withSender($sender);
 
-        $this->expectPromiseReject($browser->get('https://self-signed.badssl.com/'));
-
-        $this->loop->run();
+        $this->setExpectedException('RuntimeException');
+        Block\await($browser->get('https://self-signed.badssl.com/'), $this->loop);
     }
 
     public function testVerifyPeerDisabledForBadSslResolves()
@@ -112,9 +109,7 @@ class FunctionalBrowserTest extends TestCase
         $sender = Sender::createFromLoopConnectors($this->loop, $tcp, $ssl);
         $browser = $this->browser->withSender($sender);
 
-        $this->expectPromiseResolve($browser->get('https://self-signed.badssl.com/'));
-
-        $this->loop->run();
+        Block\await($browser->get('https://self-signed.badssl.com/'), $this->loop);
     }
 
     public function testInvalidPort()
