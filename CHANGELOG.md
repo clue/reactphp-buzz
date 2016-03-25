@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.2 (2016-03-25)
+
+* Support advanced connection options with newest SocketClient (TLS/HTTPS and socket options)
+  (#51 by @clue)
+
+* First class support for PHP 5.3 through PHP 7 and HHVM
+  (#52 by @clue)
+
 ## 0.4.1 (2015-09-05)
 
 * Fix: Replace URI placeholders before applying base URI, in order to avoid
@@ -7,11 +15,13 @@
   ([#48](https://github.com/clue/php-buzz-react/pull/48))
 
   ```php
-// returns "http://example.com/path" instead of "http://example.com//path"
+// now correctly returns "http://example.com/path"
+// instead of previous   "http://example.com//path"
 $browser = $browser->withBase('http://example.com/');
 echo $browser->resolve('{+path}', array('path' => '/path'));
 
-// returns "http://example.com/path?q=test" instead of "http://example.com/path/?q=test"
+// now correctly returns "http://example.com/path?q=test"
+// instead of previous   "http://example.com/path/?q=test"
 $browser = $browser->withBase('http://example.com/path');
 echo $browser->resolve('{?q}', array('q' => 'test'));
 ```
