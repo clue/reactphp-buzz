@@ -42,11 +42,9 @@ mess with most of the low-level details.
     * [withBase()](#withbase)
     * [withoutBase()](#withoutbase)
     * [resolve()](#resolve)
-  * [Message](#message)
-  * [Response](#response)
-  * [Request](#request)
-    * [getUri()](#geturi)
-  * [Uri](#uri)
+  * [ResponseInterface](#responseinterface)
+  * [RequestInterface](#requestinterface)
+  * [UriInterface](#uriinterface)
   * [ResponseException](#responseexception)
 * [Advanced](#advanced)
   * [Sender](#sender)
@@ -68,8 +66,8 @@ HTTP webserver and send some simple HTTP GET requests:
 $loop = React\EventLoop\Factory::create();
 $client = new Browser($loop);
 
-$client->get('http://www.google.com/')->then(function (Response $result) {
-    var_dump($result->getHeaders(), $result->getBody());
+$client->get('http://www.google.com/')->then(function (ResponseInterface $response) {
+    var_dump($response->getHeaders(), (string)$response->getBody());
 });
 
 $loop->run();
@@ -108,19 +106,19 @@ $browser->patch($url, array $headers = array(), $content = '');
 
 If you need a custom HTTP protocol method, you can use the [`send()`](#send) method.
 
-Each of the above methods supports async operation and either *resolves* with a [`Response`](#response) or
+Each of the above methods supports async operation and either *resolves* with a [`ResponseInterface`](#responseinterface) or
 *rejects* with an `Exception`.
 Please see the following chapter about [promises](#promises) for more details.
 
 #### Promises
 
 Sending requests is async (non-blocking), so you can actually send multiple requests in parallel.
-The `Browser` will respond to each request with a [`Response`](#response) message, the order is not guaranteed.
+The `Browser` will respond to each request with a [`ResponseInterface`](#responseinterface) message, the order is not guaranteed.
 Sending requests uses a [Promise](https://github.com/reactphp/promise)-based interface that makes it easy to react to when a transaction is fulfilled (i.e. either successfully resolved or rejected with an error):
 
 ```php
 $browser->get($url)->then(
-    function ($response) {
+    function (ResponseInterface $response) {
         var_dump('Response received', $response);
     },
     function (Exception $error) {
@@ -175,7 +173,8 @@ The `submit($url, array $fields, $headers = array(), $method = 'POST')` method c
 
 #### send()
 
-The `send(Request $request)` method can be used to send an arbitrary [`Request` object](#request).
+The `send(RequestInterface $request)` method can be used to send an arbitrary
+instance implementing the [`RequestInterface`](#requestinterface) (PSR-7).
 
 #### withOptions()
 
@@ -244,15 +243,11 @@ See also [`withBase()`](#withbase).
 
 #### resolve()
 
-The `resolve($uri, array $parameters = array())` method can be used to resolve the given relative URI to
-an absolute URI by appending it behind the configured base URI.
-It also replaces URI template placeholders with the given `$parameters`
-according to [RFC 6570](http://tools.ietf.org/html/rfc6570).
-It returns a new [`Uri`](#uri) instance which can then be passed
-to the [HTTP methods](#methods).
-
-URI template placeholders in the given URI string will be replaced according to
-[RFC 6570](http://tools.ietf.org/html/rfc6570):
+The `resolve($uri, array $parameters)` method can be used to replace URI
+template placeholders with the given `$parameters` according to
+[RFC 6570](http://tools.ietf.org/html/rfc6570).
+It returns a string URI which can
+then be passed to the [HTTP methods](#methods).
 
 ```php
 echo $browser->resolve('http://example.com/{?first,second,third}', array(
@@ -262,28 +257,22 @@ echo $browser->resolve('http://example.com/{?first,second,third}', array(
 // http://example.com/?first=a&third=c
 ```
 
-If you pass in a relative URI string, then it will be resolved relative to the
-configured base URI.
-Please note that this merely prepends the base URI and does *not* resolve any
-relative path references (like `../` etc.).
-This is mostly useful for API calls where all endpoints (URIs) are located
+If you pass in a relative URI string, then it will also return a relative URI
+string.
+Please note that this method only proccesses URI template placeholders and does not
+take relative path referencess (such as `../` etc.) or the base URI into account.
+
+This ofen makes sense for API calls where all endpoints (URIs) are located
 under a common base URI:
 
 ```php
-$newBrowser = $browser->withBase('http://api.example.com/v3');
+$browser = $browser->withBase('http://api.example.com/v3');
 
-echo $newBrowser->resolve('/example');
-// http://api.example.com/v3/example
-```
-
-The URI template placeholders can also be combined with a base URI like this:
-
-```php
-echo $newBrowser->resolve('/fetch{/file}{?version,tag}', array(
+$browser->get($browser->resolve('/fetch{/file}{?version,tag}', array(
     'file' => 'example',
     'version' => 1.0,
     'tag' => 'just testing'
-));
+)));
 // http://api.example.com/v3/fetch/example?version=1.0&tag=just%20testing
 ```
 
@@ -291,68 +280,33 @@ This uses the excellent [rize/uri-template](https://github.com/rize/UriTemplate)
 Please refer to [its documentation](https://github.com/rize/UriTemplate#usage) or
 [RFC 6570](http://tools.ietf.org/html/rfc6570) for more details.
 
-Trying to resolve anything that does not live under the same base URI will
-result in an `UnexpectedValueException`:
+### ResponseInterface
 
-```php
-$newBrowser->resolve('http://www.example.com/');
-// throws UnexpectedValueException
-```
+The `Psr\Http\Message\ResponseInterface` represents the incoming response received from the [`Browser`](#browser).
 
-Similarily, if you do not have a base URI configured, passing a relative URI
-will result in an `InvalidArgumentException`:
+This is a standard interface defined in [PSR-7: HTTP message interfaces]
+(http://www.php-fig.org/psr/psr-7/), see its [`ResponseInterface` definition]
+(http://www.php-fig.org/psr/psr-7/#3-3-psr-http-message-responseinterface)
+which in turn extends the [`MessageInterface` definition]
+(http://www.php-fig.org/psr/psr-7/#3-1-psr-http-message-messageinterface).
 
-```php
-$browser->resolve('/example');
-// throws InvalidArgumentException
-```
+### RequestInterface
 
-### Message
+The `Psr\Http\Message\RequestInterface` represents the outgoing request to be sent via the [`Browser`](#browser).
 
-The `Message` is an abstract base class for the [`Response`](#response) and [`Request`](#request).
-It provides a common interface for these message types.
+This is a standard interface defined in [PSR-7: HTTP message interfaces]
+(http://www.php-fig.org/psr/psr-7/), see its [`RequestInterface` definition]
+(http://www.php-fig.org/psr/psr-7/#3-2-psr-http-message-requestinterface)
+which in turn extends the [`MessageInterface` definition]
+(http://www.php-fig.org/psr/psr-7/#3-1-psr-http-message-messageinterface).
 
-See its [class outline](src/Message/Message.php) for more details.
+### UriInterface
 
-### Response
+The `Psr\Http\Message\UriInterface` represents an absolute or relative URI (aka URL).
 
-The `Response` value object represents the incoming response received from the [`Browser`](#browser).
-It shares all properties of the [`Message`](#message) parent class.
-
-See its [class outline](src/Message/Response.php) for more details.
-
-### Request
-
-The `Request` value object represents the outgoing request to be sent via the [`Browser`](#browser).
-It shares all properties of the [`Message`](#message) parent class.
-
-See its [class outline](src/Message/Request.php) for more details.
-
-#### getUri()
-
-The `getUri()` method can be used to get its [`Uri`](#uri) instance.
-
-### Uri
-
-An `Uri` represents an absolute URI (aka URL).
-
-By definition of this library, an `Uri` instance is always absolute and can not contain any placeholders.
-As such, any incomplete/relative URI will be rejected with an `InvalidArgumentException`.
-
-Each [`Request`](#request) contains a (full) absolute request URI.
-
-```
-$request = new Request('GET', 'http://www.google.com/');
-$uri = $request->getUri();
-
-assert('http' == $uri->getScheme());
-assert('www.google.com' == $uri->getHost());
-assert('/' == $uri->getPath());
-```
-
-See its [class outline](src/Message/Uri.php) for more details.
-
-Internally, this class uses the excellent [ml/iri](https://github.com/lanthaler/IRI) library under the hood.
+This is a standard interface defined in [PSR-7: HTTP message interfaces]
+(http://www.php-fig.org/psr/psr-7/), see its [`UriInterface` definition]
+(http://www.php-fig.org/psr/psr-7/#3-5-psr-http-message-uriinterface).
 
 ### ResponseException
 
@@ -363,15 +317,15 @@ You can control this behavior via the ["obeySuccessCode" option](#options).
 
 The `getCode()` method can be used to return the HTTP response status code.
 
-The `getResponse()` method can be used to access its underlying [`Response`](#response) object.
+The `getResponse()` method can be used to access its underlying [`ResponseInteface`](#responseinterface) object.
 
 ## Advanced
 
 ### Sender
 
-The `Sender` is responsible for passing the [`Request`](#request) objects to
+The `Sender` is responsible for passing the [`RequestInterface`](#requestinterface) objects to
 the underlying [`HttpClient`](https://github.com/reactphp/http-client) library
-and keeps track of its transmission and converts its reponses back to [`Response`](#response) objects.
+and keeps track of its transmission and converts its reponses back to [`ResponseInterface`](#responseinterfae) objects.
 
 It also registers everything with the main [`EventLoop`](https://github.com/reactphp/event-loop#usage)
 and the default [`Connector`](https://github.com/reactphp/socket-client) and [DNS `Resolver`](https://github.com/reactphp/dns).

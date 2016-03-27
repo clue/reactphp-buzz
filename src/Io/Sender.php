@@ -3,13 +3,11 @@
 namespace Clue\React\Buzz\Io;
 
 use React\HttpClient\Client as HttpClient;
-use Clue\React\Buzz\Message\Request;
-use Clue\React\Buzz\Message\Response;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 use React\HttpClient\Request as RequestStream;
 use React\HttpClient\Response as ResponseStream;
 use React\Promise\Deferred;
-use Clue\React\Buzz\Message\Headers;
-use Clue\React\Buzz\Message\Body;
 use React\EventLoop\LoopInterface;
 use React\Dns\Resolver\Factory as ResolverFactory;
 use React\SocketClient\Connector;
@@ -17,6 +15,8 @@ use React\SocketClient\SecureConnector;
 use RuntimeException;
 use React\SocketClient\ConnectorInterface;
 use React\Dns\Resolver\Resolver;
+use React\Promise;
+use Clue\React\Buzz\Message\MessageFactory;
 
 class Sender
 {
@@ -99,49 +99,74 @@ class Sender
         $this->http = $http;
     }
 
-    public function send(Request $request)
+    /**
+     *
+     * @internal
+     * @param RequestInterface $request
+     * @param MessageFactory $messageFactory
+     * @return PromiseInterface Promise<ResponseInterface, Exception>
+     */
+    public function send(RequestInterface $request, MessageFactory $messageFactory)
     {
-        $body = $request->getBody();
-        $headers = $request->getHeaders()->getAll();
+        $uri = $request->getUri();
+
+        // URIs are required to be absolute for the HttpClient to work
+        if ($uri->getScheme() === '' || $uri->getHost() === '') {
+            return Promise\reject(new \InvalidArgumentException('Sending request requires absolute URI with scheme and host'));
+        }
+
+        $body = (string)$request->getBody();
 
         // automatically assign a Content-Length header if the body is not empty
-        if (!$body->isEmpty() && $request->getHeader('Content-Length') === null) {
-            $headers['Content-Length'] = $body->getLength();
+        if ($body !== '' && $request->hasHeader('Content-Length') !== null) {
+            $request = $request->withHeader('Content-Length', strlen($body));
+        }
+
+        $headers = array();
+        foreach ($request->getHeaders() as $name => $values) {
+            $headers[$name] = implode(', ', $values);
         }
 
         $deferred = new Deferred();
 
-        $requestStream = $this->http->request($request->getMethod(), (string)$request->getUri(), $headers);
+        $requestStream = $this->http->request($request->getMethod(), (string)$uri, $headers);
 
         $requestStream->on('error', function($error) use ($deferred) {
             $deferred->reject($error);
         });
 
-        $requestStream->on('response', function (ResponseStream $response) use ($deferred, $requestStream) {
+        $requestStream->on('response', function (ResponseStream $responseStream) use ($deferred, $requestStream, $messageFactory) {
+            // apply response header values from response stream
+            $response = $messageFactory->response(
+                $responseStream->getVersion(),
+                $responseStream->getCode(),
+                $responseStream->getReasonPhrase(),
+                $responseStream->getHeaders()
+            );
+
+            // keep buffering body until end of stream
             $bodyBuffer = '';
-            $response->on('data', function ($data) use (&$bodyBuffer) {
+            $responseStream->on('data', function ($data) use (&$bodyBuffer) {
                 $bodyBuffer .= $data;
-                // progress
             });
 
-            $response->on('end', function ($error = null) use ($deferred, $response, &$bodyBuffer) {
+            $responseStream->on('end', function ($error = null) use ($deferred, &$bodyBuffer, $response, $messageFactory) {
                 if ($error !== null) {
                     $deferred->reject($error);
                 } else {
-                    $deferred->resolve(new Response(
-                        'HTTP/' . $response->getVersion(),
-                        $response->getCode(),
-                        $response->getReasonPhrase(),
-                        new Headers($response->getHeaders()),
-                        new Body($bodyBuffer)
-                    ));
+                    $deferred->resolve(
+                        $response->withBody(
+                            $messageFactory->body($bodyBuffer)
+                        )
+                    );
+                    $bodyBuffer = '';
                 }
             });
 
-            $deferred->progress(array('responseStream' => $response, 'requestStream' => $requestStream));
+            $deferred->progress(array('responseStream' => $responseStream, 'requestStream' => $requestStream));
         });
 
-        $requestStream->end((string)$body);
+        $requestStream->end($body);
 
         return $deferred->promise();
     }

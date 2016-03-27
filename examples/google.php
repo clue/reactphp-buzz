@@ -1,23 +1,23 @@
 <?php
 
 use Clue\React\Buzz\Browser;
-use Clue\React\Buzz\Message\Response;
+use Psr\Http\Message\ResponseInterface;
 
 require __DIR__ . '/../vendor/autoload.php';
 
 $loop = React\EventLoop\Factory::create();
 $client = new Browser($loop);
 
-$client->head('http://www.github.com/clue/http-react')->then(function (Response $result) {
-    var_dump($result->getHeaders(), $result->getBody());
+$client->head('http://www.github.com/clue/http-react')->then(function (ResponseInterface $result) {
+    var_dump($result->getHeaders(), (string)$result->getBody());
 });
 
-$client->get('http://google.com/')->then(function (Response $response) {
-    var_dump($response->getHeaders(), $response->getBody());
+$client->get('http://google.com/')->then(function (ResponseInterface $response) {
+    var_dump($response->getHeaders(), (string)$response->getBody());
 });
 
-$client->get('http://www.lueck.tv/psocksd')->then(function (Response $response) {
-    var_dump($response->getHeaders(), $response->getBody());
+$client->get('http://www.lueck.tv/psocksd')->then(function (ResponseInterface $response) {
+    var_dump($response->getHeaders(), (string)$response->getBody());
 });
 
 $loop->run();

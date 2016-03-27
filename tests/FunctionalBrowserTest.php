@@ -126,8 +126,8 @@ class FunctionalBrowserTest extends TestCase
         } catch (ResponseException $e) {
             $this->assertEquals(404, $e->getCode());
 
-            $this->assertInstanceOf('Clue\React\Buzz\Message\Response', $e->getResponse());
-            $this->assertEquals(404, $e->getResponse()->getCode());
+            $this->assertInstanceOf('Psr\Http\Message\ResponseInterface', $e->getResponse());
+            $this->assertEquals(404, $e->getResponse()->getStatusCode());
         }
     }
 }

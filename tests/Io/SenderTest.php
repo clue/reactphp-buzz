@@ -1,7 +1,7 @@
 <?php
 
 use Clue\React\Buzz\Io\Sender;
-use Clue\React\Buzz\Message\Request;
+use RingCentral\Psr7\Request;
 use React\Promise;
 use Clue\React\Block;
 
@@ -46,7 +46,7 @@ class SenderTest extends TestCase
 
         $request = new Request('GET', 'http://www.google.com/');
 
-        $promise = $sender->send($request);
+        $promise = $sender->send($request, $this->getMock('Clue\React\Buzz\Message\MessageFactory'));
 
         $this->setExpectedException('RuntimeException');
         Block\await($promise, $this->loop);
