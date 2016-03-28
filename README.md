@@ -41,7 +41,6 @@ mess with most of the low-level details.
     * [withSender()](#withsender)
     * [withBase()](#withbase)
     * [withoutBase()](#withoutbase)
-    * [resolve()](#resolve)
   * [ResponseInterface](#responseinterface)
   * [RequestInterface](#requestinterface)
   * [UriInterface](#uriinterface)
@@ -226,8 +225,6 @@ under a common base URI scheme.
 $newBrowser->get('/example')->then(…);
 ```
 
-See also [`resolve()`](#resolve).
-
 #### withoutBase()
 
 The `withoutBase()` method can be used to remove the base URI.
@@ -240,45 +237,6 @@ Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withoutB
 actually returns a *new* [`Browser`](#browser) instance without any base URI applied.
 
 See also [`withBase()`](#withbase).
-
-#### resolve()
-
-The `resolve($uri, array $parameters)` method can be used to replace URI
-template placeholders with the given `$parameters` according to
-[RFC 6570](http://tools.ietf.org/html/rfc6570).
-It returns a string URI which can
-then be passed to the [HTTP methods](#methods).
-
-```php
-echo $browser->resolve('http://example.com/{?first,second,third}', array(
-    'first' => 'a',
-    'third' => 'c'
-));
-// http://example.com/?first=a&third=c
-```
-
-If you pass in a relative URI string, then it will also return a relative URI
-string.
-Please note that this method only proccesses URI template placeholders and does not
-take relative path referencess (such as `../` etc.) or the base URI into account.
-
-This ofen makes sense for API calls where all endpoints (URIs) are located
-under a common base URI:
-
-```php
-$browser = $browser->withBase('http://api.example.com/v3');
-
-$browser->get($browser->resolve('/fetch{/file}{?version,tag}', array(
-    'file' => 'example',
-    'version' => 1.0,
-    'tag' => 'just testing'
-)));
-// http://api.example.com/v3/fetch/example?version=1.0&tag=just%20testing
-```
-
-This uses the excellent [rize/uri-template](https://github.com/rize/UriTemplate) library under the hood.
-Please refer to [its documentation](https://github.com/rize/UriTemplate#usage) or
-[RFC 6570](http://tools.ietf.org/html/rfc6570) for more details.
 
 ### ResponseInterface
 

@@ -28,43 +28,12 @@ class BrowserTest extends TestCase
         $this->assertNotSame($this->browser, $browser);
     }
 
-    public function testResolveAbsoluteWithoutPlaceholdersReturnsSame()
-    {
-        $this->assertEquals('http://example.com/', $this->browser->resolve('http://example.com/', array()));
-    }
-
-    public function testResolveRelativeWithoutPlaceholdersReturnsSame()
-    {
-        $this->assertEquals('example', $this->browser->resolve('example', array()));
-    }
-
     public function testWithBase()
     {
         $browser = $this->browser->withBase('http://example.com/root');
 
         $this->assertInstanceOf('Clue\React\Buzz\Browser', $browser);
         $this->assertNotSame($this->browser, $browser);
-    }
-
-    public function testResolveUriTemplateQueryStringWithLeadingSlash()
-    {
-        $this->assertEquals('/?q=test', $this->browser->resolve('/{?q}', array('q' => 'test')));
-    }
-
-    public function testResolveUriTemplateQueryStringOnly()
-    {
-        $this->assertEquals('?q=test', $this->browser->resolve('{?q}', array('q' => 'test')));
-    }
-
-    public function testResolveUriTemplateAbsolute()
-    {
-        $this->assertEquals('http://example.com/?q=test', $this->browser->resolve('http://example.com/{?q}', array('q' => 'test')));
-    }
-
-    public function testResolveUriTemplatePath()
-    {
-        $this->assertEquals('test', $this->browser->resolve('{+path}', array('path' => 'test')));
-        $this->assertEquals('/test', $this->browser->resolve('{+path}', array('path' => '/test')));
     }
 
     public function provideOtherUris()
