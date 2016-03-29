@@ -72,4 +72,25 @@ class MessageFactoryTest extends TestCase
 
         $this->assertEquals('http://www.example.com/', $this->messageFactory->uriRelative($base, $this->messageFactory->uri('http://www.example.com/')));
     }
+
+    public function testBodyString()
+    {
+        $body = $this->messageFactory->body('hi');
+
+        $this->assertInstanceOf('Psr\Http\Message\StreamInterface', $body);
+        $this->assertNotInstanceOf('React\Stream\ReadableStreamInterface', $body);
+        $this->assertEquals(2, $body->getSize());
+        $this->assertEquals('hi', (string)$body);
+    }
+
+    public function testBodyReadableStream()
+    {
+        $stream = $this->getMock('React\Stream\ReadableStreamInterface');
+        $body = $this->messageFactory->body($stream);
+
+        $this->assertInstanceOf('Psr\Http\Message\StreamInterface', $body);
+        $this->assertInstanceOf('React\Stream\ReadableStreamInterface', $body);
+        $this->assertEquals(null, $body->getSize());
+        $this->assertEquals('', (string)$body);
+    }
 }
