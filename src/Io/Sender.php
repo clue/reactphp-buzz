@@ -135,35 +135,15 @@ class Sender
             $deferred->reject($error);
         });
 
-        $requestStream->on('response', function (ResponseStream $responseStream) use ($deferred, $requestStream, $messageFactory) {
+        $requestStream->on('response', function (ResponseStream $responseStream) use ($deferred, $messageFactory) {
             // apply response header values from response stream
-            $response = $messageFactory->response(
+            $deferred->resolve($messageFactory->response(
                 $responseStream->getVersion(),
                 $responseStream->getCode(),
                 $responseStream->getReasonPhrase(),
-                $responseStream->getHeaders()
-            );
-
-            // keep buffering body until end of stream
-            $bodyBuffer = '';
-            $responseStream->on('data', function ($data) use (&$bodyBuffer) {
-                $bodyBuffer .= $data;
-            });
-
-            $responseStream->on('end', function ($error = null) use ($deferred, &$bodyBuffer, $response, $messageFactory) {
-                if ($error !== null) {
-                    $deferred->reject($error);
-                } else {
-                    $deferred->resolve(
-                        $response->withBody(
-                            $messageFactory->body($bodyBuffer)
-                        )
-                    );
-                    $bodyBuffer = '';
-                }
-            });
-
-            $deferred->progress(array('responseStream' => $responseStream, 'requestStream' => $requestStream));
+                $responseStream->getHeaders(),
+                $responseStream
+            ));
         });
 
         $requestStream->end($body);
