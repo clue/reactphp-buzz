@@ -35,6 +35,8 @@ class Transaction
     // context: http.ignore_errors
     private $obeySuccessCode = true;
 
+    private $streaming = false;
+
     public function __construct(RequestInterface $request, Sender $sender, array $options = array(), MessageFactory $messageFactory)
     {
         foreach ($options as $name => $value) {
@@ -60,11 +62,13 @@ class Transaction
         $that = $this;
         ++$this->numRequests;
 
-        return $this->sender->send($request, $this->messageFactory)->then(
-            function (ResponseInterface $response) use ($that) {
-                return $that->bufferResponse($response);
-            }
-        )->then(
+        $promise = $this->sender->send($request, $this->messageFactory);
+
+        if (!$this->streaming) {
+            $promise = $promise->then(array($that, 'bufferResponse'));
+        }
+
+        return $promise->then(
             function (ResponseInterface $response) use ($request, $that) {
                 return $that->onResponse($response, $request);
             },
