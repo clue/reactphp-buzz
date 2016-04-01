@@ -17,15 +17,15 @@ class MessageFactory
     /**
      * Creates a new instance of RequestInterface for the given request parameters
      *
-     * @param string              $method
-     * @param string|UriInterface $uri
-     * @param array               $headers
-     * @param string              $content
+     * @param string                         $method
+     * @param string|UriInterface            $uri
+     * @param array                          $headers
+     * @param string|ReadableStreamInterface $content
      * @return RequestInterface
      */
     public function request($method, $uri, $headers = array(), $content = '')
     {
-        return new Request($method, $uri, $headers, $content);
+        return new Request($method, $uri, $headers, $this->body($content));
     }
 
     /**

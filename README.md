@@ -262,6 +262,19 @@ $body->read(); // throws BadMethodCallException
 $body->getContents(); // throws BadMethodCallException
 ```
 
+Besides streaming the response body, you can also stream the request body.
+This can be useful if you want to send big POST requests (uploading files etc.)
+or process many outgoing streams at once.
+Instead of passing the body as a string, you can simply pass an instance
+implementing React's [`ReadableStreamInterface`](https://github.com/reactphp/stream#readablestreaminterface)
+to the [HTTP methods](#methods) like this:
+
+```php
+$browser->post($url, array(), $stream)->then(function (ResponseInterface $response) {
+    echo 'Successfully sent.';
+});
+```
+
 #### submit()
 
 The `submit($url, array $fields, $headers = array(), $method = 'POST')` method can be used to submit an array of field values similar to submitting a form (`application/x-www-form-urlencoded`).

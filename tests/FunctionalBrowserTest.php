@@ -9,6 +9,7 @@ use React\SocketClient\TcpConnector;
 use React\SocketClient\DnsConnector;
 use Clue\React\Buzz\Message\ResponseException;
 use Clue\React\Block;
+use React\Stream\ReadableStream;
 
 class FunctionalBrowserTest extends TestCase
 {
@@ -129,5 +130,54 @@ class FunctionalBrowserTest extends TestCase
             $this->assertInstanceOf('Psr\Http\Message\ResponseInterface', $e->getResponse());
             $this->assertEquals(404, $e->getResponse()->getStatusCode());
         }
+    }
+
+    public function testPostString()
+    {
+        $response = Block\await($this->browser->post($this->base . 'post', array(), 'hello world'), $this->loop);
+        $data = json_decode((string)$response->getBody(), true);
+
+        $this->assertEquals('hello world', $data['data']);
+    }
+
+    public function testPostStreamChunked()
+    {
+        $stream = new ReadableStream();
+
+        $this->loop->addTimer(0.001, function () use ($stream) {
+            $stream->emit('data', array('hello world'));
+            $stream->close();
+        });
+
+        $response = Block\await($this->browser->post($this->base . 'post', array(), $stream), $this->loop);
+        $data = json_decode((string)$response->getBody(), true);
+
+        $this->assertEquals('hello world', $data['data']);
+    }
+
+    public function testPostStreamKnownLength()
+    {
+        $stream = new ReadableStream();
+
+        $this->loop->addTimer(0.001, function () use ($stream) {
+            $stream->emit('data', array('hello world'));
+            $stream->close();
+        });
+
+        $response = Block\await($this->browser->post($this->base . 'post', array('Content-Length' => 11), $stream), $this->loop);
+        $data = json_decode((string)$response->getBody(), true);
+
+        $this->assertEquals('hello world', $data['data']);
+    }
+
+    public function testPostStreamClosed()
+    {
+        $stream = new ReadableStream();
+        $stream->close();
+
+        $response = Block\await($this->browser->post($this->base . 'post', array(), $stream), $this->loop);
+        $data = json_decode((string)$response->getBody(), true);
+
+        $this->assertEquals('', $data['data']);
     }
 }

@@ -17,6 +17,7 @@ use React\SocketClient\ConnectorInterface;
 use React\Dns\Resolver\Resolver;
 use React\Promise;
 use Clue\React\Buzz\Message\MessageFactory;
+use React\Stream\ReadableStreamInterface;
 
 class Sender
 {
@@ -115,11 +116,15 @@ class Sender
             return Promise\reject(new \InvalidArgumentException('Sending request requires absolute URI with scheme and host'));
         }
 
-        $body = (string)$request->getBody();
+        $body = $request->getBody();
 
-        // automatically assign a Content-Length header if the body is not empty
-        if ($body !== '' && $request->hasHeader('Content-Length') !== null) {
-            $request = $request->withHeader('Content-Length', strlen($body));
+        // automatically assign a Content-Length header if the body size is known
+        if ($body->getSize() !== null && $body->getSize() !== 0 && $request->hasHeader('Content-Length') !== null) {
+            $request = $request->withHeader('Content-Length', $body->getSize());
+        }
+
+        if ($body instanceof ReadableStreamInterface && $body->isReadable() && !$request->hasHeader('Content-Length')) {
+            $request = $request->withHeader('Transfer-Encoding', 'chunked');
         }
 
         $headers = array();
@@ -146,7 +151,29 @@ class Sender
             ));
         });
 
-        $requestStream->end($body);
+        if ($body instanceof ReadableStreamInterface) {
+            if ($body->isReadable()) {
+                if ($request->hasHeader('Content-Length')) {
+                    // length is known => just write to request
+                    $body->pipe($requestStream);
+                } else {
+                    // length unknown => apply chunked transfer-encoding
+                    // this should be moved somewhere else obviously
+                    $body->on('data', function ($data) use ($requestStream) {
+                        $requestStream->write(dechex(strlen($data)) . "\r\n" . $data . "\r\n");
+                    });
+                    $body->on('end', function() use ($requestStream) {
+                        $requestStream->end("0\r\n\r\n");
+                    });
+                }
+            } else {
+                // stream is not readable => end request without body
+                $requestStream->end();
+            }
+        } else {
+            // body is fully buffered => write as one chunk
+            $requestStream->end((string)$body);
+        }
 
         return $deferred->promise();
     }
