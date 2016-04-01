@@ -9,32 +9,26 @@ use Clue\React\Buzz\Message\Body;
 use Clue\React\Buzz\Message\Headers;
 use Clue\React\Buzz\Io\Sender;
 use Psr\Http\Message\UriInterface;
-use Rize\UriTemplate;
 use Clue\React\Buzz\Message\MessageFactory;
 
 class Browser
 {
     private $sender;
     private $loop;
-    private $uriTemplate;
     private $messageFactory;
     private $baseUri = null;
     private $options = array();
 
-    public function __construct(LoopInterface $loop, Sender $sender = null, UriTemplate $uriTemplate = null, MessageFactory $messageFactory = null)
+    public function __construct(LoopInterface $loop, Sender $sender = null, MessageFactory $messageFactory = null)
     {
         if ($sender === null) {
             $sender = Sender::createFromLoop($loop);
-        }
-        if ($uriTemplate === null) {
-            $uriTemplate = new UriTemplate();
         }
         if ($messageFactory === null) {
             $messageFactory = new MessageFactory();
         }
         $this->sender = $sender;
         $this->loop = $loop;
-        $this->uriTemplate = $uriTemplate;
         $this->messageFactory = $messageFactory;
     }
 
@@ -86,22 +80,6 @@ class Browser
         $transaction = new Transaction($request, $this->sender, $this->options, $this->messageFactory);
 
         return $transaction->send();
-    }
-
-    /**
-     * Resolves a relative or absolute URI by processing URI template placeholders according to RFC 6570
-     *
-     * You can either pass in a relative or absolute URI, which may or may not
-     * contain any number of URI template placeholders.
-     *
-     * @param string $uri        relative or absolute URI with URI template placeholders (RFC 6570)
-     * @param array  $parameters parameters for URI template placeholders
-     * @return string relative or absolute URI with URI template placeholders resolved according to RFC 6570
-     */
-    public function resolve($uri, array $parameters)
-    {
-        // only string URIs may contain URI template placeholders (RFC 6570)
-        return $this->uriTemplate->expand($uri, $parameters);
     }
 
     /**
