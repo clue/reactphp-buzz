@@ -10,6 +10,10 @@ use React\HttpClient\Client as HttpClient;
 use Clue\React\Buzz\Io\Sender;
 use Clue\React\Buzz\Message\ResponseException;
 use Clue\React\Buzz\Message\MessageFactory;
+use Clue\React\Buzz\Message\BufferedResponse;
+use React\Stream\BufferedSink;
+use React\Stream\ReadableStreamInterface;
+use React\Promise;
 
 /**
  * @internal
@@ -30,6 +34,8 @@ class Transaction
 
     // context: http.ignore_errors
     private $obeySuccessCode = true;
+
+    private $streaming = false;
 
     public function __construct(RequestInterface $request, Sender $sender, array $options = array(), MessageFactory $messageFactory)
     {
@@ -56,7 +62,13 @@ class Transaction
         $that = $this;
         ++$this->numRequests;
 
-        return $this->sender->send($request, $this->messageFactory)->then(
+        $promise = $this->sender->send($request, $this->messageFactory);
+
+        if (!$this->streaming) {
+            $promise = $promise->then(array($that, 'bufferResponse'));
+        }
+
+        return $promise->then(
             function (ResponseInterface $response) use ($request, $that) {
                 return $that->onResponse($response, $request);
             },
@@ -64,6 +76,27 @@ class Transaction
                 return $that->onError($error, $request);
             }
         );
+    }
+
+    /**
+     * @internal
+     * @param ResponseInterface $response
+     * @return PromiseInterface Promise<ResponseInterface, Exception>
+     */
+    public function bufferResponse(ResponseInterface $response)
+    {
+        $stream = $response->getBody();
+
+        // body is not streaming => already buffered
+        if (!$stream instanceof ReadableStreamInterface) {
+            return Promise\resolve($response);
+        }
+
+        // buffer stream and resolve with buffered body
+        $messageFactory = $this->messageFactory;
+        return BufferedSink::createPromise($stream)->then(function ($body) use ($response, $messageFactory) {
+            return $response->withBody($messageFactory->body($body));
+        });
     }
 
     /**

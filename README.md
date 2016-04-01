@@ -35,6 +35,7 @@ mess with most of the low-level details.
     * [Methods](#methods)
     * [Promises](#promises)
     * [Blocking](#blocking)
+    * [Streaming](#streaming)
     * [submit()](#submit)
     * [send()](#send)
     * [withOptions()](#withoptions)
@@ -52,7 +53,6 @@ mess with most of the low-level details.
   * [SOCKS proxy](#socks-proxy)
   * [UNIX domain sockets](#unix-domain-sockets)
   * [Options](#options)
-  * [Streaming](#streaming)
 * [Install](#install)
 * [License](#license)
 
@@ -128,6 +128,18 @@ $browser->get($url)->then(
 
 If this looks strange to you, you can also use the more traditional [blocking API](#blocking).
 
+Keep in mind that resolving the Promise with the full response message means the
+whole response body has to be kept in memory.
+This is easy to get started and works reasonably well for smaller responses
+(such as common HTML pages or RESTful or JSON API requests).
+
+You may also want to look into the [streaming API](#streaming):
+
+* If you're dealing with lots of concurrent requests (100+) or
+* If you want to process individual data chunks as they happen (without having to wait for the full response body) or
+* If you're expecting a big response body size (1 MiB or more, for example when downloading binary files) or
+* If you're unsure about the response body size (better be safe than sorry when accessing arbitrary remote HTTP endpoints and the response body size is unknown in advance). 
+
 #### Blocking
 
 As stated above, this library provides you a powerful, async API by default.
@@ -165,6 +177,102 @@ $responses = Block\awaitAll($promises, $loop);
 ```
 
 Please refer to [clue/block-react](https://github.com/clue/php-block-react#readme) for more details.
+
+Keep in mind the above remark about buffering the whole response message in memory.
+As an alternative, you may also see the following chapter for the
+[streaming API](#streaming).
+
+#### Streaming
+
+All of the above examples assume you want to store the whole response body in memory.
+This is easy to get started and works reasonably well for smaller responses.
+
+However, there are several situations where it's usually a better idea to use a
+streaming approach, where only small chunks have to be kept in memory:
+
+* If you're dealing with lots of concurrent requests (100+) or
+* If you want to process individual data chunks as they happen (without having to wait for the full response body) or
+* If you're expecting a big response body size (1 MiB or more, for example when downloading binary files) or
+* If you're unsure about the response body size (better be safe than sorry when accessing arbitrary remote HTTP endpoints and the response body size is unknown in advance). 
+
+The streaming API uses the same HTTP message API, but does not buffer the response
+message body in memory.
+It only processes the response body in small chunks as data is received and
+forwards this data through [React's Stream API](https://github.com/reactphp/stream).
+This works for (any number of) responses of arbitrary sizes.
+
+This resolves with a normal [`ResponseInterface`](#responseinterface), which
+can be used access the response message parameters as usual.
+You can access the message body as usual, however it now
+implements React's [`ReadableStreamInterface`](https://github.com/reactphp/stream#readablestreaminterface)
+as well as parts of the PSR-7's [`StreamInterface`](http://www.php-fig.org/psr/psr-7/#3-4-psr-http-message-streaminterface).
+
+```php
+// turn on streaming responses (does no longer buffer response body)
+$streamingBrowser = $browser->withOptions(array('streaming' => true));
+
+// issue a normal GET request
+$streamingBrowser->get($url)->then(function (ResponseInterface $response) {
+    $body = $response->getBody();
+    /* @var $body \React\Stream\ReadableStreamInterface */
+    
+    $body->on('data', function ($chunk) {
+        echo $chunk;
+    });
+    
+    $body->on('error', function (Exception $error) {
+        echo 'Error: ' . $error->getMessage() . PHP_EOL;
+    });
+    
+    $body->on('close', function () {
+        echo '[DONE]' . PHP_EOL;
+    });
+});
+```
+
+See also the [stream bandwith example](examples/stream-bandwidth.php) and
+the [stream forwarding example](examples/stream-forwarding.php).
+
+You can invoke the following methods on the message body:
+
+```php
+$body->on($event, $callback);
+$body->eof();
+$body->isReadable();
+$body->close();
+$body->pause();
+$body->resume();
+```
+
+Because the message body is in a streaming state, invoking the following methods
+doesn't make much sense:
+
+```php
+$body->__toString(); // ''
+$body->detach(); // throws BadMethodCallException
+$body->getSize(); // null
+$body->tell(); // throws BadMethodCallException
+$body->isSeekable(); // false
+$body->seek(); // throws BadMethodCallException
+$body->rewind(); // throws BadMethodCallException
+$body->isWritable(); // false
+$body->write(); // throws BadMethodCallException
+$body->read(); // throws BadMethodCallException
+$body->getContents(); // throws BadMethodCallException
+```
+
+Besides streaming the response body, you can also stream the request body.
+This can be useful if you want to send big POST requests (uploading files etc.)
+or process many outgoing streams at once.
+Instead of passing the body as a string, you can simply pass an instance
+implementing React's [`ReadableStreamInterface`](https://github.com/reactphp/stream#readablestreaminterface)
+to the [HTTP methods](#methods) like this:
+
+```php
+$browser->post($url, array(), $stream)->then(function (ResponseInterface $response) {
+    echo 'Successfully sent.';
+});
+```
 
 #### submit()
 
@@ -391,30 +499,13 @@ can be controlled via the following API (and their defaults):
 $newBrowser = $browser->withOptions(array(
     'followRedirects' => true,
     'maxRedirects' => 10,
-    'obeySuccessCode' => true
+    'obeySuccessCode' => true,
+    'streaming' => false,
 ));
 ```
 
 Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withOptions()` method
 actually returns a *new* [`Browser`](#browser) instance with the options applied.
-
-### Streaming
-
-Note: This API is subject to change.
-
-The [`Sender`](#sender) emits a `progress` event array on its `Promise` that can be used
-to intercept the underlying outgoing request stream (`React\HttpClient\Request` in the `requestStream` key)
-and the incoming response stream (`React\HttpClient\Response` in the `responseStream` key).
-
-```php
-$client->get('http://www.google.com/')->then($handler, null, function ($event) {
-    if (isset($event['responseStream'])) {
-        /* @var $stream React\HttpClient\Response */
-        $stream = $event['responseStream'];
-        $stream->on('data', function ($data) { });
-    }
-});
-```
 
 ## Install
 

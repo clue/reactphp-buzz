@@ -7,6 +7,7 @@ use RingCentral\Psr7\Uri;
 use RingCentral\Psr7\Response;
 use Psr\Http\Message\UriInterface;
 use RingCentral;
+use React\Stream\ReadableStreamInterface;
 
 /**
  * @internal
@@ -16,15 +17,15 @@ class MessageFactory
     /**
      * Creates a new instance of RequestInterface for the given request parameters
      *
-     * @param string              $method
-     * @param string|UriInterface $uri
-     * @param array               $headers
-     * @param string              $content
+     * @param string                         $method
+     * @param string|UriInterface            $uri
+     * @param array                          $headers
+     * @param string|ReadableStreamInterface $content
      * @return RequestInterface
      */
     public function request($method, $uri, $headers = array(), $content = '')
     {
-        return new Request($method, $uri, $headers, $content);
+        return new Request($method, $uri, $headers, $this->body($content));
     }
 
     /**
@@ -34,22 +35,27 @@ class MessageFactory
      * @param int    $status
      * @param string $reason
      * @param array  $headers
-     * @param string $body
+     * @param ReadableStreamInterface|string $body
      * @return ResponseInterface
+     * @uses self::body()
      */
     public function response($version, $status, $reason, $headers = array(), $body = '')
     {
-        return new Response($status, $headers, $body, $version, $reason);
+        return new Response($status, $headers, $this->body($body), $version, $reason);
     }
 
     /**
      * Creates a new instance of StreamInterface for the given body contents
      *
-     * @param string $body
+     * @param ReadableStreamInterface|string $body
      * @return StreamInterface
      */
     public function body($body)
     {
+        if ($body instanceof ReadableStreamInterface) {
+            return new ReadableBodyStream($body);
+        }
+
         return RingCentral\Psr7\stream_for($body);
     }
 
