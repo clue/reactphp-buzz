@@ -5,7 +5,8 @@ use React\HttpClient\Client as HttpClient;
 use React\EventLoop\Factory as LoopFactory;
 use Clue\React\Socks\Client as SocksClient;
 use Clue\React\Buzz\Browser;
-use Clue\React\Buzz\Message\Response;
+use Psr\Http\Message\ResponseInterface;
+use RingCentral\Psr7;
 
 require __DIR__ . '/vendor/autoload.php';
 
@@ -20,8 +21,8 @@ $sender = Sender::createFromLoopConnectors($loop, $socks->createConnector());
 $browser = new Browser($loop, $sender);
 
 // demo fetching HTTP headers (or bail out otherwise)
-$browser->head('https://www.google.com/')->then(function (Response $response) {
-    var_dump($response->getHeaders());
+$browser->get('https://www.google.com/')->then(function (ResponseInterface $response) {
+    echo Psr7\str($response);
 }, 'printf');
 
 $loop->run();

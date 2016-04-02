@@ -4,32 +4,35 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "d32e1e160ed935d14ddb8f6be78a9eea",
-    "content-hash": "5f6118827722eb85ed96c51ae2e8109d",
+    "hash": "03014b2d28812672402986b188b6a17b",
+    "content-hash": "bff2d4c7ede7c0b40374d082640c2c84",
     "packages": [
         {
             "name": "clue/buzz-react",
-            "version": "v0.4.2",
+            "version": "v0.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/clue/php-buzz-react.git",
-                "reference": "ad083574215bba7461a038d43a2b8a08c2d66e98"
+                "reference": "ae65feb2d15a9b0632b2b816c9037a6f6300f528"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/clue/php-buzz-react/zipball/ad083574215bba7461a038d43a2b8a08c2d66e98",
-                "reference": "ad083574215bba7461a038d43a2b8a08c2d66e98",
+                "url": "https://api.github.com/repos/clue/php-buzz-react/zipball/ae65feb2d15a9b0632b2b816c9037a6f6300f528",
+                "reference": "ae65feb2d15a9b0632b2b816c9037a6f6300f528",
                 "shasum": ""
             },
             "require": {
-                "ml/iri": "~1.0",
                 "php": ">=5.3",
+                "psr/http-message": "~1.0",
                 "react/dns": "0.3.*|0.4.*",
                 "react/event-loop": "0.3.*|0.4.*",
                 "react/http-client": "0.3.*|0.4.*",
-                "react/promise": "1.*|2.*",
+                "react/promise": "^2 || ^1.1",
                 "react/socket-client": "^0.5 || ^0.4 || ^0.3",
-                "rize/uri-template": "~0.3.0"
+                "ringcentral/psr7": "~1.2"
+            },
+            "require-dev": {
+                "clue/block-react": "~1.0"
             },
             "type": "library",
             "autoload": {
@@ -55,7 +58,7 @@
                 "http client",
                 "reactphp"
             ],
-            "time": "2016-03-25 11:13:27"
+            "time": "2016-04-02 00:41:43"
         },
         {
             "name": "clue/socks-react",
@@ -212,53 +215,6 @@
                 "uri"
             ],
             "time": "2016-02-18 21:54:00"
-        },
-        {
-            "name": "ml/iri",
-            "version": "1.1.4",
-            "target-dir": "ML/IRI",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/lanthaler/IRI.git",
-                "reference": "cbd44fa913e00ea624241b38cefaa99da8d71341"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/lanthaler/IRI/zipball/cbd44fa913e00ea624241b38cefaa99da8d71341",
-                "reference": "cbd44fa913e00ea624241b38cefaa99da8d71341",
-                "shasum": ""
-            },
-            "require": {
-                "lib-pcre": ">=4.0",
-                "php": ">=5.3.0"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-0": {
-                    "ML\\IRI": ""
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Markus Lanthaler",
-                    "email": "mail@markus-lanthaler.com",
-                    "homepage": "http://www.markus-lanthaler.com",
-                    "role": "Developer"
-                }
-            ],
-            "description": "IRI handling for PHP",
-            "homepage": "http://www.markus-lanthaler.com",
-            "keywords": [
-                "URN",
-                "iri",
-                "uri",
-                "url"
-            ],
-            "time": "2014-01-21 13:43:39"
         },
         {
             "name": "psr/http-message",
@@ -476,16 +432,16 @@
         },
         {
             "name": "react/promise",
-            "version": "v2.3.0",
+            "version": "v2.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/reactphp/promise.git",
-                "reference": "8ffacee1171e33a1c129f424bf1ec36e062eba82"
+                "reference": "f942da7b505d1a294284ab343d05df42d02ad6d9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/reactphp/promise/zipball/8ffacee1171e33a1c129f424bf1ec36e062eba82",
-                "reference": "8ffacee1171e33a1c129f424bf1ec36e062eba82",
+                "url": "https://api.github.com/repos/reactphp/promise/zipball/f942da7b505d1a294284ab343d05df42d02ad6d9",
+                "reference": "f942da7b505d1a294284ab343d05df42d02ad6d9",
                 "shasum": ""
             },
             "require": {
@@ -516,7 +472,7 @@
                 }
             ],
             "description": "A lightweight implementation of CommonJS Promises/A for PHP",
-            "time": "2016-03-24 21:20:22"
+            "time": "2016-03-31 13:10:33"
         },
         {
             "name": "react/socket",
@@ -648,30 +604,42 @@
             "time": "2015-10-07 18:32:58"
         },
         {
-            "name": "rize/uri-template",
-            "version": "0.3.0",
+            "name": "ringcentral/psr7",
+            "version": "1.2.1",
             "source": {
                 "type": "git",
-                "url": "https://github.com/rize/UriTemplate.git",
-                "reference": "2496aa674438f1c48fce122ffc44291ad7014717"
+                "url": "https://github.com/ringcentral/psr7.git",
+                "reference": "2594fb47cdc659f3fcf0aa1559b7355460555303"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/rize/UriTemplate/zipball/2496aa674438f1c48fce122ffc44291ad7014717",
-                "reference": "2496aa674438f1c48fce122ffc44291ad7014717",
+                "url": "https://api.github.com/repos/ringcentral/psr7/zipball/2594fb47cdc659f3fcf0aa1559b7355460555303",
+                "reference": "2594fb47cdc659f3fcf0aa1559b7355460555303",
                 "shasum": ""
             },
             "require": {
-                "php": ">=5.3.0"
+                "php": ">=5.3",
+                "psr/http-message": "~1.0"
+            },
+            "provide": {
+                "psr/http-message-implementation": "1.0"
             },
             "require-dev": {
-                "phpunit/phpunit": "~4.0.0"
+                "phpunit/phpunit": "~4.0"
             },
             "type": "library",
-            "autoload": {
-                "psr-0": {
-                    "Rize\\UriTemplate": "src/"
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0-dev"
                 }
+            },
+            "autoload": {
+                "psr-4": {
+                    "RingCentral\\Psr7\\": "src/"
+                },
+                "files": [
+                    "src/functions_include.php"
+                ]
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
@@ -679,17 +647,19 @@
             ],
             "authors": [
                 {
-                    "name": "Marut K",
-                    "homepage": "http://twitter.com/rezigned"
+                    "name": "Michael Dowling",
+                    "email": "mtdowling@gmail.com",
+                    "homepage": "https://github.com/mtdowling"
                 }
             ],
-            "description": "PHP URI Template (RFC 6570) supports both expansion & extraction",
+            "description": "PSR-7 message implementation",
             "keywords": [
-                "RFC 6570",
-                "template",
+                "http",
+                "message",
+                "stream",
                 "uri"
             ],
-            "time": "2015-04-17 16:12:22"
+            "time": "2016-03-25 17:36:49"
         }
     ],
     "packages-dev": [],
