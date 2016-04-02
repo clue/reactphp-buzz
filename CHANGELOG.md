@@ -1,5 +1,54 @@
 # Changelog
 
+## 0.5.0 (2016-04-02)
+
+* Feature / BC break: Implement PSR-7 http-message interfaces
+  (#54 by @clue)
+  
+  Replace custom `Message`, `Request`, `Response` and `Uri` classes with
+  common PSR-7 interfaces:
+
+  ```php
+// old
+$browser->get($uri)->then(function (Response $response) {
+    echo 'Test: ' . $response->getHeader('X-Test');
+    echo 'Body: ' . $response->getBody();
+});
+
+// new
+$browser->get($uri)->then(function (ResponseInterface $response) {
+    if ($response->hasHeader('X-Test')) {
+        echo 'Test: ' . $response->getHeaderLine('X-Test');
+    }
+    echo 'Body: ' . $response->getBody();
+});
+```
+
+* Feature: Add streaming API
+  (#56 by @clue)
+
+  ```php
+$browser = $browser->withOptions(array('streaming' => true));
+$browser->get($uri)->then(function (ResponseInterface $response) {
+    $response->getBody()->on('data', function($chunk) {
+        echo $chunk . PHP_EOL;
+    });
+});
+```
+
+* Remove / BC break: Remove `Browser::resolve()` because it's now fully decoupled
+  (#55 by @clue)
+
+  If you need this feature, consider explicitly depending on rize/uri-template
+  instead:
+
+  ```bash
+$ composer require rize/uri-template
+```
+
+* Use clue/block-react and new Promise API in order to simplify tests
+  (#53 by @clue)
+
 ## 0.4.2 (2016-03-25)
 
 * Support advanced connection options with newest SocketClient (TLS/HTTPS and socket options)
