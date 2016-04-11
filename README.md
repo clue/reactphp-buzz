@@ -202,8 +202,8 @@ forwards this data through [React's Stream API](https://github.com/reactphp/stre
 This works for (any number of) responses of arbitrary sizes.
 
 This resolves with a normal [`ResponseInterface`](#responseinterface), which
-can be used access the response message parameters as usual.
-You can access the message body as usual, however it now
+can be used to access the response message parameters as usual.
+You can access the message body as usual, however it now also
 implements React's [`ReadableStreamInterface`](https://github.com/reactphp/stream#readablestreaminterface)
 as well as parts of the PSR-7's [`StreamInterface`](http://www.php-fig.org/psr/psr-7/#3-4-psr-http-message-streaminterface).
 
@@ -230,7 +230,7 @@ $streamingBrowser->get($url)->then(function (ResponseInterface $response) {
 });
 ```
 
-See also the [stream bandwith example](examples/stream-bandwidth.php) and
+See also the [stream bandwidth example](examples/stream-bandwidth.php) and
 the [stream forwarding example](examples/stream-forwarding.php).
 
 You can invoke the following methods on the message body:
@@ -239,6 +239,7 @@ You can invoke the following methods on the message body:
 $body->on($event, $callback);
 $body->eof();
 $body->isReadable();
+$body->pipe(WritableStreamInterface $dest, array $options = array());
 $body->close();
 $body->pause();
 $body->resume();
