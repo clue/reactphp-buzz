@@ -1,6 +1,6 @@
 # clue/buzz-react [![Build Status](https://travis-ci.org/clue/php-buzz-react.svg?branch=master)](https://travis-ci.org/clue/php-buzz-react)
 
-Simple, async HTTP client for concurrently processing any number of HTTP requests,
+Simple, async PSR-7 HTTP client for concurrently processing any number of HTTP requests,
 built on top of [React PHP](http://reactphp.org/).
 
 This library is heavily inspired by the great
@@ -260,6 +260,24 @@ $body->isWritable(); // false
 $body->write(); // throws BadMethodCallException
 $body->read(); // throws BadMethodCallException
 $body->getContents(); // throws BadMethodCallException
+```
+
+If you want to integrate the streaming response into a higher level API, then
+working with Promise objects that resolve with Stream objects is often inconvenient.
+Consider looking into also using [clue/promise-stream-react](https://github.com/clue/php-promise-stream-react).
+The resulting streaming code could look something like this:
+
+```php
+function download($url) {
+    return Stream\unwrapReadable($streamingBrowser->get($url)->then(function (ResponseInterface $response) {
+        return $response->getBody();
+    });
+}
+
+$stream = download($url);
+$stream->on('data', function ($data) {
+    echo $data;
+});
 ```
 
 Besides streaming the response body, you can also stream the request body.
