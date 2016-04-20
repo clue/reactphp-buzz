@@ -9,32 +9,32 @@
   common PSR-7 interfaces:
 
   ```php
-// old
-$browser->get($uri)->then(function (Response $response) {
-    echo 'Test: ' . $response->getHeader('X-Test');
-    echo 'Body: ' . $response->getBody();
-});
-
-// new
-$browser->get($uri)->then(function (ResponseInterface $response) {
-    if ($response->hasHeader('X-Test')) {
-        echo 'Test: ' . $response->getHeaderLine('X-Test');
-    }
-    echo 'Body: ' . $response->getBody();
-});
-```
+  // old
+  $browser->get($uri)->then(function (Response $response) {
+      echo 'Test: ' . $response->getHeader('X-Test');
+      echo 'Body: ' . $response->getBody();
+  });
+  
+  // new
+  $browser->get($uri)->then(function (ResponseInterface $response) {
+      if ($response->hasHeader('X-Test')) {
+          echo 'Test: ' . $response->getHeaderLine('X-Test');
+      }
+      echo 'Body: ' . $response->getBody();
+  });
+  ```
 
 * Feature: Add streaming API
   (#56 by @clue)
 
   ```php
-$browser = $browser->withOptions(array('streaming' => true));
-$browser->get($uri)->then(function (ResponseInterface $response) {
-    $response->getBody()->on('data', function($chunk) {
-        echo $chunk . PHP_EOL;
-    });
-});
-```
+  $browser = $browser->withOptions(array('streaming' => true));
+  $browser->get($uri)->then(function (ResponseInterface $response) {
+      $response->getBody()->on('data', function($chunk) {
+          echo $chunk . PHP_EOL;
+      });
+  });
+  ```
 
 * Remove / BC break: Remove `Browser::resolve()` because it's now fully decoupled
   (#55 by @clue)
@@ -43,8 +43,8 @@ $browser->get($uri)->then(function (ResponseInterface $response) {
   instead:
 
   ```bash
-$ composer require rize/uri-template
-```
+  $ composer require rize/uri-template
+  ```
 
 * Use clue/block-react and new Promise API in order to simplify tests
   (#53 by @clue)
@@ -64,16 +64,16 @@ $ composer require rize/uri-template
   ([#48](https://github.com/clue/php-buzz-react/pull/48))
 
   ```php
-// now correctly returns "http://example.com/path"
-// instead of previous   "http://example.com//path"
-$browser = $browser->withBase('http://example.com/');
-echo $browser->resolve('{+path}', array('path' => '/path'));
-
-// now correctly returns "http://example.com/path?q=test"
-// instead of previous   "http://example.com/path/?q=test"
-$browser = $browser->withBase('http://example.com/path');
-echo $browser->resolve('{?q}', array('q' => 'test'));
-```
+  // now correctly returns "http://example.com/path"
+  // instead of previous   "http://example.com//path"
+  $browser = $browser->withBase('http://example.com/');
+  echo $browser->resolve('{+path}', array('path' => '/path'));
+  
+  // now correctly returns "http://example.com/path?q=test"
+  // instead of previous   "http://example.com/path/?q=test"
+  $browser = $browser->withBase('http://example.com/path');
+  echo $browser->resolve('{?q}', array('q' => 'test'));
+  ```
 
 ## 0.4.0 (2015-08-09)
 
@@ -81,19 +81,19 @@ echo $browser->resolve('{?q}', array('q' => 'test'));
   ([#41](https://github.com/clue/php-buzz-react/pull/41), [#44](https://github.com/clue/php-buzz-react/pull/44))
 
   ```php
-$browser = $browser->withBase('http://example.com/');
-$browser->post('/');
-```
+  $browser = $browser->withBase('http://example.com/');
+  $browser->post('/');
+  ```
 
 * Feature: Resolve URI template placeholders according to RFC 6570
   ([#42](https://github.com/clue/php-buzz-react/pull/42), [#44](https://github.com/clue/php-buzz-react/pull/44))
 
   ```php
-$browser->post($browser->resolve('/{+path}{?version}', array(
-    'path' => 'demo.json',
-    'version' => '4'
-)));
-```
+  $browser->post($browser->resolve('/{+path}{?version}', array(
+      'path' => 'demo.json',
+      'version' => '4'
+  )));
+  ```
 
 * Feature: Resolve and follow redirects to relative URIs
   ([#45](https://github.com/clue/php-buzz-react/pull/45))
@@ -103,12 +103,12 @@ $browser->post($browser->resolve('/{+path}{?version}', array(
   ([#37](https://github.com/clue/php-buzz-react/pull/37))
   
   ```php
-// old
-$browser->request('GET', 'http://www.example.com/');
-
-// new
-$browser->send(new Request('GET', 'http://www.example.com/'));
-```
+  // old
+  $browser->request('GET', 'http://www.example.com/');
+  
+  // new
+  $browser->send(new Request('GET', 'http://www.example.com/'));
+  ```
 
 * Feature / Bc break: Enforce absolute URIs via new Uri class
   ([#40](https://github.com/clue/php-buzz-react/pull/40), [#44](https://github.com/clue/php-buzz-react/pull/44))
