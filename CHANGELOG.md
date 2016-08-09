@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.0 (2016-08-09)
+
+* First stable release, now following SemVer
+
+* Improve documentation and usage examples
+
+> Contains no other changes, so it's actually fully compatible with the v0.5.0 release.
+
 ## 0.5.0 (2016-04-02)
 
 * Feature / BC break: Implement PSR-7 http-message interfaces
