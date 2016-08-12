@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.1 (2016-08-12)
+
+* Fix: Explicitly define all minimum required package versions
+  (#57 by @clue)
+
 ## 1.0.0 (2016-08-09)
 
 * First stable release, now following SemVer
