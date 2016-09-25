@@ -134,7 +134,7 @@ class Sender
 
         $deferred = new Deferred();
 
-        $requestStream = $this->http->request($request->getMethod(), (string)$uri, $headers);
+        $requestStream = $this->http->request($request->getMethod(), (string)$uri, $headers, $request->getProtocolVersion());
 
         $requestStream->on('error', function($error) use ($deferred) {
             $deferred->reject($error);
