@@ -410,7 +410,7 @@ The `getResponse()` method can be used to access its underlying [`ResponseIntefa
 
 The `Sender` is responsible for passing the [`RequestInterface`](#requestinterface) objects to
 the underlying [`HttpClient`](https://github.com/reactphp/http-client) library
-and keeps track of its transmission and converts its reponses back to [`ResponseInterface`](#responseinterfae) objects.
+and keeps track of its transmission and converts its reponses back to [`ResponseInterface`](#responseinterface) objects.
 
 It also registers everything with the main [`EventLoop`](https://github.com/reactphp/event-loop#usage)
 and the default [`Connector`](https://github.com/reactphp/socket-client) and [DNS `Resolver`](https://github.com/reactphp/dns).
