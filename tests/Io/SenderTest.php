@@ -1,6 +1,7 @@
 <?php
 
 use Clue\React\Buzz\Io\Sender;
+use React\HttpClient\RequestData;
 use RingCentral\Psr7\Request;
 use React\Promise;
 use Clue\React\Block;
@@ -50,5 +51,58 @@ class SenderTest extends TestCase
 
         $this->setExpectedException('RuntimeException');
         Block\await($promise, $this->loop);
+    }
+
+    public function provideRequestProtocolVersion()
+    {
+        return array(
+            array(
+                new Request('GET', 'http://www.google.com/'),
+                'GET',
+                'http://www.google.com/',
+                array(
+                    'Host' => 'www.google.com',
+                ),
+                '1.1',
+            ),
+            array(
+                new Request('GET', 'http://www.google.com/', array(), '', '1.0'),
+                'GET',
+                'http://www.google.com/',
+                array(
+                    'Host' => 'www.google.com',
+                ),
+                '1.0',
+            ),
+        );
+    }
+
+    /**
+     * @dataProvider provideRequestProtocolVersion
+     */
+    public function testRequestProtocolVersion(Request $Request, $method, $uri, $headers, $protocolVersion)
+    {
+        $http = $this->getMock(
+            'React\HttpClient\Client',
+            array(
+                'request',
+            ),
+            array(
+                $this->getMock('React\SocketClient\ConnectorInterface'),
+                $this->getMock('React\SocketClient\ConnectorInterface')
+            )
+        );
+        $request = $this->getMock(
+            'React\HttpClient\Request',
+            array(),
+            array(
+                $this->getMock('React\SocketClient\ConnectorInterface'),
+                new RequestData($method, $uri, $headers, $protocolVersion)
+            )
+        );
+        $http->expects($this->once())->method('request')->with($method, $uri, $headers, $protocolVersion)->willReturn($request);
+
+        $sender = new Sender($http);
+        $sender->send($Request, $this->getMock('Clue\React\Buzz\Message\MessageFactory'));
     }
 }
