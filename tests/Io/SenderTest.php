@@ -82,15 +82,19 @@ class SenderTest extends TestCase
      */
     public function testRequestProtocolVersion(Request $Request, $method, $uri, $headers, $protocolVersion)
     {
+        $httpClientArguments = array();
+        $ref = new \ReflectionClass('React\HttpClient\Client');
+        if ($ref->getConstructor()->getNumberOfRequiredParameters() == 3) {
+            $httpClientArguments[] = $this->getMock('React\EventLoop\LoopInterface');
+        }
+        $httpClientArguments[] = $this->getMock('React\SocketClient\ConnectorInterface');
+        $httpClientArguments[] = $this->getMock('React\SocketClient\ConnectorInterface');
         $http = $this->getMock(
             'React\HttpClient\Client',
             array(
                 'request',
             ),
-            array(
-                $this->getMock('React\SocketClient\ConnectorInterface'),
-                $this->getMock('React\SocketClient\ConnectorInterface')
-            )
+            $httpClientArguments
         );
         $request = $this->getMock(
             'React\HttpClient\Request',
