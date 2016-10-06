@@ -96,13 +96,17 @@ class SenderTest extends TestCase
             ),
             $httpClientArguments
         );
+        $requestArguments = array();
+        $ref = new \ReflectionClass('React\HttpClient\Request');
+        if ($ref->getConstructor()->getNumberOfRequiredParameters() == 3) {
+            $requestArguments[] = $this->getMock('React\EventLoop\LoopInterface');
+        }
+        $requestArguments[] = $this->getMock('React\SocketClient\ConnectorInterface');
+        $requestArguments[] = new RequestData($method, $uri, $headers, $protocolVersion);
         $request = $this->getMock(
             'React\HttpClient\Request',
             array(),
-            array(
-                $this->getMock('React\SocketClient\ConnectorInterface'),
-                new RequestData($method, $uri, $headers, $protocolVersion)
-            )
+            $requestArguments
         );
         $http->expects($this->once())->method('request')->with($method, $uri, $headers, $protocolVersion)->willReturn($request);
 
