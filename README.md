@@ -103,7 +103,7 @@ $browser->put($url, array $headers = array(), $content = '');
 $browser->patch($url, array $headers = array(), $content = '');
 ```
 
-If you need a custom HTTP protocol method, you can use the [`send()`](#send) method.
+All the above methods send requests as HTTP 1.1. If you need a custom HTTP protocol method or version, you can use the [`send()`](#send) method.
 
 Each of the above methods supports async operation and either *resolves* with a [`ResponseInterface`](#responseinterface) or
 *rejects* with an `Exception`.
