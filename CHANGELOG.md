@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.1.0 (2016-10-21)
+
+* Feature: Obey explicitly set HTTP protocol version for outgoing requests
+  (#58, #59 by @WyriHaximus, @clue)
+
+  ```php
+  $request = new Request('GET', $url);
+  $request = $request->withProtocolVersion(1.1);
+  
+  $browser->send($request)->then(…);
+  ```
+
 ## 1.0.1 (2016-08-12)
 
 * Fix: Explicitly define all minimum required package versions
