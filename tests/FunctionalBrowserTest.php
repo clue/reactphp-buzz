@@ -10,6 +10,7 @@ use React\SocketClient\DnsConnector;
 use Clue\React\Buzz\Message\ResponseException;
 use Clue\React\Block;
 use React\Stream\ReadableStream;
+use RingCentral\Psr7\Request;
 
 class FunctionalBrowserTest extends TestCase
 {
@@ -179,5 +180,31 @@ class FunctionalBrowserTest extends TestCase
         $data = json_decode((string)$response->getBody(), true);
 
         $this->assertEquals('', $data['data']);
+    }
+
+    public function provideHttpVersion()
+    {
+        return array(
+            array('1.0'),
+            array('1.1'),
+        );
+    }
+
+    /**
+     * @dataProvider provideHttpVersion
+     */
+    public function testHttpVersion($version)
+    {
+        $request = new Request(
+            'GET',
+            $this->base . 'version',
+            array(),
+            '',
+            $version
+        );
+        $response = Block\await($this->browser->send($request), $this->loop);
+        $data = json_decode((string)$response->getBody(), true);
+
+        $this->assertEquals('HTTP/' . $version, $data['version']);
     }
 }
