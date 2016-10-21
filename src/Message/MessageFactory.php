@@ -25,7 +25,7 @@ class MessageFactory
      */
     public function request($method, $uri, $headers = array(), $content = '')
     {
-        return new Request($method, $uri, $headers, $this->body($content));
+        return new Request($method, $uri, $headers, $this->body($content), '1.0');
     }
 
     /**

@@ -103,7 +103,8 @@ $browser->put($url, array $headers = array(), $content = '');
 $browser->patch($url, array $headers = array(), $content = '');
 ```
 
-All the above methods send requests as HTTP 1.1. If you need a custom HTTP protocol method or version, you can use the [`send()`](#send) method.
+All the above methods default to sending requests as HTTP/1.0.
+If you need a custom HTTP protocol method or version, you can use the [`send()`](#send) method.
 
 Each of the above methods supports async operation and either *resolves* with a [`ResponseInterface`](#responseinterface) or
 *rejects* with an `Exception`.
@@ -301,6 +302,21 @@ The `submit($url, array $fields, $headers = array(), $method = 'POST')` method c
 
 The `send(RequestInterface $request)` method can be used to send an arbitrary
 instance implementing the [`RequestInterface`](#requestinterface) (PSR-7).
+
+All the above [predefined methods](#methods) default to sending requests as HTTP/1.0.
+If you need a custom HTTP protocol method or version, then you may want to use this
+method:
+
+```php
+$request = new Request('OPTIONS', $url);
+$request = $request->withProtocolVersion(1.1);
+
+$browser->send($request)->then(…);
+```
+
+> Legacy compatibility: Note that the custom HTTP protocol version will be
+ignored for legacy versions (PHP 5.3) because the underlying `http-client`
+v0.3 API does not support this parameter.
 
 #### withOptions()
 
