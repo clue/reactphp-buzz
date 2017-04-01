@@ -385,29 +385,29 @@ See also [`withBase()`](#withbase).
 
 The `Psr\Http\Message\ResponseInterface` represents the incoming response received from the [`Browser`](#browser).
 
-This is a standard interface defined in [PSR-7: HTTP message interfaces]
-(http://www.php-fig.org/psr/psr-7/), see its [`ResponseInterface` definition]
-(http://www.php-fig.org/psr/psr-7/#3-3-psr-http-message-responseinterface)
-which in turn extends the [`MessageInterface` definition]
-(http://www.php-fig.org/psr/psr-7/#3-1-psr-http-message-messageinterface).
+This is a standard interface defined in
+[PSR-7: HTTP message interfaces](http://www.php-fig.org/psr/psr-7/), see its
+[`ResponseInterface` definition](http://www.php-fig.org/psr/psr-7/#3-3-psr-http-message-responseinterface)
+which in turn extends the
+[`MessageInterface` definition](http://www.php-fig.org/psr/psr-7/#3-1-psr-http-message-messageinterface).
 
 ### RequestInterface
 
 The `Psr\Http\Message\RequestInterface` represents the outgoing request to be sent via the [`Browser`](#browser).
 
-This is a standard interface defined in [PSR-7: HTTP message interfaces]
-(http://www.php-fig.org/psr/psr-7/), see its [`RequestInterface` definition]
-(http://www.php-fig.org/psr/psr-7/#3-2-psr-http-message-requestinterface)
-which in turn extends the [`MessageInterface` definition]
-(http://www.php-fig.org/psr/psr-7/#3-1-psr-http-message-messageinterface).
+This is a standard interface defined in
+[PSR-7: HTTP message interfaces](http://www.php-fig.org/psr/psr-7/), see its
+[`RequestInterface` definition](http://www.php-fig.org/psr/psr-7/#3-2-psr-http-message-requestinterface)
+which in turn extends the
+[`MessageInterface` definition](http://www.php-fig.org/psr/psr-7/#3-1-psr-http-message-messageinterface).
 
 ### UriInterface
 
 The `Psr\Http\Message\UriInterface` represents an absolute or relative URI (aka URL).
 
-This is a standard interface defined in [PSR-7: HTTP message interfaces]
-(http://www.php-fig.org/psr/psr-7/), see its [`UriInterface` definition]
-(http://www.php-fig.org/psr/psr-7/#3-5-psr-http-message-uriinterface).
+This is a standard interface defined in
+[PSR-7: HTTP message interfaces](http://www.php-fig.org/psr/psr-7/), see its
+[`UriInterface` definition](http://www.php-fig.org/psr/psr-7/#3-5-psr-http-message-uriinterface).
 
 ### ResponseException
 
