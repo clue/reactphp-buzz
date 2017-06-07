@@ -5,15 +5,12 @@ namespace Clue\React\Buzz\Io;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Exception;
-use Clue\React\Buzz\Browser;
-use React\HttpClient\Client as HttpClient;
-use Clue\React\Buzz\Io\Sender;
 use Clue\React\Buzz\Message\ResponseException;
 use Clue\React\Buzz\Message\MessageFactory;
-use Clue\React\Buzz\Message\BufferedResponse;
-use React\Stream\BufferedSink;
+use React\Promise\PromiseInterface;
 use React\Stream\ReadableStreamInterface;
 use React\Promise;
+use React\Promise\Stream as PromiseStream;
 
 /**
  * @internal
@@ -94,7 +91,7 @@ class Transaction
 
         // buffer stream and resolve with buffered body
         $messageFactory = $this->messageFactory;
-        return BufferedSink::createPromise($stream)->then(function ($body) use ($response, $messageFactory) {
+        return PromiseStream\buffer($stream)->then(function ($body) use ($response, $messageFactory) {
             return $response->withBody($messageFactory->body($body));
         });
     }
