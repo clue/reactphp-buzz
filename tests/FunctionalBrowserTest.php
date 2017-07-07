@@ -10,6 +10,9 @@ use React\SocketClient\DnsConnector;
 use Clue\React\Buzz\Message\ResponseException;
 use Clue\React\Block;
 use React\Stream\ReadableStream;
+use Psr\Http\Message\ServerRequestInterface;
+use React\Http\Response;
+use React\Promise\Stream;
 
 class FunctionalBrowserTest extends TestCase
 {
@@ -142,6 +145,28 @@ class FunctionalBrowserTest extends TestCase
 
     public function testPostStreamChunked()
     {
+        // httpbin used to support `Transfer-Encoding: chunked` for requests,
+        // but not rejects those, so let's start our own server instance
+        $that = $this;
+        $server = new \React\Http\Server(function (ServerRequestInterface $request) use ($that) {
+            $that->assertFalse($request->hasHeader('Content-Length'));
+            $that->assertNull($request->getBody()->getSize());
+
+            return Stream\buffer($request->getBody())->then(function ($body) {
+                return new Response(
+                    200,
+                    array(),
+                    json_encode(array(
+                        'data' => $body
+                    ))
+                );
+            });
+        });
+        $socket = new \React\Socket\Server(0, $this->loop);
+        $server->listen($socket);
+
+        $this->base = str_replace('tcp:', 'http:', $socket->getAddress()) . '/';
+
         $stream = new ReadableStream();
 
         $this->loop->addTimer(0.001, function () use ($stream) {
@@ -153,6 +178,8 @@ class FunctionalBrowserTest extends TestCase
         $data = json_decode((string)$response->getBody(), true);
 
         $this->assertEquals('hello world', $data['data']);
+
+        $socket->close();
     }
 
     public function testPostStreamKnownLength()
