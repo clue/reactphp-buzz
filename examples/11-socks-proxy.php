@@ -8,7 +8,7 @@ use Clue\React\Buzz\Browser;
 use Psr\Http\Message\ResponseInterface;
 use RingCentral\Psr7;
 
-require __DIR__ . '/vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
 
 $loop = LoopFactory::create();
 
