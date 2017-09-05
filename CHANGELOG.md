@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.2.0 (2017-09-05)
+
+* Feature: Forward compatibility with react/http-client v0.5
+  (#72 and #73 by @clue)
+
+  Older HttpClient versions are still supported, but the new version is now
+  preferred. Advanced usage with custom connectors now recommends setting up
+  the `React\HttpClient\Client` instance explicitly.
+
+  Accordingly, the `Sender::createFromLoopDns()` and
+  `Sender::createFromLoopConnectors()` have been marked as deprecated and
+  will be removed in future versions.
+
 ## 1.1.1 (2017-09-05)
 
 * Restructure examples to ease getting started and
