@@ -2,10 +2,9 @@
 
 namespace Clue\React\Buzz\Message;
 
-use Psr\Http\Message\StreamInterface;
-use React\Stream\ReadableStream;
-use React\Stream\ReadableStreamInterface;
 use Evenement\EventEmitter;
+use Psr\Http\Message\StreamInterface;
+use React\Stream\ReadableStreamInterface;
 use React\Stream\Util;
 use React\Stream\WritableStreamInterface;
 
@@ -14,6 +13,9 @@ use React\Stream\WritableStreamInterface;
  */
 class ReadableBodyStream extends EventEmitter implements ReadableStreamInterface, StreamInterface
 {
+    private $input;
+    private $closed = false;
+
     public function __construct(ReadableStreamInterface $input)
     {
         $this->input = $input;
@@ -24,19 +26,24 @@ class ReadableBodyStream extends EventEmitter implements ReadableStreamInterface
         });
         $input->on('error', function ($error) use ($that) {
             $that->emit('error', array($error, $that));
+            $that->close();
         });
         $input->on('end', function () use ($that) {
             $that->emit('end', array($that));
-            $that->emit('close', array($that));
+            $that->close();
         });
-        $input->on('close', function () use ($that) {
-            $that->emit('close', array($that));
-        });
+        $input->on('close', array($that, 'close'));
     }
 
     public function close()
     {
-        $this->input->close();
+        if (!$this->closed) {
+            $this->closed = true;
+            $this->input->close();
+
+            $this->emit('close', array($this));
+            $this->removeAllListeners();
+        }
     }
 
     public function isReadable()
