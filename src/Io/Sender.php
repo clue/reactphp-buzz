@@ -13,7 +13,7 @@ use React\Dns\Resolver\Factory as ResolverFactory;
 use React\Socket\Connector;
 use React\SocketClient\Connector as LegacyConnector;
 use React\SocketClient\SecureConnector;
-use React\SocketClient\ConnectorInterface;
+use React\SocketClient\ConnectorInterface as LegacyConnectorInterface;
 use React\Dns\Resolver\Resolver;
 use React\Promise;
 use Clue\React\Buzz\Message\MessageFactory;
@@ -24,20 +24,42 @@ class Sender
     /**
      * create a new default sender attached to the given event loop
      *
+     * This method is used internally to create the "default sender".
+     * If you need custom DNS or connector settings, you're recommended to
+     * explicitly create a HttpClient instance yourself and pass this to the
+     * constructor of this method manually like this:
+     *
+     * ```php
+     * $connector = new \React\Socket\Connector($loop);
+     * $client = new \React\HttpClient\Client($loop, $connector);
+     * $sender = new \Clue\React\Buzz\Io\Sender($client);
+     * $browser = new \Clue\React\Buzz\Browser($loop, $sender);
+     * ```
+     *
      * @param LoopInterface $loop
      * @return self
      */
     public static function createFromLoop(LoopInterface $loop)
     {
+        $ref = new \ReflectionClass('React\HttpClient\Client');
+        $num = $ref->getConstructor()->getNumberOfRequiredParameters();
+        if ($num === 1) {
+            // react/http 0.5
+            return new self(new HttpClient($loop));
+        }
+
+        // react/http 0.4/0.3
         return self::createFromLoopDns($loop, '8.8.8.8');
     }
 
     /**
-     * create sender attached to the given event loop and DNS resolver
+     * [deprecated] create sender attached to the given event loop and DNS resolver
      *
      * @param LoopInterface   $loop
      * @param Resolver|string $dns  DNS resolver instance or IP address
      * @return self
+     * @deprecated as of v1.2.0, see createFromLoop()
+     * @see self::createFromLoop()
      */
     public static function createFromLoopDns(LoopInterface $loop, $dns)
     {
@@ -52,14 +74,16 @@ class Sender
     }
 
     /**
-     * create sender attached to given event loop using the given connectors
+     * [deprecated] create sender attached to given event loop using the given legacy connectors
      *
      * @param LoopInterface $loop
-     * @param ConnectorInterface $connector            default connector to use to establish TCP/IP connections
-     * @param ConnectorInterface|null $secureConnector secure connector to use to establish TLS/SSL connections (optional, composed from given default connector)
+     * @param LegacyConnectorInterface $connector            default legacy connector to use to establish TCP/IP connections
+     * @param LegacyConnectorInterface|null $secureConnector secure legacy connector to use to establish TLS/SSL connections (optional, composed from given default connector)
      * @return self
+     * @deprecated as of v1.2.0, see createFromLoop()
+     * @see self::createFromLoop()
      */
-    public static function createFromLoopConnectors(LoopInterface $loop, ConnectorInterface $connector, ConnectorInterface $secureConnector = null)
+    public static function createFromLoopConnectors(LoopInterface $loop, LegacyConnectorInterface $connector, LegacyConnectorInterface $secureConnector = null)
     {
         if ($secureConnector === null) {
             $secureConnector = new SecureConnector($connector, $loop);

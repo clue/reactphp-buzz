@@ -9,7 +9,7 @@ $loop = React\EventLoop\Factory::create();
 $client = new Browser($loop);
 
 $client->head('http://www.github.com/clue/http-react')->then(function (ResponseInterface $response) {
-    var_dump($response->getHeaders(), (string)$result->getBody());
+    var_dump($response->getHeaders(), (string)$response->getBody());
 });
 
 $client->get('http://google.com/')->then(function (ResponseInterface $response) {
