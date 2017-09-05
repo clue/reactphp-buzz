@@ -78,7 +78,8 @@ class Sender
         return new self(new HttpClient($loop, new Connector($loop, array(
             'tcp' => new ConnectorUpcaster($connector),
             'tls' => new ConnectorUpcaster($secureConnector),
-            'dns' => false
+            'dns' => false,
+            'timeout' => false
         ))));
     }
 

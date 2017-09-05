@@ -1,6 +1,7 @@
 <?php
 
 use Clue\React\Buzz\Io\Sender;
+use React\HttpClient\Client as HttpClient;
 use React\HttpClient\RequestData;
 use RingCentral\Psr7\Request;
 use React\Promise;
@@ -38,7 +39,22 @@ class SenderTest extends TestCase
         $this->assertInstanceOf('Clue\React\Buzz\Io\Sender', $sender);
     }
 
-    public function testSenderRejection()
+    public function testSenderConnectorRejection()
+    {
+        $connector = $this->getMock('React\Socket\ConnectorInterface');
+        $connector->expects($this->once())->method('connect')->willReturn(Promise\reject(new RuntimeException('Rejected')));
+
+        $sender = new Sender(new HttpClient($this->loop, $connector));
+
+        $request = new Request('GET', 'http://www.google.com/');
+
+        $promise = $sender->send($request, $this->getMock('Clue\React\Buzz\Message\MessageFactory'));
+
+        $this->setExpectedException('RuntimeException');
+        Block\await($promise, $this->loop);
+    }
+
+    public function testSenderLegacyConnectorRejection()
     {
         $connector = $this->getMock('React\SocketClient\ConnectorInterface');
         $connector->expects($this->once())->method('connect')->willReturn(Promise\reject(new RuntimeException('Rejected')));
