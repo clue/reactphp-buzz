@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.1 (2017-09-05)
+
+* Restructure examples to ease getting started and
+  fix online tests and add option to exclude tests against httpbin.org
+  (#67 and #71 by @clue)
+
+* Improve test suite by fixing HHVM build for now again and ignore future HHVM build errors and
+  lock Travis distro so new defaults will not break the build
+  (#68 and #70 by @clue)
+
 ## 1.1.0 (2016-10-21)
 
 * Feature: Obey explicitly set HTTP protocol version for outgoing requests

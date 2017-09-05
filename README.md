@@ -1,12 +1,12 @@
 # clue/buzz-react [![Build Status](https://travis-ci.org/clue/php-buzz-react.svg?branch=master)](https://travis-ci.org/clue/php-buzz-react)
 
 Simple, async PSR-7 HTTP client for concurrently processing any number of HTTP requests,
-built on top of [React PHP](http://reactphp.org/).
+built on top of [ReactPHP](http://reactphp.org/).
 
 This library is heavily inspired by the great
 [kriswallsmith/Buzz](https://github.com/kriswallsmith/Buzz)
 project. However, instead of blocking on each request, it relies on
-[React PHP's EventLoop](https://github.com/reactphp/event-loop) to process
+[ReactPHP's EventLoop](https://github.com/reactphp/event-loop) to process
 multiple requests in parallel.
 This allows you to interact with multiple HTTP servers
 (fetch URLs, talk to RESTful APIs, follow redirects etc.)
@@ -206,7 +206,7 @@ This works for (any number of) responses of arbitrary sizes.
 This resolves with a normal [`ResponseInterface`](#responseinterface), which
 can be used to access the response message parameters as usual.
 You can access the message body as usual, however it now also
-implements React's [`ReadableStreamInterface`](https://github.com/reactphp/stream#readablestreaminterface)
+implements ReactPHP's [`ReadableStreamInterface`](https://github.com/reactphp/stream#readablestreaminterface)
 as well as parts of the PSR-7's [`StreamInterface`](http://www.php-fig.org/psr/psr-7/#3-4-psr-http-message-streaminterface).
 
 ```php
@@ -286,7 +286,7 @@ Besides streaming the response body, you can also stream the request body.
 This can be useful if you want to send big POST requests (uploading files etc.)
 or process many outgoing streams at once.
 Instead of passing the body as a string, you can simply pass an instance
-implementing React's [`ReadableStreamInterface`](https://github.com/reactphp/stream#readablestreaminterface)
+implementing ReactPHP's [`ReadableStreamInterface`](https://github.com/reactphp/stream#readablestreaminterface)
 to the [HTTP methods](#methods) like this:
 
 ```php
@@ -545,16 +545,21 @@ actually returns a *new* [`Browser`](#browser) instance with the options applied
 
 ## Install
 
-The recommended way to install this library is [through Composer](http://getcomposer.org).
-[New to Composer?](http://getcomposer.org/doc/00-intro.md)
+The recommended way to install this library is [through Composer](https://getcomposer.org).
+[New to Composer?](https://getcomposer.org/doc/00-intro.md)
 
 This will install the latest supported version:
 
 ```bash
-$ composer require clue/buzz-react:^1.1
+$ composer require clue/buzz-react:^1.1.1
 ```
 
 See also the [CHANGELOG](CHANGELOG.md) for details about version upgrades.
+
+This project aims to run on any platform and thus does not require any PHP
+extensions and supports running on legacy PHP 5.3 through current PHP 7+ and
+HHVM.
+It's *highly recommended to use PHP 7+* for this project.
 
 ## Tests
 
