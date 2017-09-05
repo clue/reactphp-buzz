@@ -504,7 +504,7 @@ by adding a dependency to [clue/socks-react](https://github.com/clue/php-socks-r
 The SOCKS protocol operates at the TCP/IP layer and thus requires minimal effort at the HTTP application layer.
 This works for both plain HTTP and SSL encrypted HTTPS requests.
 
-See also the [SOCKS example](examples/socks).
+See also the [SOCKS example](examples/socks.php).
 
 ### UNIX domain sockets
 
