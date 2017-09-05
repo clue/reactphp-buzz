@@ -14,7 +14,7 @@
         "psr-4": { "Clue\\React\\Buzz\\": "src/" }
     },
     "require": {
-    	"php": ">=5.3",
+    	"php": ">=5.4",
         "react/event-loop": "^0.4 || ^0.3",
         "react/http-client": "^0.5 || ^0.4 || ^0.3",
         "react/socket": "^0.8",

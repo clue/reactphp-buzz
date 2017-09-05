@@ -315,10 +315,6 @@ $request = $request->withProtocolVersion(1.1);
 $browser->send($request)->then(…);
 ```
 
-> Legacy compatibility: Note that the custom HTTP protocol version will be
-ignored for legacy versions (PHP 5.3) because the underlying `http-client`
-v0.3 API does not support this parameter.
-
 #### withOptions()
 
 The `withOptions(array $options)` method can be used to change the [options](#options) to use:
@@ -583,7 +579,7 @@ $ composer require clue/buzz-react:^1.1.1
 See also the [CHANGELOG](CHANGELOG.md) for details about version upgrades.
 
 This project aims to run on any platform and thus does not require any PHP
-extensions and supports running on legacy PHP 5.3 through current PHP 7+ and
+extensions and supports running on legacy PHP 5.4 through current PHP 7+ and
 HHVM.
 It's *highly recommended to use PHP 7+* for this project.
 
