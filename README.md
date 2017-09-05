@@ -445,6 +445,15 @@ If you need custom DNS settings, you can explicitly create a [`Sender`](#sender)
 with your DNS server address (or `React\Dns\Resolver` instance) like this:
 
 ```php
+// new API for react/http 0.5
+$connector = new \React\Socket\Connector($loop, array(
+    'dns' => '127.0.0.1'
+));
+$client = new \React\HttpClient\Client($loop, $connector);
+$sender = new \Clue\Buzz\Io\Sender($client);
+$browser = $browser->withSender($sender);
+
+// deprecated legacy API
 $dns = '127.0.0.1';
 $sender = Sender::createFromLoopDns($loop, $dns);
 $browser = $browser->withSender($sender);
@@ -455,9 +464,24 @@ See also [`Browser::withSender()`](#withsender) for more details.
 ### Connection options
 
 If you need custom connector settings (DNS resolution, SSL/TLS parameters, timeouts etc.), you can explicitly pass a
-custom instance of the [`ConnectorInterface`](https://github.com/reactphp/socket-client#connectorinterface).
+custom instance of the new [`ConnectorInterface`](https://github.com/reactphp/socket#connectorinterface).
 
-The below examples assume you've installed the latest SocketClient version:
+```php
+// new API for react/http 0.5
+$connector = new \React\Socket\Connector($loop, array(
+    'dns' => '127.0.0.1'
+));
+$client = new \React\HttpClient\Client($loop, $connector);
+$sender = new \Clue\Buzz\Io\Sender($client);
+$browser = $browser->withSender($sender);
+```
+
+If you're still using the deprecated legacy Http component and you need custom
+connector settings (DNS resolution, SSL/TLS parameters, timeouts etc.), you can
+explicitly pass a custom instance of the
+[legacy `ConnectorInterface`](https://github.com/reactphp/socket-client#connectorinterface).
+
+The below examples assume you've installed the latest legacy SocketClient version:
 
 ```bash
 $ composer require react/socket-client:^0.5
@@ -468,6 +492,7 @@ You can optionally pass additional
 to the constructor like this:
 
 ```php
+// deprecated legacy API
 // use local DNS server
 $dnsResolverFactory = new DnsFactory();
 $resolver = $dnsResolverFactory->createCached('127.0.0.1', $loop);
@@ -487,6 +512,7 @@ You can optionally pass additional
 to the constructor like this:
 
 ```php
+// deprecated legacy API
 $ssl = new SecureConnector($tcp, $loop, array(
     'verify_peer' => false,
     'verify_peer_name' => false

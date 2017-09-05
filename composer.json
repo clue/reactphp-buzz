@@ -16,7 +16,8 @@
     "require": {
     	"php": ">=5.3",
         "react/event-loop": "^0.4 || ^0.3",
-        "react/http-client": "^0.4 || ^0.3",
+        "react/http-client": "^0.5 || ^0.4 || ^0.3",
+        "react/socket": "^0.8",
         "react/socket-client": "^0.5 || ^0.4.5",
         "react/dns": "^0.4.1 || ^0.3",
         "react/promise": "^2 || ^1.1",
@@ -26,10 +27,9 @@
     },
     "require-dev": {
         "clue/block-react": "^1.0",
-        "clue/socks-react": "^0.6",
+        "clue/socks-react": "^0.8 || ^0.7",
         "phpunit/phpunit": "^4.5",
         "react/http": "^0.7.2",
-        "react/promise-stream": "^0.1.1",
-        "react/socket": "^0.8"
+        "react/promise-stream": "^0.1.1"
     }
 }
