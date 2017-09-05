@@ -2,22 +2,20 @@
 
 namespace Clue\React\Buzz\Io;
 
-use React\HttpClient\Client as HttpClient;
+use Clue\React\Buzz\Message\MessageFactory;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use React\EventLoop\LoopInterface;
+use React\HttpClient\Client as HttpClient;
 use React\HttpClient\Request as RequestStream;
 use React\HttpClient\Response as ResponseStream;
+use React\Promise;
 use React\Promise\Deferred;
-use React\EventLoop\LoopInterface;
-use React\Dns\Resolver\Factory as ResolverFactory;
 use React\Socket\Connector;
-use React\SocketClient\Connector as LegacyConnector;
 use React\SocketClient\SecureConnector;
 use React\SocketClient\ConnectorInterface as LegacyConnectorInterface;
-use React\Dns\Resolver\Resolver;
-use React\Promise;
-use Clue\React\Buzz\Message\MessageFactory;
 use React\Stream\ReadableStreamInterface;
+use React\Socket\UnixConnector;
 
 class Sender
 {
@@ -48,21 +46,16 @@ class Sender
      * [deprecated] create sender attached to the given event loop and DNS resolver
      *
      * @param LoopInterface   $loop
-     * @param Resolver|string $dns  DNS resolver instance or IP address
+     * @param \React\Dns\Resolver\Resolver|string $dns  DNS resolver instance or IP address
      * @return self
      * @deprecated as of v1.2.0, see createFromLoop()
      * @see self::createFromLoop()
      */
     public static function createFromLoopDns(LoopInterface $loop, $dns)
     {
-        if (!($dns instanceof Resolver)) {
-            $dnsResolverFactory = new ResolverFactory();
-            $dns = $dnsResolverFactory->createCached($dns, $loop);
-        }
-
-        $connector = new LegacyConnector($loop, $dns);
-
-        return self::createFromLoopConnectors($loop, $connector);
+        return new self(new HttpClient($loop, new Connector($loop, array(
+            'dns' => $dns
+        ))));
     }
 
     /**
@@ -98,9 +91,15 @@ class Sender
      */
     public static function createFromLoopUnix(LoopInterface $loop, $path)
     {
-        $connector = new UnixConnector($loop, $path);
-
-        return self::createFromLoopConnectors($loop, $connector);
+        return new self(
+            new HttpClient(
+                $loop,
+                new FixedUriConnector(
+                    $path,
+                    new UnixConnector($loop)
+                )
+            )
+        );
     }
 
     private $http;
