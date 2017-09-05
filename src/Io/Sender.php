@@ -41,15 +41,7 @@ class Sender
      */
     public static function createFromLoop(LoopInterface $loop)
     {
-        $ref = new \ReflectionClass('React\HttpClient\Client');
-        $num = $ref->getConstructor()->getNumberOfRequiredParameters();
-        if ($num === 1) {
-            // react/http 0.5
-            return new self(new HttpClient($loop));
-        }
-
-        // react/http 0.4/0.3
-        return self::createFromLoopDns($loop, '8.8.8.8');
+        return new self(new HttpClient($loop));
     }
 
     /**
@@ -89,27 +81,12 @@ class Sender
             $secureConnector = new SecureConnector($connector, $loop);
         }
 
-        // create HttpClient for React 0.5/0.4/0.3 (code coverage will be achieved by testing versions with Travis)
-        // @codeCoverageIgnoreStart
-        $ref = new \ReflectionClass('React\HttpClient\Client');
-        $num = $ref->getConstructor()->getNumberOfRequiredParameters();
-        if ($num === 1) {
-            // react/http-client:0.5 only requires the loop, the connector is actually optional
-            // v0.5 requires the new Socket-Connector, so we upcast from the legacy SocketClient-Connectors here
-            $http = new HttpClient($loop, new Connector($loop, array(
-                'tcp' => new ConnectorUpcaster($connector),
-                'tls' => new ConnectorUpcaster($secureConnector),
-                'dns' => false
-            )));
-        } elseif ($num === 2) {
-            // react/http-client:0.4 removed the $loop parameter
-            $http = new HttpClient($connector, $secureConnector);
-        } else {
-            $http = new HttpClient($loop, $connector, $secureConnector);
-        }
-        // @codeCoverageIgnoreEnd
-
-        return new self($http);
+        // react/http v0.5 requires the new Socket-Connector, so we upcast from the legacy SocketClient-Connectors here
+        return new self(new HttpClient($loop, new Connector($loop, array(
+            'tcp' => new ConnectorUpcaster($connector),
+            'tls' => new ConnectorUpcaster($secureConnector),
+            'dns' => false
+        ))));
     }
 
     /**

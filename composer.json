@@ -16,7 +16,7 @@
     "require": {
     	"php": ">=5.4",
         "react/event-loop": "^0.4 || ^0.3",
-        "react/http-client": "^0.5 || ^0.4 || ^0.3",
+        "react/http-client": "^0.5",
         "react/socket": "^0.8",
         "react/socket-client": "^0.5 || ^0.4.5",
         "react/dns": "^0.4.1 || ^0.3",
