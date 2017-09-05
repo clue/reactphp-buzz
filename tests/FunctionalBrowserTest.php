@@ -154,6 +154,7 @@ class FunctionalBrowserTest extends TestCase
         $this->assertEquals('hello world', $data['data']);
     }
 
+    /** @group online */
     public function testPostStreamChunked()
     {
         // httpbin used to support `Transfer-Encoding: chunked` for requests,

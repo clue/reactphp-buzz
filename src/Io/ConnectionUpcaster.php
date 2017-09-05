@@ -22,6 +22,7 @@ class ConnectionUpcaster extends EventEmitter implements ConnectionInterface
         $this->stream = $stream;
 
         Util::forwardEvents($stream, $this, array('data', 'end', 'close', 'error', 'drain'));
+        $this->stream->on('close', array($this, 'close'));
     }
 
     public function isReadable()

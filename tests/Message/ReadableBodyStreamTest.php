@@ -1,6 +1,7 @@
 <?php
 
 use Clue\React\Buzz\Message\ReadableBodyStream;
+use React\Stream\ThroughStream;
 
 class ReadableBodyStreamTest extends TestCase
 {
@@ -32,6 +33,54 @@ class ReadableBodyStreamTest extends TestCase
         $this->input->expects($this->once())->method('close');
 
         $this->stream->close();
+    }
+
+    public function testCloseWillEmitCloseEvent()
+    {
+        $this->input = new ThroughStream();
+        $this->stream = new ReadableBodyStream($this->input);
+
+        $called = 0;
+        $this->stream->on('close', function () use (&$called) {
+            ++$called;
+        });
+
+        $this->stream->close();
+        $this->stream->close();
+
+        $this->assertEquals(1, $called);
+    }
+
+    public function testCloseInputWillEmitCloseEvent()
+    {
+        $this->input = new ThroughStream();
+        $this->stream = new ReadableBodyStream($this->input);
+
+        $called = 0;
+        $this->stream->on('close', function () use (&$called) {
+            ++$called;
+        });
+
+        $this->input->close();
+        $this->input->close();
+
+        $this->assertEquals(1, $called);
+    }
+
+    public function testEndInputWillEmitCloseEvent()
+    {
+        $this->input = new ThroughStream();
+        $this->stream = new ReadableBodyStream($this->input);
+
+        $called = 0;
+        $this->stream->on('close', function () use (&$called) {
+            ++$called;
+        });
+
+        $this->input->end();
+        $this->input->end();
+
+        $this->assertEquals(1, $called);
     }
 
     public function testPauseWillPauseInputStream()
