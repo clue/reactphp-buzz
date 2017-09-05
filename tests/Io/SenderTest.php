@@ -84,11 +84,20 @@ class SenderTest extends TestCase
     {
         $httpClientArguments = array();
         $ref = new \ReflectionClass('React\HttpClient\Client');
-        if ($ref->getConstructor()->getNumberOfRequiredParameters() == 3) {
+        $num = $ref->getConstructor()->getNumberOfRequiredParameters();
+
+        if ($num === 1) {
+            // react/http 0.5
             $httpClientArguments[] = $this->getMock('React\EventLoop\LoopInterface');
+        } else {
+            if ($num == 3) {
+                // only for react/http 0.3
+                $httpClientArguments[] = $this->getMock('React\EventLoop\LoopInterface');
+            }
+            $httpClientArguments[] = $this->getMock('React\SocketClient\ConnectorInterface');
+            $httpClientArguments[] = $this->getMock('React\SocketClient\ConnectorInterface');
         }
-        $httpClientArguments[] = $this->getMock('React\SocketClient\ConnectorInterface');
-        $httpClientArguments[] = $this->getMock('React\SocketClient\ConnectorInterface');
+
         $http = $this->getMock(
             'React\HttpClient\Client',
             array(
@@ -96,13 +105,23 @@ class SenderTest extends TestCase
             ),
             $httpClientArguments
         );
+
         $requestArguments = array();
-        $ref = new \ReflectionClass('React\HttpClient\Request');
-        if ($ref->getConstructor()->getNumberOfRequiredParameters() == 3) {
-            $requestArguments[] = $this->getMock('React\EventLoop\LoopInterface');
+        if ($num === 1) {
+            // react/http 0.5
+            $requestArguments[] = $this->getMock('React\Socket\ConnectorInterface');
+        } else {
+            // react/http 0.4/0.3
+            $ref = new \ReflectionClass('React\HttpClient\Request');
+            $num = $ref->getConstructor()->getNumberOfRequiredParameters();
+
+            if ($num === 3) {
+                $requestArguments[] = $this->getMock('React\EventLoop\LoopInterface');
+            }
+            $requestArguments[] = $this->getMock('React\SocketClient\ConnectorInterface');
         }
-        $requestArguments[] = $this->getMock('React\SocketClient\ConnectorInterface');
         $requestArguments[] = new RequestData($method, $uri, $headers, $protocolVersion);
+
         $request = $this->getMock(
             'React\HttpClient\Request',
             array(),

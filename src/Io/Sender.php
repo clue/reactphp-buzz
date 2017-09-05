@@ -10,9 +10,9 @@ use React\HttpClient\Response as ResponseStream;
 use React\Promise\Deferred;
 use React\EventLoop\LoopInterface;
 use React\Dns\Resolver\Factory as ResolverFactory;
-use React\SocketClient\Connector;
+use React\Socket\Connector;
+use React\SocketClient\Connector as LegacyConnector;
 use React\SocketClient\SecureConnector;
-use RuntimeException;
 use React\SocketClient\ConnectorInterface;
 use React\Dns\Resolver\Resolver;
 use React\Promise;
@@ -46,7 +46,7 @@ class Sender
             $dns = $dnsResolverFactory->createCached($dns, $loop);
         }
 
-        $connector = new Connector($loop, $dns);
+        $connector = new LegacyConnector($loop, $dns);
 
         return self::createFromLoopConnectors($loop, $connector);
     }
@@ -65,10 +65,19 @@ class Sender
             $secureConnector = new SecureConnector($connector, $loop);
         }
 
-        // create HttpClient for React 0.4/0.3 (code coverage will be achieved by testing both versions)
+        // create HttpClient for React 0.5/0.4/0.3 (code coverage will be achieved by testing versions with Travis)
         // @codeCoverageIgnoreStart
         $ref = new \ReflectionClass('React\HttpClient\Client');
-        if ($ref->getConstructor()->getNumberOfRequiredParameters() == 2) {
+        $num = $ref->getConstructor()->getNumberOfRequiredParameters();
+        if ($num === 1) {
+            // react/http-client:0.5 only requires the loop, the connector is actually optional
+            // v0.5 requires the new Socket-Connector, so we upcast from the legacy SocketClient-Connectors here
+            $http = new HttpClient($loop, new Connector($loop, array(
+                'tcp' => new ConnectorUpcaster($connector),
+                'tls' => new ConnectorUpcaster($secureConnector),
+                'dns' => false
+            )));
+        } elseif ($num === 2) {
             // react/http-client:0.4 removed the $loop parameter
             $http = new HttpClient($connector, $secureConnector);
         } else {
