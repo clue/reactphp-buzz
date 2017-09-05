@@ -183,6 +183,7 @@ class FunctionalBrowserTest extends TestCase
 
         $this->loop->addTimer(0.001, function () use ($stream) {
             $stream->emit('data', array('hello world'));
+            $stream->emit('end');
             $stream->close();
         });
 

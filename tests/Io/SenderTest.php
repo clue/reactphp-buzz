@@ -41,7 +41,7 @@ class SenderTest extends TestCase
     public function testSenderRejection()
     {
         $connector = $this->getMock('React\SocketClient\ConnectorInterface');
-        $connector->expects($this->once())->method('create')->willReturn(Promise\reject(new RuntimeException('Rejected')));
+        $connector->expects($this->once())->method('connect')->willReturn(Promise\reject(new RuntimeException('Rejected')));
 
         $sender = Sender::createFromLoopConnectors($this->loop, $connector);
 

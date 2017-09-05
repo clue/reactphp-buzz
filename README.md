@@ -477,12 +477,6 @@ connector settings (DNS resolution, SSL/TLS parameters, timeouts etc.), you can
 explicitly pass a custom instance of the
 [legacy `ConnectorInterface`](https://github.com/reactphp/socket-client#connectorinterface).
 
-The below examples assume you've installed the latest legacy SocketClient version:
-
-```bash
-$ composer require react/socket-client:^0.5
-```
-
 You can optionally pass additional
 [socket context options](http://php.net/manual/en/context.socket.php)
 to the constructor like this:
