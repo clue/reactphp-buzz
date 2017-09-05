@@ -232,8 +232,8 @@ $streamingBrowser->get($url)->then(function (ResponseInterface $response) {
 });
 ```
 
-See also the [stream bandwidth example](examples/stream-bandwidth.php) and
-the [stream forwarding example](examples/stream-forwarding.php).
+See also the [stream bandwidth example](examples/91-stream-bandwidth.php) and
+the [stream forwarding example](examples/21-stream-forwarding.php).
 
 You can invoke the following methods on the message body:
 
@@ -504,7 +504,7 @@ by adding a dependency to [clue/socks-react](https://github.com/clue/php-socks-r
 The SOCKS protocol operates at the TCP/IP layer and thus requires minimal effort at the HTTP application layer.
 This works for both plain HTTP and SSL encrypted HTTPS requests.
 
-See also the [SOCKS example](examples/socks.php).
+See also the [SOCKS example](examples/11-socks-proxy.php).
 
 ### UNIX domain sockets
 
