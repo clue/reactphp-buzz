@@ -1,7 +1,6 @@
 language: php
 
 php:
-# - 5.3 # requires old distro, see below
   - 5.4
   - 5.5
   - 5.6
@@ -12,9 +11,6 @@ php:
 dist: trusty
 
 matrix:
-  include:
-    - php: 5.3
-      dist: precise
   allow_failures:
     - php: hhvm
 

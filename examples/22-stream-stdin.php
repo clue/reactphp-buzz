@@ -1,9 +1,8 @@
 <?php
 
 use Clue\React\Buzz\Browser;
-use React\Stream\ReadableStreamInterface;
 use Psr\Http\Message\ResponseInterface;
-use React\Stream\Stream;
+use React\Stream\ReadableResourceStream;
 use RingCentral\Psr7;
 
 $url = isset($argv[1]) ? $argv[1] : 'https://httpbin.org/post';
@@ -13,7 +12,7 @@ require __DIR__ . '/../vendor/autoload.php';
 $loop = React\EventLoop\Factory::create();
 $client = new Browser($loop);
 
-$in = new Stream(STDIN, $loop);
+$in = new ReadableResourceStream(STDIN, $loop);
 
 echo 'Sending STDIN as POST to ' . $url . '…' . PHP_EOL;
 

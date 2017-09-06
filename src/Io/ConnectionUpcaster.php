@@ -9,7 +9,7 @@ use React\Stream\WritableStreamInterface;
 use React\Stream\Util;
 
 /**
- * Adapter to upcast a legacy SocketClient:v0.5 Connector result to a new Socket:v0.8 ConnectionInterface
+ * Adapter to upcast a legacy SocketClient-Connector result to a new Socket-ConnectionInterface
  *
  * @internal
  */

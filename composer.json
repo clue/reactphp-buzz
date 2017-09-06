@@ -14,14 +14,13 @@
         "psr-4": { "Clue\\React\\Buzz\\": "src/" }
     },
     "require": {
-    	"php": ">=5.3",
+    	"php": ">=5.4",
         "react/event-loop": "^0.4 || ^0.3",
-        "react/http-client": "^0.5 || ^0.4 || ^0.3",
-        "react/socket": "^0.8",
-        "react/socket-client": "^0.5 || ^0.4.5",
-        "react/dns": "^0.4.1 || ^0.3",
+        "react/http-client": "^0.5",
         "react/promise": "^2 || ^1.1",
-        "react/stream": "^0.4 || ^0.3.1",
+        "react/socket": "^0.8",
+        "react/socket-client": "^0.7 || ^0.6",
+        "react/stream": "^0.6 || ^0.5 || ^0.4.6",
         "psr/http-message": "^1.0",
         "ringcentral/psr7": "^1.2"
     },

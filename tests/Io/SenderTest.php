@@ -1,6 +1,7 @@
 <?php
 
 use Clue\React\Buzz\Io\Sender;
+use React\HttpClient\Client as HttpClient;
 use React\HttpClient\RequestData;
 use RingCentral\Psr7\Request;
 use React\Promise;
@@ -38,10 +39,25 @@ class SenderTest extends TestCase
         $this->assertInstanceOf('Clue\React\Buzz\Io\Sender', $sender);
     }
 
-    public function testSenderRejection()
+    public function testSenderConnectorRejection()
+    {
+        $connector = $this->getMock('React\Socket\ConnectorInterface');
+        $connector->expects($this->once())->method('connect')->willReturn(Promise\reject(new RuntimeException('Rejected')));
+
+        $sender = new Sender(new HttpClient($this->loop, $connector));
+
+        $request = new Request('GET', 'http://www.google.com/');
+
+        $promise = $sender->send($request, $this->getMock('Clue\React\Buzz\Message\MessageFactory'));
+
+        $this->setExpectedException('RuntimeException');
+        Block\await($promise, $this->loop);
+    }
+
+    public function testSenderLegacyConnectorRejection()
     {
         $connector = $this->getMock('React\SocketClient\ConnectorInterface');
-        $connector->expects($this->once())->method('create')->willReturn(Promise\reject(new RuntimeException('Rejected')));
+        $connector->expects($this->once())->method('connect')->willReturn(Promise\reject(new RuntimeException('Rejected')));
 
         $sender = Sender::createFromLoopConnectors($this->loop, $connector);
 
@@ -82,51 +98,25 @@ class SenderTest extends TestCase
      */
     public function testRequestProtocolVersion(Request $Request, $method, $uri, $headers, $protocolVersion)
     {
-        $httpClientArguments = array();
-        $ref = new \ReflectionClass('React\HttpClient\Client');
-        $num = $ref->getConstructor()->getNumberOfRequiredParameters();
-
-        if ($num === 1) {
-            // react/http 0.5
-            $httpClientArguments[] = $this->getMock('React\EventLoop\LoopInterface');
-        } else {
-            if ($num == 3) {
-                // only for react/http 0.3
-                $httpClientArguments[] = $this->getMock('React\EventLoop\LoopInterface');
-            }
-            $httpClientArguments[] = $this->getMock('React\SocketClient\ConnectorInterface');
-            $httpClientArguments[] = $this->getMock('React\SocketClient\ConnectorInterface');
-        }
-
         $http = $this->getMock(
             'React\HttpClient\Client',
             array(
                 'request',
             ),
-            $httpClientArguments
+            array(
+                $this->getMock('React\EventLoop\LoopInterface')
+            )
         );
-
-        $requestArguments = array();
-        if ($num === 1) {
-            // react/http 0.5
-            $requestArguments[] = $this->getMock('React\Socket\ConnectorInterface');
-        } else {
-            // react/http 0.4/0.3
-            $ref = new \ReflectionClass('React\HttpClient\Request');
-            $num = $ref->getConstructor()->getNumberOfRequiredParameters();
-
-            if ($num === 3) {
-                $requestArguments[] = $this->getMock('React\EventLoop\LoopInterface');
-            }
-            $requestArguments[] = $this->getMock('React\SocketClient\ConnectorInterface');
-        }
-        $requestArguments[] = new RequestData($method, $uri, $headers, $protocolVersion);
 
         $request = $this->getMock(
             'React\HttpClient\Request',
             array(),
-            $requestArguments
+            array(
+                $this->getMock('React\Socket\ConnectorInterface'),
+                new RequestData($method, $uri, $headers, $protocolVersion)
+            )
         );
+
         $http->expects($this->once())->method('request')->with($method, $uri, $headers, $protocolVersion)->willReturn($request);
 
         $sender = new Sender($http);

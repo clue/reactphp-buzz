@@ -2,22 +2,20 @@
 
 namespace Clue\React\Buzz\Io;
 
-use React\HttpClient\Client as HttpClient;
+use Clue\React\Buzz\Message\MessageFactory;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use React\EventLoop\LoopInterface;
+use React\HttpClient\Client as HttpClient;
 use React\HttpClient\Request as RequestStream;
 use React\HttpClient\Response as ResponseStream;
+use React\Promise;
 use React\Promise\Deferred;
-use React\EventLoop\LoopInterface;
-use React\Dns\Resolver\Factory as ResolverFactory;
 use React\Socket\Connector;
-use React\SocketClient\Connector as LegacyConnector;
 use React\SocketClient\SecureConnector;
 use React\SocketClient\ConnectorInterface as LegacyConnectorInterface;
-use React\Dns\Resolver\Resolver;
-use React\Promise;
-use Clue\React\Buzz\Message\MessageFactory;
 use React\Stream\ReadableStreamInterface;
+use React\Socket\UnixConnector;
 
 class Sender
 {
@@ -41,36 +39,23 @@ class Sender
      */
     public static function createFromLoop(LoopInterface $loop)
     {
-        $ref = new \ReflectionClass('React\HttpClient\Client');
-        $num = $ref->getConstructor()->getNumberOfRequiredParameters();
-        if ($num === 1) {
-            // react/http 0.5
-            return new self(new HttpClient($loop));
-        }
-
-        // react/http 0.4/0.3
-        return self::createFromLoopDns($loop, '8.8.8.8');
+        return new self(new HttpClient($loop));
     }
 
     /**
      * [deprecated] create sender attached to the given event loop and DNS resolver
      *
      * @param LoopInterface   $loop
-     * @param Resolver|string $dns  DNS resolver instance or IP address
+     * @param \React\Dns\Resolver\Resolver|string $dns  DNS resolver instance or IP address
      * @return self
      * @deprecated as of v1.2.0, see createFromLoop()
      * @see self::createFromLoop()
      */
     public static function createFromLoopDns(LoopInterface $loop, $dns)
     {
-        if (!($dns instanceof Resolver)) {
-            $dnsResolverFactory = new ResolverFactory();
-            $dns = $dnsResolverFactory->createCached($dns, $loop);
-        }
-
-        $connector = new LegacyConnector($loop, $dns);
-
-        return self::createFromLoopConnectors($loop, $connector);
+        return new self(new HttpClient($loop, new Connector($loop, array(
+            'dns' => $dns
+        ))));
     }
 
     /**
@@ -89,27 +74,13 @@ class Sender
             $secureConnector = new SecureConnector($connector, $loop);
         }
 
-        // create HttpClient for React 0.5/0.4/0.3 (code coverage will be achieved by testing versions with Travis)
-        // @codeCoverageIgnoreStart
-        $ref = new \ReflectionClass('React\HttpClient\Client');
-        $num = $ref->getConstructor()->getNumberOfRequiredParameters();
-        if ($num === 1) {
-            // react/http-client:0.5 only requires the loop, the connector is actually optional
-            // v0.5 requires the new Socket-Connector, so we upcast from the legacy SocketClient-Connectors here
-            $http = new HttpClient($loop, new Connector($loop, array(
-                'tcp' => new ConnectorUpcaster($connector),
-                'tls' => new ConnectorUpcaster($secureConnector),
-                'dns' => false
-            )));
-        } elseif ($num === 2) {
-            // react/http-client:0.4 removed the $loop parameter
-            $http = new HttpClient($connector, $secureConnector);
-        } else {
-            $http = new HttpClient($loop, $connector, $secureConnector);
-        }
-        // @codeCoverageIgnoreEnd
-
-        return new self($http);
+        // react/http v0.5 requires the new Socket-Connector, so we upcast from the legacy SocketClient-Connectors here
+        return new self(new HttpClient($loop, new Connector($loop, array(
+            'tcp' => new ConnectorUpcaster($connector),
+            'tls' => new ConnectorUpcaster($secureConnector),
+            'dns' => false,
+            'timeout' => false
+        ))));
     }
 
     /**
@@ -121,9 +92,15 @@ class Sender
      */
     public static function createFromLoopUnix(LoopInterface $loop, $path)
     {
-        $connector = new UnixConnector($loop, $path);
-
-        return self::createFromLoopConnectors($loop, $connector);
+        return new self(
+            new HttpClient(
+                $loop,
+                new FixedUriConnector(
+                    $path,
+                    new UnixConnector($loop)
+                )
+            )
+        );
     }
 
     private $http;
