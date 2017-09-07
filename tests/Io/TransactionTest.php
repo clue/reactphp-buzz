@@ -59,6 +59,32 @@ class TransactionTest extends TestCase
         $this->assertEquals('hello world', (string)$response->getBody());
     }
 
+    /**
+     * @expectedException RuntimeException
+     */
+    public function testCancelBufferingResponseWillCloseStreamAndReject()
+    {
+        $messageFactory = new MessageFactory();
+        $loop = Factory::create();
+
+        $stream = $this->getMockBuilder('React\Stream\ReadableStreamInterface')->getMock();
+        $stream->expects($this->any())->method('isReadable')->willReturn(true);
+        $stream->expects($this->once())->method('close');
+
+        $request = $this->getMock('Psr\Http\Message\RequestInterface');
+        $response = $messageFactory->response(1.0, 200, 'OK', array(), $stream);
+
+        // mock sender to resolve promise with the given $response in response to the given $request
+        $sender = $this->getMockBuilder('Clue\React\Buzz\Io\Sender')->disableOriginalConstructor()->getMock();
+        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(Promise\resolve($response));
+
+        $transaction = new Transaction($request, $sender, array(), $messageFactory);
+        $promise = $transaction->send();
+        $promise->cancel();
+
+        Block\await($promise, $loop);
+    }
+
     public function testReceivingStreamingBodyWillResolveWithStreamingResponseIfStreamingIsEnabled()
     {
         $messageFactory = new MessageFactory();

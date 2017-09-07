@@ -69,6 +69,45 @@ class SenderTest extends TestCase
         Block\await($promise, $this->loop);
     }
 
+    public function testCancelRequestWillCancelConnector()
+    {
+        $promise = new \React\Promise\Promise(function () { }, function () {
+            throw new \RuntimeException();
+        });
+
+        $connector = $this->getMock('React\Socket\ConnectorInterface');
+        $connector->expects($this->once())->method('connect')->willReturn($promise);
+
+        $sender = new Sender(new HttpClient($this->loop, $connector));
+
+        $request = new Request('GET', 'http://www.google.com/');
+
+        $promise = $sender->send($request, $this->getMock('Clue\React\Buzz\Message\MessageFactory'));
+        $promise->cancel();
+
+        $this->setExpectedException('RuntimeException');
+        Block\await($promise, $this->loop);
+    }
+
+    public function testCancelRequestWillCloseConnection()
+    {
+        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $connection->expects($this->once())->method('close');
+
+        $connector = $this->getMock('React\Socket\ConnectorInterface');
+        $connector->expects($this->once())->method('connect')->willReturn(Promise\resolve($connection));
+
+        $sender = new Sender(new HttpClient($this->loop, $connector));
+
+        $request = new Request('GET', 'http://www.google.com/');
+
+        $promise = $sender->send($request, $this->getMock('Clue\React\Buzz\Message\MessageFactory'));
+        $promise->cancel();
+
+        $this->setExpectedException('RuntimeException');
+        Block\await($promise, $this->loop);
+    }
+
     public function provideRequestProtocolVersion()
     {
         return array(

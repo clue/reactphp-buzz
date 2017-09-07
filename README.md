@@ -34,6 +34,7 @@ mess with most of the low-level details.
   * [Browser](#browser)
     * [Methods](#methods)
     * [Promises](#promises)
+    * [Cancellation](#cancellation)
     * [Blocking](#blocking)
     * [Streaming](#streaming)
     * [submit()](#submit)
@@ -140,7 +141,22 @@ You may also want to look into the [streaming API](#streaming):
 * If you're dealing with lots of concurrent requests (100+) or
 * If you want to process individual data chunks as they happen (without having to wait for the full response body) or
 * If you're expecting a big response body size (1 MiB or more, for example when downloading binary files) or
-* If you're unsure about the response body size (better be safe than sorry when accessing arbitrary remote HTTP endpoints and the response body size is unknown in advance). 
+* If you're unsure about the response body size (better be safe than sorry when accessing arbitrary remote HTTP endpoints and the response body size is unknown in advance).
+
+#### Cancellation
+
+The returned Promise is implemented in such a way that it can be cancelled
+when it is still pending.
+Cancelling a pending promise will reject its value with an Exception and
+clean up any underlying resources.
+
+```php
+$promise = $browser->get($url);
+
+$loop->addTimer(2.0, function () use ($promise) {
+    $promise->cancel();
+});
+```
 
 #### Blocking
 

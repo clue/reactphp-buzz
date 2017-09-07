@@ -2,18 +2,16 @@
 
 namespace Clue\React\Buzz\Io;
 
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
-use Exception;
 use Clue\React\Buzz\Browser;
-use React\HttpClient\Client as HttpClient;
 use Clue\React\Buzz\Io\Sender;
 use Clue\React\Buzz\Message\ResponseException;
 use Clue\React\Buzz\Message\MessageFactory;
-use Clue\React\Buzz\Message\BufferedResponse;
-use React\Stream\BufferedSink;
-use React\Stream\ReadableStreamInterface;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 use React\Promise;
+use React\Promise\Stream;
+use React\Stream\ReadableStreamInterface;
+use Exception;
 
 /**
  * @internal
@@ -71,9 +69,6 @@ class Transaction
         return $promise->then(
             function (ResponseInterface $response) use ($request, $that) {
                 return $that->onResponse($response, $request);
-            },
-            function ($error) use ($request, $that) {
-                return $that->onError($error, $request);
             }
         );
     }
@@ -94,9 +89,17 @@ class Transaction
 
         // buffer stream and resolve with buffered body
         $messageFactory = $this->messageFactory;
-        return BufferedSink::createPromise($stream)->then(function ($body) use ($response, $messageFactory) {
-            return $response->withBody($messageFactory->body($body));
-        });
+        return Stream\buffer($stream)->then(
+            function ($body) use ($response, $messageFactory) {
+                return $response->withBody($messageFactory->body($body));
+            },
+            function ($e) use ($stream) {
+                // try to close stream if buffering fails (or is cancelled)
+                $stream->close();
+
+                throw $e;
+            }
+        );
     }
 
     /**
@@ -121,19 +124,6 @@ class Transaction
 
         // resolve our initial promise
         return $response;
-    }
-
-    /**
-     * @internal
-     * @param Exception $error
-     * @param RequestInterface $request
-     * @throws Exception
-     */
-    public function onError(Exception $error, RequestInterface $request)
-    {
-        $this->progress('error', array($error, $request));
-
-        throw $error;
     }
 
     private function onResponseRedirect(ResponseInterface $response, RequestInterface $request)

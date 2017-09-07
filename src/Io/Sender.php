@@ -142,9 +142,13 @@ class Sender
             $headers[$name] = implode(', ', $values);
         }
 
-        $deferred = new Deferred();
-
         $requestStream = $this->http->request($request->getMethod(), (string)$uri, $headers, $request->getProtocolVersion());
+
+        $deferred = new Deferred(function ($_, $reject) use ($requestStream) {
+            // close request stream if request is canceled
+            $reject(new \RuntimeException('Request canceled'));
+            $requestStream->close();
+        });
 
         $requestStream->on('error', function($error) use ($deferred) {
             $deferred->reject($error);
