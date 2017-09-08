@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.3.0 (2017-09-08)
+
+*   Feature: Support request cancellation
+    (#75 by @clue)
+
+    ```php
+    $promise = $browser->get($url);
+
+    $loop->addTimer(2.0, function () use ($promise) {
+        $promise->cancel();
+    });
+    ```
+
+*   Feature: Update react/http-client to v0.5,
+    support react/stream v0.6 and react/socket-client v0.7 and drop legacy PHP 5.3 support
+    (#74 by @clue)
+
 ## 1.2.0 (2017-09-05)
 
 * Feature: Forward compatibility with react/http-client v0.5
