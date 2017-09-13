@@ -49,7 +49,6 @@ mess with most of the low-level details.
   * [ResponseException](#responseexception)
 * [Advanced](#advanced)
   * [Sender](#sender)
-  * [DNS](#dns)
   * [Connection options](#connection-options)
   * [SOCKS proxy](#socks-proxy)
   * [UNIX domain sockets](#unix-domain-sockets)
@@ -446,87 +445,30 @@ and the default [`Connector`](https://github.com/reactphp/socket-client) and [DN
 
 See also [`Browser::withSender()`](#withsender) for changing the `Sender` instance during runtime.
 
-### DNS
-
-The [`Sender`](#sender) is also responsible for creating the underlying TCP/IP
-connection to the remote HTTP server and hence has to orchestrate DNS lookups.
-By default, it uses a `Connector` instance which uses Google's public DNS servers
-(`8.8.8.8`).
-
-If you need custom DNS settings, you can explicitly create a [`Sender`](#sender) instance
-with your DNS server address (or `React\Dns\Resolver` instance) like this:
-
-```php
-// new API for react/http 0.5
-$connector = new \React\Socket\Connector($loop, array(
-    'dns' => '127.0.0.1'
-));
-$client = new \React\HttpClient\Client($loop, $connector);
-$sender = new \Clue\Buzz\Io\Sender($client);
-$browser = $browser->withSender($sender);
-
-// deprecated legacy API
-$dns = '127.0.0.1';
-$sender = Sender::createFromLoopDns($loop, $dns);
-$browser = $browser->withSender($sender);
-```
-
-See also [`Browser::withSender()`](#withsender) for more details.
-
 ### Connection options
 
 If you need custom connector settings (DNS resolution, SSL/TLS parameters, timeouts etc.), you can explicitly pass a
 custom instance of the new [`ConnectorInterface`](https://github.com/reactphp/socket#connectorinterface).
 
 ```php
-// new API for react/http 0.5
 $connector = new \React\Socket\Connector($loop, array(
-    'dns' => '127.0.0.1'
+    'dns' => '127.0.0.1',
+    'tcp' => array(
+        'bindto' => '192.168.10.1:0'
+    ),
+    'tls' => array(
+        'verify_peer' => false,
+        'verify_peer_name' => false
+    )
 ));
-$client = new \React\HttpClient\Client($loop, $connector);
-$sender = new \Clue\Buzz\Io\Sender($client);
+$sender = \Clue\Buzz\Io\Sender::createFromLoop($loop, $connector);
 $browser = $browser->withSender($sender);
 ```
 
-If you're still using the deprecated legacy Http component and you need custom
-connector settings (DNS resolution, SSL/TLS parameters, timeouts etc.), you can
-explicitly pass a custom instance of the
-[legacy `ConnectorInterface`](https://github.com/reactphp/socket-client#connectorinterface).
-
-You can optionally pass additional
-[socket context options](http://php.net/manual/en/context.socket.php)
-to the constructor like this:
-
-```php
-// deprecated legacy API
-// use local DNS server
-$dnsResolverFactory = new DnsFactory();
-$resolver = $dnsResolverFactory->createCached('127.0.0.1', $loop);
-
-// outgoing connections via interface 192.168.10.1
-$tcp = new DnsConnector(
-    new TcpConnector($loop, array('bindto' => '192.168.10.1:0')),
-    $resolver
-);
-
-$sender = Sender::createFromLoopConnectors($loop, $tcp);
-$browser = $browser->withSender($sender);
-```
-
-You can optionally pass additional
-[SSL context options](http://php.net/manual/en/context.ssl.php)
-to the constructor like this:
-
-```php
-// deprecated legacy API
-$ssl = new SecureConnector($tcp, $loop, array(
-    'verify_peer' => false,
-    'verify_peer_name' => false
-));
-
-$sender = Sender::createFromLoopConnectors($loop, $tcp, $ssl);
-$browser = $browser->withSender($sender);
-```
+Legacy notice: The `Sender` class mostly exists in order to abstract changes
+on the underlying components away from this package. As such, it offers a number
+of legacy APIs that are now deprecated and no longer in active use. These APIs
+continue to work unchanged, but will be removed in a future version.
 
 ### SOCKS proxy
 
