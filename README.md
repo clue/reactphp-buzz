@@ -49,9 +49,8 @@ mess with most of the low-level details.
   * [ResponseException](#responseexception)
 * [Advanced](#advanced)
   * [Sender](#sender)
-  * [Connection options](#connection-options)
   * [SOCKS proxy](#socks-proxy)
-  * [UNIX domain sockets](#unix-domain-sockets)
+  * [Unix domain sockets](#unix-domain-sockets)
   * [Options](#options)
 * [Install](#install)
 * [Tests](#tests)
@@ -85,11 +84,33 @@ It also registers everything with the main [`EventLoop`](https://github.com/reac
 
 ```php
 $loop = React\EventLoop\Factory::create();
+
 $browser = new Browser($loop);
 ```
 
-If you need custom DNS or proxy settings, you can explicitly pass a
-custom [`Sender`](#sender) instance. This is considered *advanced usage*.
+If you need custom connector settings (DNS resolution, TLS parameters, timeouts,
+proxy servers etc.), you can explicitly pass a custom instance of the
+[`ConnectorInterface`](https://github.com/reactphp/socket#connectorinterface):
+
+```php
+$connector = new \React\Socket\Connector($loop, array(
+    'dns' => '127.0.0.1',
+    'tcp' => array(
+        'bindto' => '192.168.10.1:0'
+    ),
+    'tls' => array(
+        'verify_peer' => false,
+        'verify_peer_name' => false
+    )
+));
+
+$browser = new Browser($loop, $connector);
+```
+
+Legacy notice: This project previously used different APIs that are now
+deprecated, but continue to work unchanged. This legacy API will be removed in
+a future version, so it's highly recommended to upgrade to the above API.
+See also [`Sender`](#sender).
 
 #### Methods
 
@@ -345,6 +366,9 @@ See [options](#options) for more details.
 
 #### withSender()
 
+> [deprecated] The `Sender` is deprecated and will likely be removed in a
+  future version.
+
 The `withSender(Sender $sender)` method can be used to change the [`Sender`](#sender) instance to use:
 
 ```php
@@ -436,6 +460,9 @@ The `getResponse()` method can be used to access its underlying [`ResponseIntefa
 
 ### Sender
 
+> [deprecated] The `Sender` is deprecated and will likely be removed in a
+  future version.
+
 The `Sender` is responsible for passing the [`RequestInterface`](#requestinterface) objects to
 the underlying [`HttpClient`](https://github.com/reactphp/http-client) library
 and keeps track of its transmission and converts its reponses back to [`ResponseInterface`](#responseinterface) objects.
@@ -444,26 +471,6 @@ It also registers everything with the main [`EventLoop`](https://github.com/reac
 and the default [`Connector`](https://github.com/reactphp/socket-client) and [DNS `Resolver`](https://github.com/reactphp/dns).
 
 See also [`Browser::withSender()`](#withsender) for changing the `Sender` instance during runtime.
-
-### Connection options
-
-If you need custom connector settings (DNS resolution, SSL/TLS parameters, timeouts etc.), you can explicitly pass a
-custom instance of the new [`ConnectorInterface`](https://github.com/reactphp/socket#connectorinterface).
-
-```php
-$connector = new \React\Socket\Connector($loop, array(
-    'dns' => '127.0.0.1',
-    'tcp' => array(
-        'bindto' => '192.168.10.1:0'
-    ),
-    'tls' => array(
-        'verify_peer' => false,
-        'verify_peer_name' => false
-    )
-));
-$sender = \Clue\Buzz\Io\Sender::createFromLoop($loop, $connector);
-$browser = $browser->withSender($sender);
-```
 
 Legacy notice: The `Sender` class mostly exists in order to abstract changes
 on the underlying components away from this package. As such, it offers a number
@@ -480,11 +487,11 @@ This works for both plain HTTP and SSL encrypted HTTPS requests.
 
 See also the [SOCKS example](examples/11-socks-proxy.php).
 
-### UNIX domain sockets
+### Unix domain sockets
 
-This library also supports connecting to a local UNIX domain socket path.
-You have to explicitly create a [`Sender`](#sender) that passes every request through the
-given UNIX domain socket.
+This library also supports connecting to a local Unix domain socket (UDS) path.
+You have to explicitly create a legacy [`Sender`](#sender) that passes every
+request through the given UNIX domain socket.
 For consistency reasons you still have to pass full HTTP URLs for every request,
 but the host and port will be ignored when establishing a connection.
 

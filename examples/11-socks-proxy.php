@@ -1,7 +1,6 @@
 <?php
 
 use Clue\React\Buzz\Browser;
-use Clue\React\Buzz\Io\Sender;
 use Clue\React\Socks\Client as SocksClient;
 use Psr\Http\Message\ResponseInterface;
 use React\EventLoop\Factory as LoopFactory;
@@ -21,8 +20,7 @@ $connector = new Connector($loop, array(
     'tcp' => $proxy,
     'dns' => false
 ));
-$sender = Sender::createFromLoop($loop, $connector);
-$browser = new Browser($loop, $sender);
+$browser = new Browser($loop, $connector);
 
 // demo fetching HTTP headers (or bail out otherwise)
 $browser->get('https://www.google.com/')->then(function (ResponseInterface $response) {

@@ -18,6 +18,10 @@ use React\Stream\ReadableStreamInterface;
 use React\Socket\UnixConnector;
 use React\Socket\ConnectorInterface;
 
+/**
+ * @deprecated as of v1.4.0, see `Browser`
+ * @see Browser
+ */
 class Sender
 {
     /**
