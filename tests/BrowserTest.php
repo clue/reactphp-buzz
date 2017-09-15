@@ -1,10 +1,10 @@
 <?php
 
-use Clue\React\Buzz\Browser;
-use RingCentral\Psr7\Uri;
 use Clue\React\Block;
+use Clue\React\Buzz\Browser;
 use Psr\Http\Message\RequestInterface;
 use React\Promise\Promise;
+use RingCentral\Psr7\Uri;
 
 class BrowserTest extends TestCase
 {
@@ -16,16 +16,11 @@ class BrowserTest extends TestCase
     {
         $this->loop = $this->getMock('React\EventLoop\LoopInterface');
         $this->sender = $this->getMockBuilder('Clue\React\Buzz\Io\Sender')->disableOriginalConstructor()->getMock();
-        $this->browser = new Browser($this->loop, $this->sender);
-    }
+        $this->browser = new Browser($this->loop);
 
-    public function testWithSender()
-    {
-        $sender = $this->getMockBuilder('Clue\React\Buzz\Io\Sender')->disableOriginalConstructor()->getMock();
-
-        $browser = $this->browser->withSender($sender);
-
-        $this->assertNotSame($this->browser, $browser);
+        $ref = new ReflectionProperty($this->browser, 'sender');
+        $ref->setAccessible(true);
+        $ref->setValue($this->browser, $this->sender);
     }
 
     public function testWithBase()

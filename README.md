@@ -40,7 +40,6 @@ mess with most of the low-level details.
     * [submit()](#submit)
     * [send()](#send)
     * [withOptions()](#withoptions)
-    * [withSender()](#withsender)
     * [withBase()](#withbase)
     * [withoutBase()](#withoutbase)
   * [ResponseInterface](#responseinterface)
@@ -48,7 +47,6 @@ mess with most of the low-level details.
   * [UriInterface](#uriinterface)
   * [ResponseException](#responseexception)
 * [Advanced](#advanced)
-  * [Sender](#sender)
   * [SOCKS proxy](#socks-proxy)
   * [Options](#options)
 * [Install](#install)
@@ -105,11 +103,6 @@ $connector = new \React\Socket\Connector($loop, array(
 
 $browser = new Browser($loop, $connector);
 ```
-
-Legacy notice: This project previously used different APIs that are now
-deprecated, but continue to work unchanged. This legacy API will be removed in
-a future version, so it's highly recommended to upgrade to the above API.
-See also [`Sender`](#sender).
 
 #### Methods
 
@@ -363,22 +356,6 @@ actually returns a *new* [`Browser`](#browser) instance with the [options](#opti
 
 See [options](#options) for more details.
 
-#### withSender()
-
-> [deprecated] The `Sender` is deprecated and will likely be removed in a
-  future version.
-
-The `withSender(Sender $sender)` method can be used to change the [`Sender`](#sender) instance to use:
-
-```php
-$newBrowser = $browser->withSender($sender);
-```
-
-Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withSender()` method
-actually returns a *new* [`Browser`](#browser) instance with the given [`Sender`](#sender) applied.
-
-See [`Sender`](#sender) for more details.
-
 #### withBase()
 
 The `withBase($baseUri)` method can be used to change the base URI used to
@@ -456,25 +433,6 @@ The `getCode()` method can be used to return the HTTP response status code.
 The `getResponse()` method can be used to access its underlying [`ResponseInteface`](#responseinterface) object.
 
 ## Advanced
-
-### Sender
-
-> [deprecated] The `Sender` is deprecated and will likely be removed in a
-  future version.
-
-The `Sender` is responsible for passing the [`RequestInterface`](#requestinterface) objects to
-the underlying [`HttpClient`](https://github.com/reactphp/http-client) library
-and keeps track of its transmission and converts its reponses back to [`ResponseInterface`](#responseinterface) objects.
-
-It also registers everything with the main [`EventLoop`](https://github.com/reactphp/event-loop#usage)
-and the default [`Connector`](https://github.com/reactphp/socket-client) and [DNS `Resolver`](https://github.com/reactphp/dns).
-
-See also [`Browser::withSender()`](#withsender) for changing the `Sender` instance during runtime.
-
-Legacy notice: The `Sender` class mostly exists in order to abstract changes
-on the underlying components away from this package. As such, it offers a number
-of legacy APIs that are now deprecated and no longer in active use. These APIs
-continue to work unchanged, but will be removed in a future version.
 
 ### SOCKS proxy
 
