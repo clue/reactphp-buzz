@@ -12,11 +12,9 @@ use React\HttpClient\Response as ResponseStream;
 use React\Promise;
 use React\Promise\Deferred;
 use React\Socket\Connector;
-use React\SocketClient\SecureConnector;
-use React\SocketClient\ConnectorInterface as LegacyConnectorInterface;
-use React\Stream\ReadableStreamInterface;
-use React\Socket\UnixConnector;
 use React\Socket\ConnectorInterface;
+use React\Socket\UnixConnector;
+use React\Stream\ReadableStreamInterface;
 
 /**
  * @deprecated as of v1.4.0, see `Browser`
@@ -60,31 +58,6 @@ class Sender
     {
         return self::createFromLoop($loop, new Connector($loop, array(
             'dns' => $dns
-        )));
-    }
-
-    /**
-     * [deprecated] create sender attached to given event loop using the given legacy connectors
-     *
-     * @param LoopInterface $loop
-     * @param LegacyConnectorInterface $connector            default legacy connector to use to establish TCP/IP connections
-     * @param LegacyConnectorInterface|null $secureConnector secure legacy connector to use to establish TLS/SSL connections (optional, composed from given default connector)
-     * @return self
-     * @deprecated as of v1.2.0, see createFromLoop()
-     * @see self::createFromLoop()
-     */
-    public static function createFromLoopConnectors(LoopInterface $loop, LegacyConnectorInterface $connector, LegacyConnectorInterface $secureConnector = null)
-    {
-        if ($secureConnector === null) {
-            $secureConnector = new SecureConnector($connector, $loop);
-        }
-
-        // react/http v0.5 requires the new Socket-Connector, so we upcast from the legacy SocketClient-Connectors here
-        return self::createFromLoop($loop, new Connector($loop, array(
-            'tcp' => new ConnectorUpcaster($connector),
-            'tls' => new ConnectorUpcaster($secureConnector),
-            'dns' => false,
-            'timeout' => false
         )));
     }
 
