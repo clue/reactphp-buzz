@@ -5,11 +5,11 @@ use Clue\React\Buzz\Browser;
 use Clue\React\Buzz\Io\Sender;
 use Clue\React\Buzz\Message\ResponseException;
 use Clue\React\Block;
-use React\Stream\ReadableStream;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Response;
 use React\Promise\Stream;
 use React\Socket\Connector;
+use React\Stream\ThroughStream;
 
 class FunctionalBrowserTest extends TestCase
 {
@@ -176,7 +176,7 @@ class FunctionalBrowserTest extends TestCase
 
         $this->base = str_replace('tcp:', 'http:', $socket->getAddress()) . '/';
 
-        $stream = new ReadableStream();
+        $stream = new ThroughStream();
 
         $this->loop->addTimer(0.001, function () use ($stream) {
             $stream->emit('data', array('hello world'));
@@ -195,7 +195,7 @@ class FunctionalBrowserTest extends TestCase
     /** @group online */
     public function testPostStreamKnownLength()
     {
-        $stream = new ReadableStream();
+        $stream = new ThroughStream();
 
         $this->loop->addTimer(0.001, function () use ($stream) {
             $stream->emit('data', array('hello world'));
@@ -211,7 +211,7 @@ class FunctionalBrowserTest extends TestCase
     /** @group online */
     public function testPostStreamClosed()
     {
-        $stream = new ReadableStream();
+        $stream = new ThroughStream();
         $stream->close();
 
         $response = Block\await($this->browser->post($this->base . 'post', array(), $stream), $this->loop);

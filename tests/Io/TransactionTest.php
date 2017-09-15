@@ -7,7 +7,7 @@ use Clue\React\Buzz\Message\MessageFactory;
 use React\Promise;
 use Clue\React\Block;
 use React\EventLoop\Factory;
-use React\Stream\ReadableStream;
+use React\Stream\ThroughStream;
 
 class TransactionTest extends TestCase
 {
@@ -37,7 +37,7 @@ class TransactionTest extends TestCase
         $messageFactory = new MessageFactory();
         $loop = Factory::create();
 
-        $stream = new ReadableStream();
+        $stream = new ThroughStream();
         $loop->addTimer(0.001, function () use ($stream) {
             $stream->emit('data', array('hello world'));
             $stream->close();
