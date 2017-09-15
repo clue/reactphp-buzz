@@ -3,16 +3,13 @@
 use React\EventLoop\Factory;
 use Clue\React\Buzz\Browser;
 use Clue\React\Buzz\Io\Sender;
-use React\Dns\Resolver\Factory as DnsFactory;
-use React\SocketClient\SecureConnector;
-use React\SocketClient\TcpConnector;
-use React\SocketClient\DnsConnector;
 use Clue\React\Buzz\Message\ResponseException;
 use Clue\React\Block;
 use React\Stream\ReadableStream;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Response;
 use React\Promise\Stream;
+use React\Socket\Connector;
 
 class FunctionalBrowserTest extends TestCase
 {
@@ -92,19 +89,13 @@ class FunctionalBrowserTest extends TestCase
             $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
         }
 
-        if (!class_exists('React\SocketClient\TcpConnector')) {
-            $this->markTestSkipped('Test requires SocketClient:0.5');
-        }
-
-        $dnsResolverFactory = new DnsFactory();
-        $resolver = $dnsResolverFactory->createCached('8.8.8.8', $this->loop);
-
-        $tcp = new DnsConnector(new TcpConnector($this->loop), $resolver);
-        $ssl = new SecureConnector($tcp, $this->loop, array(
-            'verify_peer' => true
+        $connector = new Connector($this->loop, array(
+            'tls' => array(
+                'verify_peer' => true
+            )
         ));
 
-        $sender = Sender::createFromLoopConnectors($this->loop, $tcp, $ssl);
+        $sender = Sender::createFromLoop($this->loop, $connector);
         $browser = $this->browser->withSender($sender);
 
         $this->setExpectedException('RuntimeException');
@@ -118,19 +109,13 @@ class FunctionalBrowserTest extends TestCase
             $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
         }
 
-        if (!class_exists('React\SocketClient\TcpConnector')) {
-            $this->markTestSkipped('Test requires SocketClient:0.5');
-        }
-
-        $dnsResolverFactory = new DnsFactory();
-        $resolver = $dnsResolverFactory->createCached('8.8.8.8', $this->loop);
-
-        $tcp = new DnsConnector(new TcpConnector($this->loop), $resolver);
-        $ssl = new SecureConnector($tcp, $this->loop, array(
-            'verify_peer' => false
+        $connector = new Connector($this->loop, array(
+            'tls' => array(
+                'verify_peer' => false
+            )
         ));
 
-        $sender = Sender::createFromLoopConnectors($this->loop, $tcp, $ssl);
+        $sender = Sender::createFromLoop($this->loop, $connector);
         $browser = $this->browser->withSender($sender);
 
         Block\await($browser->get('https://self-signed.badssl.com/'), $this->loop);
