@@ -13,7 +13,6 @@ use React\Promise;
 use React\Promise\Deferred;
 use React\Socket\Connector;
 use React\Socket\ConnectorInterface;
-use React\Socket\UnixConnector;
 use React\Stream\ReadableStreamInterface;
 
 /**
@@ -59,24 +58,6 @@ class Sender
         return self::createFromLoop($loop, new Connector($loop, array(
             'dns' => $dns
         )));
-    }
-
-    /**
-     * create a sender that sends *everything* through given UNIX socket path
-     *
-     * @param LoopInterface $loop
-     * @param string        $path
-     * @return self
-     */
-    public static function createFromLoopUnix(LoopInterface $loop, $path)
-    {
-        return self::createFromLoop(
-            $loop,
-            new FixedUriConnector(
-                $path,
-                new UnixConnector($loop)
-            )
-        );
     }
 
     private $http;

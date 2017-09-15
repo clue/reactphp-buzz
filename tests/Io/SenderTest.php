@@ -23,13 +23,6 @@ class SenderTest extends TestCase
         $this->assertInstanceOf('Clue\React\Buzz\Io\Sender', $sender);
     }
 
-    public function testCreateFromLoopUnix()
-    {
-        $sender = Sender::createFromLoopUnix($this->loop, 'unix:///run/daemon.sock');
-
-        $this->assertInstanceOf('Clue\React\Buzz\Io\Sender', $sender);
-    }
-
     public function testSenderConnectorRejection()
     {
         $connector = $this->getMock('React\Socket\ConnectorInterface');
