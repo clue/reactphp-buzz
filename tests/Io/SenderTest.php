@@ -23,15 +23,6 @@ class SenderTest extends TestCase
         $this->assertInstanceOf('Clue\React\Buzz\Io\Sender', $sender);
     }
 
-    public function testCreateFromLoopConnectors()
-    {
-        $connector = $this->getMock('React\SocketClient\ConnectorInterface');
-
-        $sender = Sender::createFromLoopConnectors($this->loop, $connector);
-
-        $this->assertInstanceOf('Clue\React\Buzz\Io\Sender', $sender);
-    }
-
     public function testCreateFromLoopUnix()
     {
         $sender = Sender::createFromLoopUnix($this->loop, 'unix:///run/daemon.sock');
@@ -45,21 +36,6 @@ class SenderTest extends TestCase
         $connector->expects($this->once())->method('connect')->willReturn(Promise\reject(new RuntimeException('Rejected')));
 
         $sender = new Sender(new HttpClient($this->loop, $connector));
-
-        $request = new Request('GET', 'http://www.google.com/');
-
-        $promise = $sender->send($request, $this->getMock('Clue\React\Buzz\Message\MessageFactory'));
-
-        $this->setExpectedException('RuntimeException');
-        Block\await($promise, $this->loop);
-    }
-
-    public function testSenderLegacyConnectorRejection()
-    {
-        $connector = $this->getMock('React\SocketClient\ConnectorInterface');
-        $connector->expects($this->once())->method('connect')->willReturn(Promise\reject(new RuntimeException('Rejected')));
-
-        $sender = Sender::createFromLoopConnectors($this->loop, $connector);
 
         $request = new Request('GET', 'http://www.google.com/');
 
