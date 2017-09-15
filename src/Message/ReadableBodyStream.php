@@ -22,14 +22,14 @@ class ReadableBodyStream extends EventEmitter implements ReadableStreamInterface
 
         $that = $this;
         $input->on('data', function ($data) use ($that) {
-            $that->emit('data', array($data, $that));
+            $that->emit('data', array($data));
         });
         $input->on('error', function ($error) use ($that) {
-            $that->emit('error', array($error, $that));
+            $that->emit('error', array($error));
             $that->close();
         });
         $input->on('end', function () use ($that) {
-            $that->emit('end', array($that));
+            $that->emit('end');
             $that->close();
         });
         $input->on('close', array($that, 'close'));
@@ -41,7 +41,7 @@ class ReadableBodyStream extends EventEmitter implements ReadableStreamInterface
             $this->closed = true;
             $this->input->close();
 
-            $this->emit('close', array($this));
+            $this->emit('close');
             $this->removeAllListeners();
         }
     }
