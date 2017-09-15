@@ -50,7 +50,6 @@ mess with most of the low-level details.
 * [Advanced](#advanced)
   * [Sender](#sender)
   * [SOCKS proxy](#socks-proxy)
-  * [Unix domain sockets](#unix-domain-sockets)
   * [Options](#options)
 * [Install](#install)
 * [Tests](#tests)
@@ -486,22 +485,6 @@ The SOCKS protocol operates at the TCP/IP layer and thus requires minimal effort
 This works for both plain HTTP and SSL encrypted HTTPS requests.
 
 See also the [SOCKS example](examples/11-socks-proxy.php).
-
-### Unix domain sockets
-
-This library also supports connecting to a local Unix domain socket (UDS) path.
-You have to explicitly create a legacy [`Sender`](#sender) that passes every
-request through the given UNIX domain socket.
-For consistency reasons you still have to pass full HTTP URLs for every request,
-but the host and port will be ignored when establishing a connection.
-
-```php
-$path = 'unix:///tmp/daemon.sock';
-$sender = Sender::createFromLoopUnix($loop, $path);
-$client = new Browser($loop, $sender);
-
-$client->get('http://localhost/demo');
-```
 
 ### Options
 
