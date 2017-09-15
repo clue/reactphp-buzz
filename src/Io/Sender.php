@@ -16,30 +16,35 @@ use React\SocketClient\SecureConnector;
 use React\SocketClient\ConnectorInterface as LegacyConnectorInterface;
 use React\Stream\ReadableStreamInterface;
 use React\Socket\UnixConnector;
+use React\Socket\ConnectorInterface;
 
+/**
+ * @deprecated as of v1.4.0, see `Browser`
+ * @see Browser
+ */
 class Sender
 {
     /**
      * create a new default sender attached to the given event loop
      *
      * This method is used internally to create the "default sender".
-     * If you need custom DNS or connector settings, you're recommended to
-     * explicitly create a HttpClient instance yourself and pass this to the
-     * constructor of this method manually like this:
+     *
+     * You may also use this method if you need custom DNS or connector
+     * settings. You can use this method manually like this:
      *
      * ```php
      * $connector = new \React\Socket\Connector($loop);
-     * $client = new \React\HttpClient\Client($loop, $connector);
-     * $sender = new \Clue\React\Buzz\Io\Sender($client);
+     * $sender = \Clue\React\Buzz\Io\Sender::createFromLoop($loop, $connector);
      * $browser = new \Clue\React\Buzz\Browser($loop, $sender);
      * ```
      *
      * @param LoopInterface $loop
+     * @param ConnectorInterface|null $connector
      * @return self
      */
-    public static function createFromLoop(LoopInterface $loop)
+    public static function createFromLoop(LoopInterface $loop, ConnectorInterface $connector = null)
     {
-        return new self(new HttpClient($loop));
+        return new self(new HttpClient($loop, $connector));
     }
 
     /**
@@ -53,9 +58,9 @@ class Sender
      */
     public static function createFromLoopDns(LoopInterface $loop, $dns)
     {
-        return new self(new HttpClient($loop, new Connector($loop, array(
+        return self::createFromLoop($loop, new Connector($loop, array(
             'dns' => $dns
-        ))));
+        )));
     }
 
     /**
@@ -75,12 +80,12 @@ class Sender
         }
 
         // react/http v0.5 requires the new Socket-Connector, so we upcast from the legacy SocketClient-Connectors here
-        return new self(new HttpClient($loop, new Connector($loop, array(
+        return self::createFromLoop($loop, new Connector($loop, array(
             'tcp' => new ConnectorUpcaster($connector),
             'tls' => new ConnectorUpcaster($secureConnector),
             'dns' => false,
             'timeout' => false
-        ))));
+        )));
     }
 
     /**
@@ -92,19 +97,26 @@ class Sender
      */
     public static function createFromLoopUnix(LoopInterface $loop, $path)
     {
-        return new self(
-            new HttpClient(
-                $loop,
-                new FixedUriConnector(
-                    $path,
-                    new UnixConnector($loop)
-                )
+        return self::createFromLoop(
+            $loop,
+            new FixedUriConnector(
+                $path,
+                new UnixConnector($loop)
             )
         );
     }
 
     private $http;
 
+    /**
+     * [deprecated] Instantiate Sender
+     *
+     * @param HttpClient $http
+     * @deprecated explicitly calling this constructor is deprecated and it
+     *     will be removed in a future version! Please use the above static
+     *     `create*()` methods instead for future compatibility
+     * @see self::createFromLoop()
+     */
     public function __construct(HttpClient $http)
     {
         $this->http = $http;

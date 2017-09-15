@@ -2,33 +2,41 @@
 
 namespace Clue\React\Buzz;
 
-use React\EventLoop\LoopInterface;
-use Psr\Http\Message\RequestInterface;
-use Clue\React\Buzz\Io\Transaction;
-use Clue\React\Buzz\Message\Body;
-use Clue\React\Buzz\Message\Headers;
 use Clue\React\Buzz\Io\Sender;
-use Psr\Http\Message\UriInterface;
+use Clue\React\Buzz\Io\Transaction;
 use Clue\React\Buzz\Message\MessageFactory;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\UriInterface;
+use React\EventLoop\LoopInterface;
+use React\Socket\ConnectorInterface;
 
 class Browser
 {
     private $sender;
-    private $loop;
     private $messageFactory;
     private $baseUri = null;
     private $options = array();
 
-    public function __construct(LoopInterface $loop, Sender $sender = null, MessageFactory $messageFactory = null)
+    /**
+     * Instantiate the Browser
+     *
+     * @param LoopInterface $loop
+     * @param ConnectorInterface|Sender|null $connector [optional] Connector to
+     *     use. Should be `null` in order to use default Connector. Passing a
+     *     Sender instance is deprecated and only supported for BC reasons and
+     *     will be removed in future versions.
+     * @param MessageFactory $messageFactory [internal] Only used internally and
+     *     will be removed in future versions.
+     */
+    public function __construct(LoopInterface $loop, $connector = null, MessageFactory $messageFactory = null)
     {
-        if ($sender === null) {
-            $sender = Sender::createFromLoop($loop);
+        if (!$connector instanceof Sender) {
+            $connector = Sender::createFromLoop($loop, $connector);
         }
         if ($messageFactory === null) {
             $messageFactory = new MessageFactory();
         }
-        $this->sender = $sender;
-        $this->loop = $loop;
+        $this->sender = $connector;
         $this->messageFactory = $messageFactory;
     }
 
@@ -135,6 +143,7 @@ class Browser
         return $browser;
     }
 
+    /** @deprecated */
     public function withSender(Sender $sender)
     {
         $browser = clone $this;

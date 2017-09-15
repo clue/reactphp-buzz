@@ -1,11 +1,9 @@
 <?php
 
-use Clue\React\Buzz\Io\Sender;
 use Clue\React\Buzz\Browser;
 use Clue\React\Socks\Client as SocksClient;
 use Psr\Http\Message\ResponseInterface;
 use React\EventLoop\Factory as LoopFactory;
-use React\HttpClient\Client as HttpClient;
 use React\Socket\Connector;
 use RingCentral\Psr7;
 
@@ -18,12 +16,11 @@ $loop = LoopFactory::create();
 $proxy = new SocksClient('127.0.0.1:1080', new Connector($loop));
 
 // create a Browser object that uses the SOCKS client for connections
-$client = new HttpClient($loop, new Connector($loop, array(
+$connector = new Connector($loop, array(
     'tcp' => $proxy,
     'dns' => false
-)));
-$sender = new Sender($client);
-$browser = new Browser($loop, $sender);
+));
+$browser = new Browser($loop, $connector);
 
 // demo fetching HTTP headers (or bail out otherwise)
 $browser->get('https://www.google.com/')->then(function (ResponseInterface $response) {
