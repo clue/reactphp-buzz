@@ -532,7 +532,7 @@ The recommended way to install this library is [through Composer](https://getcom
 This will install the latest supported version:
 
 ```bash
-$ composer require clue/buzz-react:^1.3
+$ composer require clue/buzz-react:^1.4
 ```
 
 See also the [CHANGELOG](CHANGELOG.md) for details about version upgrades.

@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.4.0 (2017-09-15)
+
+*   Feature: `Browser` accepts `ConnectorInterface` and deprecate legacy `Sender`
+    (#76 by @clue)
+
+    If you need custom connector settings (DNS resolution, TLS parameters, timeouts,
+    proxy servers etc.), you can explicitly pass a custom instance of the
+    [`ConnectorInterface`](https://github.com/reactphp/socket#connectorinterface):
+
+    ```php
+    $connector = new \React\Socket\Connector($loop, array(
+        'dns' => '127.0.0.1',
+        'tcp' => array(
+            'bindto' => '192.168.10.1:0'
+        ),
+        'tls' => array(
+            'verify_peer' => false,
+            'verify_peer_name' => false
+        )
+    ));
+
+    $browser = new Browser($loop, $connector);
+    ```
+
 ## 1.3.0 (2017-09-08)
 
 *   Feature: Support request cancellation
