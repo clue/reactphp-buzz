@@ -16,7 +16,20 @@ use React\Socket\ConnectorInterface;
 use React\Stream\ReadableStreamInterface;
 
 /**
- * @deprecated as of v1.4.0, see `Browser`
+ * [Internal] Sends requests and receives responses
+ *
+ * The `Sender` is responsible for passing the [`RequestInterface`](#requestinterface) objects to
+ * the underlying [`HttpClient`](https://github.com/reactphp/http-client) library
+ * and keeps track of its transmission and converts its reponses back to [`ResponseInterface`](#responseinterface) objects.
+ *
+ * It also registers everything with the main [`EventLoop`](https://github.com/reactphp/event-loop#usage)
+ * and the default [`Connector`](https://github.com/reactphp/socket-client) and [DNS `Resolver`](https://github.com/reactphp/dns).
+ *
+ * The `Sender` class mostly exists in order to abstract changes on the underlying
+ * components away from this package in order to provide backwards and forwards
+ * compatibility.
+ *
+ * @internal You SHOULD NOT rely on this API, it is subject to change without prior notice!
  * @see Browser
  */
 class Sender
@@ -44,32 +57,13 @@ class Sender
         return new self(new HttpClient($loop, $connector));
     }
 
-    /**
-     * [deprecated] create sender attached to the given event loop and DNS resolver
-     *
-     * @param LoopInterface   $loop
-     * @param \React\Dns\Resolver\Resolver|string $dns  DNS resolver instance or IP address
-     * @return self
-     * @deprecated as of v1.2.0, see createFromLoop()
-     * @see self::createFromLoop()
-     */
-    public static function createFromLoopDns(LoopInterface $loop, $dns)
-    {
-        return self::createFromLoop($loop, new Connector($loop, array(
-            'dns' => $dns
-        )));
-    }
-
     private $http;
 
     /**
-     * [deprecated] Instantiate Sender
+     * [internal] Instantiate Sender
      *
      * @param HttpClient $http
-     * @deprecated explicitly calling this constructor is deprecated and it
-     *     will be removed in a future version! Please use the above static
-     *     `create*()` methods instead for future compatibility
-     * @see self::createFromLoop()
+     * @internal
      */
     public function __construct(HttpClient $http)
     {

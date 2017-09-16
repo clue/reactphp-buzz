@@ -1,11 +1,10 @@
 <?php
 
-use React\EventLoop\Factory;
-use Clue\React\Buzz\Browser;
-use Clue\React\Buzz\Io\Sender;
-use Clue\React\Buzz\Message\ResponseException;
 use Clue\React\Block;
+use Clue\React\Buzz\Browser;
+use Clue\React\Buzz\Message\ResponseException;
 use Psr\Http\Message\ServerRequestInterface;
+use React\EventLoop\Factory;
 use React\Http\Response;
 use React\Promise\Stream;
 use React\Socket\Connector;
@@ -95,8 +94,7 @@ class FunctionalBrowserTest extends TestCase
             )
         ));
 
-        $sender = Sender::createFromLoop($this->loop, $connector);
-        $browser = $this->browser->withSender($sender);
+        $browser = new Browser($this->loop, $connector);
 
         $this->setExpectedException('RuntimeException');
         Block\await($browser->get('https://self-signed.badssl.com/'), $this->loop);
@@ -115,8 +113,7 @@ class FunctionalBrowserTest extends TestCase
             )
         ));
 
-        $sender = Sender::createFromLoop($this->loop, $connector);
-        $browser = $this->browser->withSender($sender);
+        $browser = new Browser($this->loop, $connector);
 
         Block\await($browser->get('https://self-signed.badssl.com/'), $this->loop);
     }

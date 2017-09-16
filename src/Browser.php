@@ -21,23 +21,13 @@ class Browser
      * Instantiate the Browser
      *
      * @param LoopInterface $loop
-     * @param ConnectorInterface|Sender|null $connector [optional] Connector to
-     *     use. Should be `null` in order to use default Connector. Passing a
-     *     Sender instance is deprecated and only supported for BC reasons and
-     *     will be removed in future versions.
-     * @param MessageFactory $messageFactory [internal] Only used internally and
-     *     will be removed in future versions.
+     * @param ConnectorInterface|null $connector [optional] Connector to use.
+     *     Should be `null` in order to use default Connector.
      */
-    public function __construct(LoopInterface $loop, $connector = null, MessageFactory $messageFactory = null)
+    public function __construct(LoopInterface $loop, ConnectorInterface $connector = null)
     {
-        if (!$connector instanceof Sender) {
-            $connector = Sender::createFromLoop($loop, $connector);
-        }
-        if ($messageFactory === null) {
-            $messageFactory = new MessageFactory();
-        }
-        $this->sender = $connector;
-        $this->messageFactory = $messageFactory;
+        $this->sender = Sender::createFromLoop($loop, $connector);
+        $this->messageFactory = new MessageFactory();
     }
 
     public function get($url, $headers = array())
@@ -139,15 +129,6 @@ class Browser
         $browser->options = array_filter($options + $this->options, function ($value) {
             return ($value !== null);
         });
-
-        return $browser;
-    }
-
-    /** @deprecated */
-    public function withSender(Sender $sender)
-    {
-        $browser = clone $this;
-        $browser->sender = $sender;
 
         return $browser;
     }
