@@ -446,8 +446,6 @@ See also the [SOCKS example](examples/11-socks-proxy.php).
 
 ### Options
 
-Note: This API is subject to change.
-
 The [`Browser`](#browser) class exposes several options for the handling of
 HTTP transactions. These options resemble some of PHP's
 [HTTP context options](http://php.net/manual/en/context.http.php) and
@@ -473,7 +471,7 @@ The recommended way to install this library is [through Composer](https://getcom
 This will install the latest supported version:
 
 ```bash
-$ composer require clue/buzz-react:^1.4
+$ composer require clue/buzz-react:^2.0
 ```
 
 See also the [CHANGELOG](CHANGELOG.md) for details about version upgrades.

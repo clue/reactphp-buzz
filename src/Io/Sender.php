@@ -45,7 +45,6 @@ class Sender
      * ```php
      * $connector = new \React\Socket\Connector($loop);
      * $sender = \Clue\React\Buzz\Io\Sender::createFromLoop($loop, $connector);
-     * $browser = new \Clue\React\Buzz\Browser($loop, $sender);
      * ```
      *
      * @param LoopInterface $loop

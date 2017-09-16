@@ -1,5 +1,41 @@
 # Changelog
 
+## 2.0.0 (2017-09-16)
+
+A major compatibility release to update this component to support all latest
+ReactPHP components!
+
+This update involves a minor BC break due to dropped support for legacy
+versions. We've tried hard to avoid BC breaks where possible and minimize impact
+otherwise. We expect that most consumers of this package will actually not be
+affected by any BC breaks, see below for more details.
+
+*   BC break: Remove deprecated API and mark Sender as @internal only,
+    remove all references to legacy SocketClient component and
+    remove support for Unix domain sockets (UDS) for now
+    (#77, #78, #81 and #83 by @clue)
+
+    >   All of this affects the `Sender` only, which was previously marked as
+        "advanced usage" and is now marked `@internal` only. If you've not
+        used this class before, then this BC break will not affect you.
+        If you've previously used this class, then it's recommended to first
+        update to the intermediary v1.4.0 release, which allows you to use a
+        standard `ConnectorInterface` instead of the `Sender` and then update
+        to this version without causing a BC break.
+        If you've previously used Unix domain sockets (UDS), then you're
+        recommended to wait for the next version.
+
+*   Feature / BC break: Forward compatibility with future Stream v1.0 and strict stream semantics
+    (#79 by @clue)
+
+    >   This component now follows strict stream semantics. This is marked as a
+        BC break because this removes undocumented and untested excessive event
+        arguments. If you've relied on proper stream semantics as documented
+        before, then this BC break will not affect you.
+
+*   Feature: Forward compatibility with future Socket and EventLoop components
+    (#80 by @clue)
+
 ## 1.4.0 (2017-09-15)
 
 *   Feature: `Browser` accepts `ConnectorInterface` and deprecate legacy `Sender`
