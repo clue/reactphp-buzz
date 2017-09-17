@@ -48,6 +48,7 @@ mess with most of the low-level details.
   * [ResponseException](#responseexception)
 * [Advanced](#advanced)
   * [SOCKS proxy](#socks-proxy)
+  * [Unix domain sockets](#unix-domain-sockets)
   * [Options](#options)
 * [Install](#install)
 * [Tests](#tests)
@@ -443,6 +444,31 @@ The SOCKS protocol operates at the TCP/IP layer and thus requires minimal effort
 This works for both plain HTTP and SSL encrypted HTTPS requests.
 
 See also the [SOCKS example](examples/11-socks-proxy.php).
+
+### Unix domain sockets
+
+By default, this library supports transport over plaintext TCP/IP and secure
+TLS connections for the `http://` and `https://` URI schemes respectively.
+This library also supports Unix domain sockets (UDS) when explicitly configured.
+
+In order to use a UDS path, you have to explicitly configure the connector to
+override the destination URI so that the hostname given in the request URI will
+no longer be used to establish the connection:
+
+```php
+$connector = new \React\Socket\FixedUriConnector(
+    'unix:///var/run/docker.sock',
+    new \React\Socket\UnixConnector($loop)
+);
+
+$browser = new Browser($loop, $connector);
+
+$client->get('http://localhost/info')->then(function (ResponseInterface $response) {
+    var_dump($response->getHeaders(), (string)$response->getBody());
+});
+```
+
+See also the [Unix Domain Sockets (UDS) example](examples/12-unix-domain-sockets.php).
 
 ### Options
 
