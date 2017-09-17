@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.1.0 (2017-09-17)
+
+*   Feature: Update minimum required Socket dependency version in order to
+    support Unix Domain Sockets (UDS) again,
+    support hosts file on all platforms and
+    work around sending secure HTTPS requests with PHP < 7.1.4
+    (#84 by @clue)
+
 ## 2.0.0 (2017-09-16)
 
 A major compatibility release to update this component to support all latest
