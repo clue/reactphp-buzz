@@ -1,7 +1,7 @@
 # clue/buzz-react [![Build Status](https://travis-ci.org/clue/php-buzz-react.svg?branch=master)](https://travis-ci.org/clue/php-buzz-react)
 
 Simple, async PSR-7 HTTP client for concurrently processing any number of HTTP requests,
-built on top of [ReactPHP](http://reactphp.org/).
+built on top of [ReactPHP](https://reactphp.org/).
 
 This library is heavily inspired by the great
 [kriswallsmith/Buzz](https://github.com/kriswallsmith/Buzz)
@@ -295,10 +295,12 @@ $body->getContents(); // throws BadMethodCallException
 
 If you want to integrate the streaming response into a higher level API, then
 working with Promise objects that resolve with Stream objects is often inconvenient.
-Consider looking into also using [clue/promise-stream-react](https://github.com/clue/php-promise-stream-react).
+Consider looking into also using [react/promise-stream](https://github.com/reactphp/promise-stream).
 The resulting streaming code could look something like this:
 
 ```php
+use React\Promise\Stream;
+
 function download($url) {
     return Stream\unwrapReadable($streamingBrowser->get($url)->then(function (ResponseInterface $response) {
         return $response->getBody();
@@ -498,7 +500,7 @@ This project follows [SemVer](http://semver.org/).
 This will install the latest supported version:
 
 ```bash
-$ composer require clue/buzz-react:^2.1
+$ composer require clue/buzz-react:^2.2
 ```
 
 See also the [CHANGELOG](CHANGELOG.md) for details about version upgrades.

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.2.0 (2017-10-24)
+
+*   Feature: Forward compatibility with freshly released react/promise-stream v1.0
+    (#85 by @WyriHaximus)
+
 ## 2.1.0 (2017-09-17)
 
 *   Feature: Update minimum required Socket dependency version in order to
