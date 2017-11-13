@@ -139,7 +139,7 @@ $browser->get($url)->then(
     function (Exception $error) {
         var_dump('There was an error', $error->getMessage());
     }
-});
+);
 ```
 
 If this looks strange to you, you can also use the more traditional [blocking API](#blocking).
