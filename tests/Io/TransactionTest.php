@@ -13,7 +13,7 @@ class TransactionTest extends TestCase
 {
     public function testReceivingErrorResponseWillRejectWithResponseException()
     {
-        $request = $this->getMock('Psr\Http\Message\RequestInterface');
+        $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
         $response = new Response(404);
 
         // mock sender to resolve promise with the given $response in response to the given $request
@@ -24,7 +24,7 @@ class TransactionTest extends TestCase
         $promise = $transaction->send();
 
         try {
-            Block\await($promise, $this->getMock('React\EventLoop\LoopInterface'));
+            Block\await($promise, $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock());
             $this->fail();
         } catch (ResponseException $exception) {
             $this->assertEquals(404, $exception->getCode());
@@ -43,7 +43,7 @@ class TransactionTest extends TestCase
             $stream->close();
         });
 
-        $request = $this->getMock('Psr\Http\Message\RequestInterface');
+        $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
         $response = $messageFactory->response(1.0, 200, 'OK', array(), $stream);
 
         // mock sender to resolve promise with the given $response in response to the given $request
@@ -71,7 +71,7 @@ class TransactionTest extends TestCase
         $stream->expects($this->any())->method('isReadable')->willReturn(true);
         $stream->expects($this->once())->method('close');
 
-        $request = $this->getMock('Psr\Http\Message\RequestInterface');
+        $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
         $response = $messageFactory->response(1.0, 200, 'OK', array(), $stream);
 
         // mock sender to resolve promise with the given $response in response to the given $request
@@ -89,8 +89,8 @@ class TransactionTest extends TestCase
     {
         $messageFactory = new MessageFactory();
 
-        $request = $this->getMock('Psr\Http\Message\RequestInterface');
-        $response = $messageFactory->response(1.0, 200, 'OK', array(), $this->getMock('React\Stream\ReadableStreamInterface'));
+        $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
+        $response = $messageFactory->response(1.0, 200, 'OK', array(), $this->getMockBuilder('React\Stream\ReadableStreamInterface')->getMock());
 
         // mock sender to resolve promise with the given $response in response to the given $request
         $sender = $this->getMockBuilder('Clue\React\Buzz\Io\Sender')->disableOriginalConstructor()->getMock();
@@ -99,7 +99,7 @@ class TransactionTest extends TestCase
         $transaction = new Transaction($request, $sender, array('streaming' => true), $messageFactory);
         $promise = $transaction->send();
 
-        $response = Block\await($promise, $this->getMock('React\EventLoop\LoopInterface'));
+        $response = Block\await($promise, $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock());
 
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('', (string)$response->getBody());

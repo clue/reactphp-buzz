@@ -85,7 +85,7 @@ class MessageFactoryTest extends TestCase
 
     public function testBodyReadableStream()
     {
-        $stream = $this->getMock('React\Stream\ReadableStreamInterface');
+        $stream = $this->getMockBuilder('React\Stream\ReadableStreamInterface')->getMock();
         $body = $this->messageFactory->body($stream);
 
         $this->assertInstanceOf('Psr\Http\Message\StreamInterface', $body);
