@@ -10,7 +10,7 @@ class ReadableBodyStreamTest extends TestCase
 
     public function setUp()
     {
-        $this->input = $this->getMock('React\Stream\ReadableStreamInterface');
+        $this->input = $this->getMockBuilder('React\Stream\ReadableStreamInterface')->getMock();
         $this->stream = new ReadableBodyStream($this->input);
     }
 

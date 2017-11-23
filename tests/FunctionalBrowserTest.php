@@ -62,12 +62,14 @@ class FunctionalBrowserTest extends TestCase
         Block\await($browser->get($this->base . 'redirect/3'), $this->loop);
     }
 
-    /** @group online */
+    /**
+     * @group online
+     * @expectedException RuntimeException
+     */
     public function testRejectingRedirectsRejects()
     {
         $browser = $this->browser->withOptions(array('maxRedirects' => 0));
 
-        $this->setExpectedException('RuntimeException');
         Block\await($browser->get($this->base . 'redirect/3'), $this->loop);
     }
 
@@ -81,7 +83,10 @@ class FunctionalBrowserTest extends TestCase
         Block\await($this->browser->get('https://www.google.com/'), $this->loop);
     }
 
-    /** @group online */
+    /**
+     * @group online
+     * @expectedException RuntimeException
+     */
     public function testVerifyPeerEnabledForBadSslRejects()
     {
         if (!function_exists('stream_socket_enable_crypto')) {
@@ -96,7 +101,6 @@ class FunctionalBrowserTest extends TestCase
 
         $browser = new Browser($this->loop, $connector);
 
-        $this->setExpectedException('RuntimeException');
         Block\await($browser->get('https://self-signed.badssl.com/'), $this->loop);
     }
 
@@ -118,10 +122,12 @@ class FunctionalBrowserTest extends TestCase
         Block\await($browser->get('https://self-signed.badssl.com/'), $this->loop);
     }
 
-    /** @group online */
+    /**
+     * @group online
+     * @expectedException RuntimeException
+     */
     public function testInvalidPort()
     {
-        $this->setExpectedException('RuntimeException');
         Block\await($this->browser->get('http://www.google.com:443/'), $this->loop);
     }
 

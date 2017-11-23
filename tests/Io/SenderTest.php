@@ -13,7 +13,7 @@ class SenderTest extends TestCase
 
     public function setUp()
     {
-        $this->loop = $this->getMock('React\EventLoop\LoopInterface');
+        $this->loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
     }
 
     public function testCreateFromLoop()
@@ -23,57 +23,63 @@ class SenderTest extends TestCase
         $this->assertInstanceOf('Clue\React\Buzz\Io\Sender', $sender);
     }
 
+    /**
+     * @expectedException RuntimeException
+     */
     public function testSenderConnectorRejection()
     {
-        $connector = $this->getMock('React\Socket\ConnectorInterface');
+        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->once())->method('connect')->willReturn(Promise\reject(new RuntimeException('Rejected')));
 
         $sender = new Sender(new HttpClient($this->loop, $connector));
 
         $request = new Request('GET', 'http://www.google.com/');
 
-        $promise = $sender->send($request, $this->getMock('Clue\React\Buzz\Message\MessageFactory'));
+        $promise = $sender->send($request, $this->getMockBuilder('Clue\React\Buzz\Message\MessageFactory')->getMock());
 
-        $this->setExpectedException('RuntimeException');
         Block\await($promise, $this->loop);
     }
 
+    /**
+     * @expectedException RuntimeException
+     */
     public function testCancelRequestWillCancelConnector()
     {
         $promise = new \React\Promise\Promise(function () { }, function () {
             throw new \RuntimeException();
         });
 
-        $connector = $this->getMock('React\Socket\ConnectorInterface');
+        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->once())->method('connect')->willReturn($promise);
 
         $sender = new Sender(new HttpClient($this->loop, $connector));
 
         $request = new Request('GET', 'http://www.google.com/');
 
-        $promise = $sender->send($request, $this->getMock('Clue\React\Buzz\Message\MessageFactory'));
+        $promise = $sender->send($request, $this->getMockBuilder('Clue\React\Buzz\Message\MessageFactory')->getMock());
         $promise->cancel();
 
-        $this->setExpectedException('RuntimeException');
         Block\await($promise, $this->loop);
     }
 
+    /**
+     * @expectedException RuntimeException
+     */
     public function testCancelRequestWillCloseConnection()
     {
         $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
         $connection->expects($this->once())->method('close');
 
-        $connector = $this->getMock('React\Socket\ConnectorInterface');
+        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->once())->method('connect')->willReturn(Promise\resolve($connection));
 
         $sender = new Sender(new HttpClient($this->loop, $connector));
 
         $request = new Request('GET', 'http://www.google.com/');
 
-        $promise = $sender->send($request, $this->getMock('Clue\React\Buzz\Message\MessageFactory'));
+        $promise = $sender->send($request, $this->getMockBuilder('Clue\React\Buzz\Message\MessageFactory')->getMock());
         $promise->cancel();
 
-        $this->setExpectedException('RuntimeException');
         Block\await($promise, $this->loop);
     }
 
@@ -106,28 +112,24 @@ class SenderTest extends TestCase
      */
     public function testRequestProtocolVersion(Request $Request, $method, $uri, $headers, $protocolVersion)
     {
-        $http = $this->getMock(
-            'React\HttpClient\Client',
-            array(
-                'request',
-            ),
-            array(
-                $this->getMock('React\EventLoop\LoopInterface')
-            )
-        );
+        $http = $this->getMockBuilder('React\HttpClient\Client')
+                    ->setMethods(array(
+                        'request',
+                    ))
+                    ->setConstructorArgs(array(
+                        $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock(),
+                    ))->getMock();
 
-        $request = $this->getMock(
-            'React\HttpClient\Request',
-            array(),
-            array(
-                $this->getMock('React\Socket\ConnectorInterface'),
-                new RequestData($method, $uri, $headers, $protocolVersion)
-            )
-        );
+        $request = $this->getMockBuilder('React\HttpClient\Request')
+                        ->setMethods(array())
+                        ->setConstructorArgs(array(
+                            $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock(),
+                            new RequestData($method, $uri, $headers, $protocolVersion),
+                        ))->getMock();
 
         $http->expects($this->once())->method('request')->with($method, $uri, $headers, $protocolVersion)->willReturn($request);
 
         $sender = new Sender($http);
-        $sender->send($Request, $this->getMock('Clue\React\Buzz\Message\MessageFactory'));
+        $sender->send($Request, $this->getMockBuilder('Clue\React\Buzz\Message\MessageFactory')->getMock());
     }
 }
