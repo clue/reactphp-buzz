@@ -7,6 +7,7 @@ use Clue\React\Buzz\Message\MessageFactory;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
+use React\EventLoop\LoopInterface;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use React\Stream\ReadableStreamInterface;
@@ -30,10 +31,20 @@ class Transaction
 
     private $streaming = false;
 
-    public function __construct(Sender $sender, MessageFactory $messageFactory)
+    /** @var int $timeout */
+    private $timeout;
+
+    /** @var LoopInterface $loop */
+    private $loop;
+
+    public function __construct(Sender $sender, MessageFactory $messageFactory, LoopInterface $loop)
     {
+        // In case the timeout hasn't been set through the options
+        $this->timeout = ini_get('default_socket_timeout');
+
         $this->sender = $sender;
         $this->messageFactory = $messageFactory;
+        $this->loop = $loop;
     }
 
     /**
@@ -47,7 +58,7 @@ class Transaction
             if (property_exists($transaction, $name)) {
                 // restore default value if null is given
                 if ($value === null) {
-                    $default = new self($this->sender, $this->messageFactory);
+                    $default = new self($this->sender, $this->messageFactory, $this->loop);
                     $value = $default->$name;
                 }
 
@@ -74,7 +85,11 @@ class Transaction
             array($deferred, 'reject')
         );
 
-        return $deferred->promise();
+        return \React\Promise\Timer\timeout(
+            $deferred->promise(),
+            $this->timeout,
+            $this->loop
+        );
     }
 
     private function next(RequestInterface $request, Deferred $deferred)

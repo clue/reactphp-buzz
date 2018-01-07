@@ -17,7 +17,8 @@ class TransactionTest extends TestCase
     public function testWithOptionsReturnsNewInstanceWithChangedOption()
     {
         $sender = $this->makeSenderMock();
-        $transaction = new Transaction($sender, new MessageFactory());
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $transaction = new Transaction($sender, new MessageFactory(), $loop);
 
         $new = $transaction->withOptions(array('followRedirects' => false));
 
@@ -33,7 +34,8 @@ class TransactionTest extends TestCase
     public function testWithOptionsDoesNotChangeOriginalInstance()
     {
         $sender = $this->makeSenderMock();
-        $transaction = new Transaction($sender, new MessageFactory());
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $transaction = new Transaction($sender, new MessageFactory(), $loop);
 
         $transaction->withOptions(array('followRedirects' => false));
 
@@ -46,7 +48,8 @@ class TransactionTest extends TestCase
     public function testWithOptionsNullValueReturnsNewInstanceWithDefaultOption()
     {
         $sender = $this->makeSenderMock();
-        $transaction = new Transaction($sender, new MessageFactory());
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $transaction = new Transaction($sender, new MessageFactory(), $loop);
 
         $transaction = $transaction->withOptions(array('followRedirects' => false));
         $transaction = $transaction->withOptions(array('followRedirects' => null));
@@ -61,16 +64,17 @@ class TransactionTest extends TestCase
     {
         $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
         $response = new Response(404);
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
         // mock sender to resolve promise with the given $response in response to the given $request
         $sender = $this->makeSenderMock();
         $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(Promise\resolve($response));
 
-        $transaction = new Transaction($sender, new MessageFactory());
+        $transaction = new Transaction($sender, new MessageFactory(), $loop);
         $promise = $transaction->send($request);
 
         try {
-            Block\await($promise, $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock());
+            Block\await($promise, $loop);
             $this->fail();
         } catch (ResponseException $exception) {
             $this->assertEquals(404, $exception->getCode());
@@ -96,7 +100,7 @@ class TransactionTest extends TestCase
         $sender = $this->makeSenderMock();
         $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(Promise\resolve($response));
 
-        $transaction = new Transaction($sender, $messageFactory);
+        $transaction = new Transaction($sender, $messageFactory, $loop);
         $promise = $transaction->send($request);
 
         $response = Block\await($promise, $loop);
@@ -124,7 +128,7 @@ class TransactionTest extends TestCase
         $sender = $this->makeSenderMock();
         $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(Promise\resolve($response));
 
-        $transaction = new Transaction($sender, $messageFactory);
+        $transaction = new Transaction($sender, $messageFactory, $loop);
         $promise = $transaction->send($request);
         $promise->cancel();
 
@@ -134,6 +138,7 @@ class TransactionTest extends TestCase
     public function testReceivingStreamingBodyWillResolveWithStreamingResponseIfStreamingIsEnabled()
     {
         $messageFactory = new MessageFactory();
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
         $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
         $response = $messageFactory->response(1.0, 200, 'OK', array(), $this->getMockBuilder('React\Stream\ReadableStreamInterface')->getMock());
@@ -142,11 +147,11 @@ class TransactionTest extends TestCase
         $sender = $this->makeSenderMock();
         $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(Promise\resolve($response));
 
-        $transaction = new Transaction($sender, $messageFactory);
+        $transaction = new Transaction($sender, $messageFactory, $loop);
         $transaction = $transaction->withOptions(array('streaming' => true));
         $promise = $transaction->send($request);
 
-        $response = Block\await($promise, $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock());
+        $response = Block\await($promise, $loop);
 
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('', (string)$response->getBody());
@@ -155,6 +160,7 @@ class TransactionTest extends TestCase
     public function testFollowingRedirectWithSpecifiedHeaders()
     {
         $messageFactory = new MessageFactory();
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
         $customHeaders = array('User-Agent' => 'Chrome');
         $requestWithUserAgent = $messageFactory->request('GET', 'http://example.com', $customHeaders);
@@ -176,13 +182,14 @@ class TransactionTest extends TestCase
                 return true;
             }))->willReturn(Promise\resolve($okResponse));
 
-        $transaction = new Transaction($sender, $messageFactory);
+        $transaction = new Transaction($sender, $messageFactory, $loop);
         $transaction->send($requestWithUserAgent);
     }
 
     public function testRemovingAuthorizationHeaderWhenChangingHostnamesDuringRedirect()
     {
         $messageFactory = new MessageFactory();
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
         $customHeaders = array('Authorization' => 'secret');
         $requestWithAuthorization = $messageFactory->request('GET', 'http://example.com', $customHeaders);
@@ -204,13 +211,14 @@ class TransactionTest extends TestCase
                 return true;
             }))->willReturn(Promise\resolve($okResponse));
 
-        $transaction = new Transaction($sender, $messageFactory);
+        $transaction = new Transaction($sender, $messageFactory, $loop);
         $transaction->send($requestWithAuthorization);
     }
 
     public function testAuthorizationHeaderIsForwardedWhenRedirectingToSameDomain()
     {
         $messageFactory = new MessageFactory();
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
         $customHeaders = array('Authorization' => 'secret');
         $requestWithAuthorization = $messageFactory->request('GET', 'http://example.com', $customHeaders);
@@ -232,13 +240,14 @@ class TransactionTest extends TestCase
                 return true;
             }))->willReturn(Promise\resolve($okResponse));
 
-        $transaction = new Transaction($sender, $messageFactory);
+        $transaction = new Transaction($sender, $messageFactory, $loop);
         $transaction->send($requestWithAuthorization);
     }
 
     public function testAuthorizationHeaderIsForwardedWhenLocationContainsAuthentication()
     {
         $messageFactory = new MessageFactory();
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
         $request = $messageFactory->request('GET', 'http://example.com');
         $sender = $this->makeSenderMock();
@@ -260,13 +269,14 @@ class TransactionTest extends TestCase
                 return true;
             }))->willReturn(Promise\resolve($okResponse));
 
-        $transaction = new Transaction($sender, $messageFactory);
+        $transaction = new Transaction($sender, $messageFactory, $loop);
         $transaction->send($request);
     }
 
     public function testSomeRequestHeadersShouldBeRemovedWhenRedirecting()
     {
         $messageFactory = new MessageFactory();
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
         $customHeaders = array(
             'Content-Type' => 'text/html; charset=utf-8',
@@ -293,13 +303,14 @@ class TransactionTest extends TestCase
                 return true;
             }))->willReturn(Promise\resolve($okResponse));
 
-        $transaction = new Transaction($sender, $messageFactory);
+        $transaction = new Transaction($sender, $messageFactory, $loop);
         $transaction->send($requestWithCustomHeaders);
     }
 
     public function testCancelTransactionWillCancelRequest()
     {
         $messageFactory = new MessageFactory();
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
         $request = $messageFactory->request('GET', 'http://example.com');
         $sender = $this->makeSenderMock();
@@ -309,7 +320,7 @@ class TransactionTest extends TestCase
         // mock sender to return pending promise which should be cancelled when cancelling result
         $sender->expects($this->once())->method('send')->willReturn($pending);
 
-        $transaction = new Transaction($sender, $messageFactory);
+        $transaction = new Transaction($sender, $messageFactory, $loop);
         $promise = $transaction->send($request);
 
         $promise->cancel();
@@ -318,6 +329,7 @@ class TransactionTest extends TestCase
     public function testCancelTransactionWillCancelRedirectedRequest()
     {
         $messageFactory = new MessageFactory();
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
         $request = $messageFactory->request('GET', 'http://example.com');
         $sender = $this->makeSenderMock();
@@ -331,7 +343,7 @@ class TransactionTest extends TestCase
         // mock sender to return pending promise which should be cancelled when cancelling result
         $sender->expects($this->at(1))->method('send')->willReturn($pending);
 
-        $transaction = new Transaction($sender, $messageFactory);
+        $transaction = new Transaction($sender, $messageFactory, $loop);
         $promise = $transaction->send($request);
 
         $promise->cancel();
@@ -340,6 +352,7 @@ class TransactionTest extends TestCase
     public function testCancelTransactionWillCancelRedirectedRequestAgain()
     {
         $messageFactory = new MessageFactory();
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
         $request = $messageFactory->request('GET', 'http://example.com');
         $sender = $this->makeSenderMock();
@@ -353,7 +366,7 @@ class TransactionTest extends TestCase
         // mock sender to return pending promise which should be cancelled when cancelling result
         $sender->expects($this->at(1))->method('send')->willReturn($second);
 
-        $transaction = new Transaction($sender, $messageFactory);
+        $transaction = new Transaction($sender, $messageFactory, $loop);
         $promise = $transaction->send($request);
 
         // mock sender to resolve promise with the given $redirectResponse in
@@ -365,6 +378,7 @@ class TransactionTest extends TestCase
     public function testCancelTransactionWillCloseBufferingStream()
     {
         $messageFactory = new MessageFactory();
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
         $request = $messageFactory->request('GET', 'http://example.com');
         $sender = $this->makeSenderMock();
@@ -376,7 +390,7 @@ class TransactionTest extends TestCase
         $redirectResponse = $messageFactory->response(1.0, 301, null, array('Location' => 'http://example.com/new'), $body);
         $sender->expects($this->once())->method('send')->willReturn(Promise\resolve($redirectResponse));
 
-        $transaction = new Transaction($sender, $messageFactory);
+        $transaction = new Transaction($sender, $messageFactory, $loop);
         $promise = $transaction->send($request);
 
         $promise->cancel();
@@ -385,6 +399,7 @@ class TransactionTest extends TestCase
     public function testCancelTransactionWillCloseBufferingStreamAgain()
     {
         $messageFactory = new MessageFactory();
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
         $request = $messageFactory->request('GET', 'http://example.com');
         $sender = $this->makeSenderMock();
@@ -392,7 +407,7 @@ class TransactionTest extends TestCase
         $first = new Deferred();
         $sender->expects($this->once())->method('send')->willReturn($first->promise());
 
-        $transaction = new Transaction($sender, $messageFactory);
+        $transaction = new Transaction($sender, $messageFactory, $loop);
         $promise = $transaction->send($request);
 
         $body = new ThroughStream();
@@ -406,6 +421,7 @@ class TransactionTest extends TestCase
     public function testCancelTransactionShouldCancelSendingPromise()
     {
         $messageFactory = new MessageFactory();
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
         $request = $messageFactory->request('GET', 'http://example.com');
         $sender = $this->makeSenderMock();
@@ -419,10 +435,41 @@ class TransactionTest extends TestCase
         // mock sender to return pending promise which should be cancelled when cancelling result
         $sender->expects($this->at(1))->method('send')->willReturn($pending);
 
-        $transaction = new Transaction($sender, $messageFactory);
+        $transaction = new Transaction($sender, $messageFactory, $loop);
         $promise = $transaction->send($request);
 
         $promise->cancel();
+    }
+
+    public function testTimeoutPromiseWillThrowTimeoutException()
+    {
+        $messageFactory = new MessageFactory();
+        $loop = Factory::create();
+
+        $stream = new ThroughStream();
+        $loop->addTimer(0.01, function () use ($stream) {
+            $stream->close();
+        });
+
+        $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
+        $response = $messageFactory->response(1.0, 200, 'OK', array(), $stream);
+
+        // mock sender to resolve promise with the given $response in response to the given $request
+        $sender = $this->getMockBuilder('Clue\React\Buzz\Io\Sender')->disableOriginalConstructor()->getMock();
+        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(Promise\resolve($response));
+
+        $transaction = new Transaction($sender, $messageFactory, $loop);
+        $transaction = $transaction->withOptions(array('timeout' => 0.001));
+        $promise = $transaction->send($request);
+
+        $exception = false;
+        try {
+            $response = Block\await($promise, $loop);
+        } catch (Exception $exception) {
+
+        }
+
+        $this->assertTrue(is_a($exception, 'React\Promise\Timer\TimeoutException'));
     }
 
     /**

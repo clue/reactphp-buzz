@@ -19,6 +19,9 @@ class Browser
     private $messageFactory;
     private $baseUri = null;
 
+    /** @var LoopInterface $loop */
+    private $loop;
+
     /**
      * The `Browser` is responsible for sending HTTP requests to your HTTP server
      * and keeps track of pending incoming HTTP responses.
@@ -58,7 +61,8 @@ class Browser
         $this->messageFactory = new MessageFactory();
         $this->transaction = new Transaction(
             Sender::createFromLoop($loop, $connector, $this->messageFactory),
-            $this->messageFactory
+            $this->messageFactory,
+            $loop
         );
     }
 
