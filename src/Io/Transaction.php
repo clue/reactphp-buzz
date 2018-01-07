@@ -8,6 +8,7 @@ use Clue\React\Buzz\Message\ResponseException;
 use Clue\React\Buzz\Message\MessageFactory;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use React\EventLoop\LoopInterface;
 use React\Promise;
 use React\Promise\Stream;
 use React\Stream\ReadableStreamInterface;
@@ -35,8 +36,19 @@ class Transaction
 
     private $streaming = false;
 
-    public function __construct(RequestInterface $request, Sender $sender, array $options = array(), MessageFactory $messageFactory)
-    {
+    /** @var int $timeout */
+    private $timeout = 10;
+
+    /** @var LoopInterface $loop */
+    private $loop;
+
+    public function __construct(
+        RequestInterface $request,
+        Sender $sender,
+        array $options = array(),
+        MessageFactory $messageFactory,
+        LoopInterface $loop
+    ) {
         foreach ($options as $name => $value) {
             if (property_exists($this, $name)) {
                 $this->$name = $value;
@@ -46,6 +58,7 @@ class Transaction
         $this->request = $request;
         $this->sender = $sender;
         $this->messageFactory = $messageFactory;
+        $this->loop = $loop;
     }
 
     public function send()
@@ -66,10 +79,14 @@ class Transaction
             $promise = $promise->then(array($that, 'bufferResponse'));
         }
 
-        return $promise->then(
-            function (ResponseInterface $response) use ($request, $that) {
-                return $that->onResponse($response, $request);
-            }
+        return Promise\Timer\timeout(
+            $promise->then(
+                function (ResponseInterface $response) use ($request, $that) {
+                    return $that->onResponse($response, $request);
+                }
+            ),
+            $this->timeout,
+            $this->loop
         );
     }
 

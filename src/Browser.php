@@ -17,6 +17,9 @@ class Browser
     private $baseUri = null;
     private $options = array();
 
+    /** @var LoopInterface $loop */
+    private $loop;
+
     /**
      * Instantiate the Browser
      *
@@ -28,6 +31,7 @@ class Browser
     {
         $this->sender = Sender::createFromLoop($loop, $connector);
         $this->messageFactory = new MessageFactory();
+        $this->loop = $loop;
     }
 
     public function get($url, $headers = array())
@@ -75,7 +79,7 @@ class Browser
             $request = $request->withUri($this->messageFactory->expandBase($request->getUri(), $this->baseUri));
         }
 
-        $transaction = new Transaction($request, $this->sender, $this->options, $this->messageFactory);
+        $transaction = new Transaction($request, $this->sender, $this->options, $this->messageFactory, $this->loop);
 
         return $transaction->send();
     }
