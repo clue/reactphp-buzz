@@ -2,6 +2,7 @@
 
 use Clue\React\Buzz\Io\Transaction;
 use Clue\React\Buzz\Message\ResponseException;
+use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Http\Message\RequestInterface;
 use RingCentral\Psr7\Response;
 use Clue\React\Buzz\Message\MessageFactory;
@@ -18,7 +19,7 @@ class TransactionTest extends TestCase
         $response = new Response(404);
 
         // mock sender to resolve promise with the given $response in response to the given $request
-        $sender = $this->getMockBuilder('Clue\React\Buzz\Io\Sender')->disableOriginalConstructor()->getMock();
+        $sender = $this->makeSenderMock();
         $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(Promise\resolve($response));
 
         $transaction = new Transaction($request, $sender, array(), new MessageFactory());
@@ -48,7 +49,7 @@ class TransactionTest extends TestCase
         $response = $messageFactory->response(1.0, 200, 'OK', array(), $stream);
 
         // mock sender to resolve promise with the given $response in response to the given $request
-        $sender = $this->getMockBuilder('Clue\React\Buzz\Io\Sender')->disableOriginalConstructor()->getMock();
+        $sender = $this->makeSenderMock();
         $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(Promise\resolve($response));
 
         $transaction = new Transaction($request, $sender, array(), $messageFactory);
@@ -76,7 +77,7 @@ class TransactionTest extends TestCase
         $response = $messageFactory->response(1.0, 200, 'OK', array(), $stream);
 
         // mock sender to resolve promise with the given $response in response to the given $request
-        $sender = $this->getMockBuilder('Clue\React\Buzz\Io\Sender')->disableOriginalConstructor()->getMock();
+        $sender = $this->makeSenderMock();
         $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(Promise\resolve($response));
 
         $transaction = new Transaction($request, $sender, array(), $messageFactory);
@@ -94,7 +95,7 @@ class TransactionTest extends TestCase
         $response = $messageFactory->response(1.0, 200, 'OK', array(), $this->getMockBuilder('React\Stream\ReadableStreamInterface')->getMock());
 
         // mock sender to resolve promise with the given $response in response to the given $request
-        $sender = $this->getMockBuilder('Clue\React\Buzz\Io\Sender')->disableOriginalConstructor()->getMock();
+        $sender = $this->makeSenderMock();
         $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(Promise\resolve($response));
 
         $transaction = new Transaction($request, $sender, array('streaming' => true), $messageFactory);
@@ -110,25 +111,120 @@ class TransactionTest extends TestCase
     {
         $messageFactory = new MessageFactory();
 
-        $requestWithUserAgent = $messageFactory->request('GET', 'http://example.com', ['User-Agent' => 'Chrome']);
-        $sender = $this->getMockBuilder('Clue\React\Buzz\Io\Sender')->disableOriginalConstructor()->getMock();
+        $customHeaders = ['User-Agent' => 'Chrome'];
+        $requestWithUserAgent = $messageFactory->request('GET', 'http://example.com', $customHeaders);
+        $sender = $this->makeSenderMock();
 
         // mock sender to resolve promise with the given $redirectResponse in
         // response to the given $requestWithUserAgent
-        $redirectResponse = $messageFactory->response(1.0, 301, null);
+        $redirectResponse = $messageFactory->response(1.0, 301, null, ['Location' => 'http://redirect.com']);
         $sender->expects($this->at(0))->method('send')->willReturn(Promise\resolve($redirectResponse));
 
         // mock sender to resolve promise with the given $okResponse in
         // response to the given $requestWithUserAgent
         $okResponse = $messageFactory->response(1.0, 200, 'OK');
-        $sender->expects($this->at(1))->method('send')
-            ->with($this->callback(function(RequestInterface $request){
+        $sender->expects($this->at(1))
+            ->method('send')
+            ->with($this->callback(function (RequestInterface $request) {
                 $this->assertEquals(['Chrome'], $request->getHeader('User-Agent'));
                 return true;
-            }))
-            ->willReturn(Promise\resolve($okResponse));
+            }))->willReturn(Promise\resolve($okResponse));
 
-        $transaction = new Transaction($requestWithUserAgent, $sender, array(), $messageFactory);
+        $transaction = new Transaction($requestWithUserAgent, $sender, [], $messageFactory);
         $transaction->send();
+    }
+
+    public function testRemovingAuthorizationHeaderWhenChangingHostnamesDuringRedirect()
+    {
+        $messageFactory = new MessageFactory();
+
+        $customHeaders = ['Authentication' => 'secret'];
+        $requestWithAuthentication = $messageFactory->request('GET', 'http://example.com', $customHeaders);
+        $sender = $this->makeSenderMock();
+
+        // mock sender to resolve promise with the given $redirectResponse in
+        // response to the given $requestWithAuthentication
+        $redirectResponse = $messageFactory->response(1.0, 301, null, ['Location' => 'http://redirect.com']);
+        $sender->expects($this->at(0))->method('send')->willReturn(Promise\resolve($redirectResponse));
+
+        // mock sender to resolve promise with the given $okResponse in
+        // response to the given $requestWithAuthentication
+        $okResponse = $messageFactory->response(1.0, 200, 'OK');
+        $sender->expects($this->at(1))
+            ->method('send')
+            ->with($this->callback(function (RequestInterface $request) {
+                $this->assertFalse($request->hasHeader('Authentication'));
+                return true;
+            }))->willReturn(Promise\resolve($okResponse));
+
+        $transaction = new Transaction($requestWithAuthentication, $sender, [], $messageFactory);
+        $transaction->send();
+    }
+
+    public function testAuthorizationHeaderIsForwardedWhenRedirectingToSameDomain()
+    {
+        $messageFactory = new MessageFactory();
+
+        $customHeaders = ['Authentication' => 'secret'];
+        $requestWithAuthentication = $messageFactory->request('GET', 'http://example.com', $customHeaders);
+        $sender = $this->makeSenderMock();
+
+        // mock sender to resolve promise with the given $redirectResponse in
+        // response to the given $requestWithAuthentication
+        $redirectResponse = $messageFactory->response(1.0, 301, null, ['Location' => 'http://example.com/new']);
+        $sender->expects($this->at(0))->method('send')->willReturn(Promise\resolve($redirectResponse));
+
+        // mock sender to resolve promise with the given $okResponse in
+        // response to the given $requestWithAuthentication
+        $okResponse = $messageFactory->response(1.0, 200, 'OK');
+        $sender->expects($this->at(1))
+            ->method('send')
+            ->with($this->callback(function (RequestInterface $request) {
+                $this->assertEquals(['secret'], $request->getHeader('Authentication'));
+                return true;
+            }))->willReturn(Promise\resolve($okResponse));
+
+        $transaction = new Transaction($requestWithAuthentication, $sender, [], $messageFactory);
+        $transaction->send();
+    }
+
+    public function testSomeRequestHeadersShouldBeRemovedWhenRedirecting()
+    {
+        $messageFactory = new MessageFactory();
+
+        $customHeaders = [
+            'Content-Type' => 'text/html; charset=utf-8',
+            'Content-Length' => '111',
+        ];
+
+        $requestWithCustomHeaders = $messageFactory->request('GET', 'http://example.com', $customHeaders);
+        $sender = $this->makeSenderMock();
+
+        // mock sender to resolve promise with the given $redirectResponse in
+        // response to the given $requestWithCustomHeaders
+        $redirectResponse = $messageFactory->response(1.0, 301, null, ['Location' => 'http://example.com/new']);
+        $sender->expects($this->at(0))->method('send')->willReturn(Promise\resolve($redirectResponse));
+
+        // mock sender to resolve promise with the given $okResponse in
+        // response to the given $requestWithCustomHeaders
+        $okResponse = $messageFactory->response(1.0, 200, 'OK');
+        $sender->expects($this->at(1))
+            ->method('send')
+            ->with($this->callback(function (RequestInterface $request) {
+                $this->assertFalse($request->hasHeader('Content-Type'));
+                $this->assertFalse($request->hasHeader('Content-Length'));
+                return true;
+            }))->willReturn(Promise\resolve($okResponse));
+
+        $transaction = new Transaction($requestWithCustomHeaders, $sender, [], $messageFactory);
+        $transaction->send();
+    }
+
+    /**
+     * @return MockObject
+     */
+    private function makeSenderMock()
+    {
+        return $this->getMockBuilder('Clue\React\Buzz\Io\Sender')->disableOriginalConstructor()->getMock();
     }
 }
