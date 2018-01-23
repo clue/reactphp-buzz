@@ -2,6 +2,7 @@
 
 use Clue\React\Buzz\Io\Transaction;
 use Clue\React\Buzz\Message\ResponseException;
+use Psr\Http\Message\RequestInterface;
 use RingCentral\Psr7\Response;
 use Clue\React\Buzz\Message\MessageFactory;
 use React\Promise;
@@ -103,5 +104,31 @@ class TransactionTest extends TestCase
 
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('', (string)$response->getBody());
+    }
+
+    public function testFollowingRedirectWithSpecifiedHeaders()
+    {
+        $messageFactory = new MessageFactory();
+
+        $requestWithUserAgent = $messageFactory->request('GET', 'http://example.com', ['User-Agent' => 'Chrome']);
+        $sender = $this->getMockBuilder('Clue\React\Buzz\Io\Sender')->disableOriginalConstructor()->getMock();
+
+        // mock sender to resolve promise with the given $redirectResponse in
+        // response to the given $requestWithUserAgent
+        $redirectResponse = $messageFactory->response(1.0, 301, null);
+        $sender->expects($this->at(0))->method('send')->willReturn(Promise\resolve($redirectResponse));
+
+        // mock sender to resolve promise with the given $okResponse in
+        // response to the given $requestWithUserAgent
+        $okResponse = $messageFactory->response(1.0, 200, 'OK');
+        $sender->expects($this->at(1))->method('send')
+            ->with($this->callback(function(RequestInterface $request){
+                $this->assertEquals(['Chrome'], $request->getHeader('User-Agent'));
+                return true;
+            }))
+            ->willReturn(Promise\resolve($okResponse));
+
+        $transaction = new Transaction($requestWithUserAgent, $sender, array(), $messageFactory);
+        $transaction->send();
     }
 }

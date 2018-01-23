@@ -133,7 +133,7 @@ class Transaction
 
         // naïve approach..
         $method = ($request->getMethod() === 'HEAD') ? 'HEAD' : 'GET';
-        $request = $this->messageFactory->request($method, $location);
+        $request = $this->messageFactory->request($method, $location, $request->getHeaders());
 
         $this->progress('redirect', array($request));
 
