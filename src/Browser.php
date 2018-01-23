@@ -5,9 +5,11 @@ namespace Clue\React\Buzz;
 use Clue\React\Buzz\Io\Sender;
 use Clue\React\Buzz\Io\Transaction;
 use Clue\React\Buzz\Message\MessageFactory;
+use InvalidArgumentException;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\UriInterface;
 use React\EventLoop\LoopInterface;
+use React\Promise\PromiseInterface;
 use React\Socket\ConnectorInterface;
 
 class Browser
@@ -30,36 +32,77 @@ class Browser
         $this->messageFactory = new MessageFactory();
     }
 
-    public function get($url, $headers = array())
+    /**
+     * @param string|UriInterface $url URI for the request.
+     * @param array $headers
+     * @return PromiseInterface
+     */
+    public function get($url, array $headers = array())
     {
         return $this->send($this->messageFactory->request('GET', $url, $headers));
     }
 
-    public function post($url, $headers = array(), $content = '')
+    /**
+     * @param string|UriInterface $url URI for the request.
+     * @param array $headers
+     * @param string $content
+     * @return PromiseInterface
+     */
+    public function post($url, array $headers = array(), $content = '')
     {
         return $this->send($this->messageFactory->request('POST', $url, $headers, $content));
     }
 
-    public function head($url, $headers = array())
+    /**
+     * @param string|UriInterface $url URI for the request.
+     * @param array $headers
+     * @return PromiseInterface
+     */
+    public function head($url, array $headers = array())
     {
         return $this->send($this->messageFactory->request('HEAD', $url, $headers));
     }
 
-    public function patch($url, $headers = array(), $content = '')
+    /**
+     * @param string|UriInterface $url URI for the request.
+     * @param array $headers
+     * @param string $content
+     * @return PromiseInterface
+     */
+    public function patch($url, array $headers = array(), $content = '')
     {
         return $this->send($this->messageFactory->request('PATCH', $url , $headers, $content));
     }
 
-    public function put($url, $headers = array(), $content = '')
+    /**
+     * @param string|UriInterface $url URI for the request.
+     * @param array $headers
+     * @param string $content
+     * @return PromiseInterface
+     */
+    public function put($url, array $headers = array(), $content = '')
     {
         return $this->send($this->messageFactory->request('PUT', $url, $headers, $content));
     }
 
-    public function delete($url, $headers = array(), $content = '')
+    /**
+     * @param string|UriInterface $url URI for the request.
+     * @param array $headers
+     * @param string $content
+     * @return PromiseInterface
+     */
+    public function delete($url, array $headers = array(), $content = '')
     {
         return $this->send($this->messageFactory->request('DELETE', $url, $headers, $content));
     }
 
+    /**
+     * @param string|UriInterface $url URI for the request.
+     * @param array $fields
+     * @param array $headers
+     * @param string $method
+     * @return PromiseInterface
+     */
     public function submit($url, array $fields, $headers = array(), $method = 'POST')
     {
         $headers['Content-Type'] = 'application/x-www-form-urlencoded';
@@ -68,6 +111,10 @@ class Browser
         return $this->send($this->messageFactory->request($method, $url, $headers, $content));
     }
 
+    /**
+     * @param RequestInterface $request
+     * @return PromiseInterface
+     */
     public function send(RequestInterface $request)
     {
         if ($this->baseUri !== null) {
@@ -121,6 +168,10 @@ class Browser
         return $browser;
     }
 
+    /**
+     * @param array $options
+     * @return self
+     */
     public function withOptions(array $options)
     {
         $browser = clone $this;
