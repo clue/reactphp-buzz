@@ -155,7 +155,8 @@ class Transaction
             ->withoutHeader('Content-Type')
             ->withoutHeader('Content-Length');
 
-        if($location->getHost() !== $originalHost) {
+        // Remove authorization if changing hostnames (but not if just changing ports or protocols).
+        if ($location->getHost() !== $originalHost) {
             $request = $request->withoutHeader('Authentication');
         }
 
