@@ -6,9 +6,11 @@ use Clue\React\Buzz\Message\ResponseException;
 use Psr\Http\Message\ServerRequestInterface;
 use React\EventLoop\Factory;
 use React\Http\Response;
+use React\Http\StreamingServer;
 use React\Promise\Stream;
 use React\Socket\Connector;
 use React\Stream\ThroughStream;
+use RingCentral\Psr7\Request;
 
 class FunctionalBrowserTest extends TestCase
 {
@@ -172,13 +174,12 @@ class FunctionalBrowserTest extends TestCase
         $this->assertEquals('hello world', $data['data']);
     }
 
-    /** @group online */
     public function testPostStreamChunked()
     {
         // httpbin used to support `Transfer-Encoding: chunked` for requests,
         // but not rejects those, so let's start our own server instance
         $that = $this;
-        $server = new \React\Http\Server(function (ServerRequestInterface $request) use ($that) {
+        $server = new StreamingServer(function (ServerRequestInterface $request) use ($that) {
             $that->assertFalse($request->hasHeader('Content-Length'));
             $that->assertNull($request->getBody()->getSize());
 
@@ -239,5 +240,47 @@ class FunctionalBrowserTest extends TestCase
         $data = json_decode((string)$response->getBody(), true);
 
         $this->assertEquals('', $data['data']);
+    }
+
+    public function testSendsHttp10ByDefault()
+    {
+        $server = new StreamingServer(function (ServerRequestInterface $request) {
+            return new Response(
+                200,
+                array(),
+                $request->getProtocolVersion()
+            );
+        });
+        $socket = new \React\Socket\Server(0, $this->loop);
+        $server->listen($socket);
+
+        $this->base = str_replace('tcp:', 'http:', $socket->getAddress()) . '/';
+
+        $response = Block\await($this->browser->get($this->base), $this->loop);
+        $this->assertEquals('1.0', (string)$response->getBody());
+
+        $socket->close();
+    }
+
+    public function testSendsExplicitHttp11Request()
+    {
+        $server = new StreamingServer(function (ServerRequestInterface $request) {
+            return new Response(
+                200,
+                array(),
+                $request->getProtocolVersion()
+            );
+        });
+        $socket = new \React\Socket\Server(0, $this->loop);
+        $server->listen($socket);
+
+        $this->base = str_replace('tcp:', 'http:', $socket->getAddress()) . '/';
+
+        $request = new Request('GET', $this->base, array(), '', '1.1');
+
+        $response = Block\await($this->browser->send($request), $this->loop);
+        $this->assertEquals('1.1', (string)$response->getBody());
+
+        $socket->close();
     }
 }
