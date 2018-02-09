@@ -8,6 +8,7 @@ use Clue\React\Buzz\Message\ResponseException;
 use Clue\React\Buzz\Message\MessageFactory;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\UriInterface;
 use React\Promise;
 use React\Promise\Stream;
 use React\Stream\ReadableStreamInterface;
@@ -131,10 +132,7 @@ class Transaction
         // resolve location relative to last request URI
         $location = $this->messageFactory->uriRelative($request->getUri(), $response->getHeaderLine('Location'));
 
-        // naïve approach..
-        $method = ($request->getMethod() === 'HEAD') ? 'HEAD' : 'GET';
-        $request = $this->messageFactory->request($method, $location);
-
+        $request = $this->makeRedirectRequest($request, $location);
         $this->progress('redirect', array($request));
 
         if ($this->numRequests >= $this->maxRedirects) {
@@ -142,6 +140,30 @@ class Transaction
         }
 
         return $this->next($request);
+    }
+
+    /**
+     * @param RequestInterface $request
+     * @param UriInterface $location
+     * @return \Clue\React\Buzz\Message\RequestInterface
+     */
+    private function makeRedirectRequest(RequestInterface $request, UriInterface $location)
+    {
+        $originalHost = $request->getUri()->getHost();
+        $request = $request
+            ->withoutHeader('Host')
+            ->withoutHeader('Content-Type')
+            ->withoutHeader('Content-Length');
+
+        // Remove authorization if changing hostnames (but not if just changing ports or protocols).
+        if ($location->getHost() !== $originalHost) {
+            $request = $request->withoutHeader('Authentication');
+        }
+
+        // naïve approach..
+        $method = ($request->getMethod() === 'HEAD') ? 'HEAD' : 'GET';
+
+        return $this->messageFactory->request($method, $location, $request->getHeaders());
     }
 
     private function progress($name, array $args = array())
