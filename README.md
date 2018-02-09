@@ -341,7 +341,7 @@ method:
 
 ```php
 $request = new Request('OPTIONS', $url);
-$request = $request->withProtocolVersion(1.1);
+$request = $request->withProtocolVersion('1.1');
 
 $browser->send($request)->then(…);
 ```
