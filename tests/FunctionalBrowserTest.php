@@ -24,7 +24,10 @@ class FunctionalBrowserTest extends TestCase
         $this->browser = new Browser($this->loop);
     }
 
-    /** @group online */
+    /**
+     * @group online
+     * @doesNotPerformAssertions
+     */
     public function testSimpleRequest()
     {
         Block\await($this->browser->get($this->base . 'get'), $this->loop);
@@ -42,19 +45,28 @@ class FunctionalBrowserTest extends TestCase
         Block\await($promise, $this->loop);
     }
 
-    /** @group online */
+    /**
+     * @group online
+     * @doesNotPerformAssertions
+     */
     public function testRedirectRequestRelative()
     {
         Block\await($this->browser->get($this->base . 'redirect-to?url=get'), $this->loop);
     }
 
-    /** @group online */
+    /**
+     * @group online
+     * @doesNotPerformAssertions
+     */
     public function testRedirectRequestAbsolute()
     {
         Block\await($this->browser->get($this->base . 'redirect-to?url=' . urlencode($this->base . 'get')), $this->loop);
     }
 
-    /** @group online */
+    /**
+     * @group online
+     * @doesNotPerformAssertions
+     */
     public function testNotFollowingRedirectsResolvesWithRedirectResult()
     {
         $browser = $this->browser->withOptions(array('followRedirects' => false));
@@ -73,7 +85,10 @@ class FunctionalBrowserTest extends TestCase
         Block\await($browser->get($this->base . 'redirect/3'), $this->loop);
     }
 
-    /** @group online */
+    /**
+     * @group online
+     * @doesNotPerformAssertions
+     */
     public function testCanAccessHttps()
     {
         if (!function_exists('stream_socket_enable_crypto')) {
@@ -104,7 +119,10 @@ class FunctionalBrowserTest extends TestCase
         Block\await($browser->get('https://self-signed.badssl.com/'), $this->loop);
     }
 
-    /** @group online */
+    /**
+     * @group online
+     * @doesNotPerformAssertions
+     */
     public function testVerifyPeerDisabledForBadSslResolves()
     {
         if (!function_exists('stream_socket_enable_crypto')) {

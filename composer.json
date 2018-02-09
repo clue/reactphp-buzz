@@ -27,7 +27,7 @@
     "require-dev": {
         "clue/block-react": "^1.0",
         "clue/socks-react": "^0.8",
-        "phpunit/phpunit": "^4.8.35 || ^5.7 || ^6.4",
+        "phpunit/phpunit": "^7.0 || ^6.4 || ^5.7 || ^4.8.35",
         "react/http": "^0.7.2"
     }
 }
