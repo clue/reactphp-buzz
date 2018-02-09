@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.3.0 (2018-02-09)
+
+*   Feature / Fix: Pass custom request headers when following redirects
+    (#91 by @seregazhuk and #96 by @clue)
+
+*   Support legacy PHP 5.3 through PHP 7.2 and HHVM
+    (#95 by @clue)
+
+*   Improve documentation
+    (#87 by @holtkamp and #93 by @seregazhuk)
+
+*   Improve test suite by adding forward compatibility with PHPUnit 5, PHPUnit 6
+    and PHPUnit 7 and explicitly test HTTP/1.1 protocol version.
+    (#86 by @carusogabriel and #94 and #97 by @clue)
+
 ## 2.2.0 (2017-10-24)
 
 *   Feature: Forward compatibility with freshly released react/promise-stream v1.0
