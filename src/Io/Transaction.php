@@ -37,7 +37,7 @@ class Transaction
     private $streaming = false;
 
     /** @var int $timeout */
-    private $timeout = 10;
+    private $timeout;
 
     /** @var LoopInterface $loop */
     private $loop;
@@ -55,6 +55,11 @@ class Transaction
             }
         }
 
+        // In case the timeout hasn't been set through the options
+        if (empty($this->timeout) === true) {
+            $this->timeout = ini_get('default_socket_timeout');
+        }
+
         $this->request = $request;
         $this->sender = $sender;
         $this->messageFactory = $messageFactory;
@@ -63,7 +68,11 @@ class Transaction
 
     public function send()
     {
-        return $this->next($this->request);
+        return Promise\Timer\timeout(
+            $this->next($this->request),
+            $this->timeout,
+            $this->loop
+        );
     }
 
     protected function next(RequestInterface $request)
@@ -79,14 +88,10 @@ class Transaction
             $promise = $promise->then(array($that, 'bufferResponse'));
         }
 
-        return Promise\Timer\timeout(
-            $promise->then(
-                function (ResponseInterface $response) use ($request, $that) {
-                    return $that->onResponse($response, $request);
-                }
-            ),
-            $this->timeout,
-            $this->loop
+        return $promise->then(
+            function (ResponseInterface $response) use ($request, $that) {
+                return $that->onResponse($response, $request);
+            }
         );
     }
 
