@@ -2,7 +2,7 @@
     "name": "clue/buzz-react",
     "description": "Simple, async PSR-7 HTTP client for concurrently processing any number of HTTP requests, built on top of ReactPHP",
     "keywords": ["HTTP client", "PSR-7", "HTTP", "ReactPHP", "async"],
-    "homepage": "https://github.com/clue/php-buzz-react",
+    "homepage": "https://github.com/clue/reactphp-buzz",
     "license": "MIT",
     "authors": [
         {
