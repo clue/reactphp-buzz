@@ -1,4 +1,4 @@
-# clue/buzz-react [![Build Status](https://travis-ci.org/clue/php-buzz-react.svg?branch=master)](https://travis-ci.org/clue/php-buzz-react)
+# clue/reactphp-buzz [![Build Status](https://travis-ci.org/clue/reactphp-buzz.svg?branch=master)](https://travis-ci.org/clue/reactphp-buzz)
 
 Simple, async PSR-7 HTTP client for concurrently processing any number of HTTP requests,
 built on top of [ReactPHP](https://reactphp.org/).
@@ -176,7 +176,7 @@ $loop->addTimer(2.0, function () use ($promise) {
 As stated above, this library provides you a powerful, async API by default.
 
 If, however, you want to integrate this into your traditional, blocking environment,
-you should look into also using [clue/block-react](https://github.com/clue/php-block-react).
+you should look into also using [clue/reactphp-block](https://github.com/clue/reactphp-block).
 
 The resulting blocking code could look something like this:
 
@@ -207,7 +207,7 @@ $promises = array(
 $responses = Block\awaitAll($promises, $loop);
 ```
 
-Please refer to [clue/block-react](https://github.com/clue/php-block-react#readme) for more details.
+Please refer to [clue/reactphp-block](https://github.com/clue/reactphp-block#readme) for more details.
 
 Keep in mind the above remark about buffering the whole response message in memory.
 As an alternative, you may also see the following chapter for the
@@ -440,7 +440,7 @@ The `getResponse()` method can be used to access its underlying [`ResponseIntefa
 ### SOCKS proxy
 
 You can also establish your outgoing connections through a SOCKS proxy server
-by adding a dependency to [clue/socks-react](https://github.com/clue/php-socks-react).
+by adding a dependency to [clue/reactphp-socks](https://github.com/clue/reactphp-socks).
 
 The SOCKS protocol operates at the TCP/IP layer and thus requires minimal effort at the HTTP application layer.
 This works for both plain HTTP and SSL encrypted HTTPS requests.
