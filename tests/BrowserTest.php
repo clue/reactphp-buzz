@@ -162,4 +162,32 @@ class BrowserTest extends TestCase
     {
         $this->browser->withBase('hello');
     }
+
+    public function testCancelGetRequestShouldCancelUnderlyingSocketConnection()
+    {
+        $pending = new Promise(function () { }, $this->expectCallableOnce());
+
+        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector->expects($this->once())->method('connect')->with('example.com:80')->willReturn($pending);
+
+        $this->browser = new Browser($this->loop, $connector);
+
+        $promise = $this->browser->get('http://example.com/');
+        $promise->cancel();
+    }
+
+    protected function expectCallableOnce()
+    {
+        $mock = $this->createCallableMock();
+        $mock
+            ->expects($this->once())
+            ->method('__invoke');
+
+        return $mock;
+    }
+
+    protected function createCallableMock()
+    {
+        return $this->getMockBuilder('stdClass')->setMethods(array('__invoke'))->getMock();
+    }
 }
