@@ -2,14 +2,13 @@
 
 namespace Clue\React\Buzz\Io;
 
-use Clue\React\Buzz\Browser;
-use Clue\React\Buzz\Io\Sender;
 use Clue\React\Buzz\Message\ResponseException;
 use Clue\React\Buzz\Message\MessageFactory;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
 use React\Promise;
+use React\Promise\PromiseInterface;
 use React\Promise\Stream;
 use React\Stream\ReadableStreamInterface;
 use Exception;
@@ -19,8 +18,8 @@ use Exception;
  */
 class Transaction
 {
-    private $browser;
     private $request;
+    private $sender;
     private $messageFactory;
 
     private $numRequests = 0;
@@ -54,7 +53,7 @@ class Transaction
         return $this->next($this->request);
     }
 
-    protected function next(RequestInterface $request)
+    private function next(RequestInterface $request)
     {
         $this->progress('request', array($request));
 
@@ -108,7 +107,7 @@ class Transaction
      * @param ResponseInterface $response
      * @param RequestInterface $request
      * @throws ResponseException
-     * @return ResponseInterface
+     * @return ResponseInterface|PromiseInterface
      */
     public function onResponse(ResponseInterface $response, RequestInterface $request)
     {
@@ -127,6 +126,12 @@ class Transaction
         return $response;
     }
 
+    /**
+     * @param ResponseInterface $response
+     * @param RequestInterface $request
+     * @return PromiseInterface
+     * @throws \RuntimeException
+     */
     private function onResponseRedirect(ResponseInterface $response, RequestInterface $request)
     {
         // resolve location relative to last request URI
@@ -145,7 +150,7 @@ class Transaction
     /**
      * @param RequestInterface $request
      * @param UriInterface $location
-     * @return \Clue\React\Buzz\Message\RequestInterface
+     * @return RequestInterface
      */
     private function makeRedirectRequest(RequestInterface $request, UriInterface $location)
     {

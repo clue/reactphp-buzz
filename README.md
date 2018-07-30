@@ -112,10 +112,10 @@ The `Browser` offers several methods that resemble the HTTP protocol methods:
 ```php
 $browser->get($url, array $headers = array());
 $browser->head($url, array $headers = array());
-$browser->post($url, array $headers = array(), $content = '');
-$browser->delete($url, array $headers = array(), $content = '');
-$browser->put($url, array $headers = array(), $content = '');
-$browser->patch($url, array $headers = array(), $content = '');
+$browser->post($url, array $headers = array(), string|ReadableStreamInterface $content = '');
+$browser->delete($url, array $headers = array(), string|ReadableStreamInterface $content = '');
+$browser->put($url, array $headers = array(), string|ReadableStreamInterface $content = '');
+$browser->patch($url, array $headers = array(), string|ReadableStreamInterface $content = '');
 ```
 
 All the above methods default to sending requests as HTTP/1.0.
@@ -328,12 +328,17 @@ $browser->post($url, array(), $stream)->then(function (ResponseInterface $respon
 
 #### submit()
 
-The `submit($url, array $fields, $headers = array(), $method = 'POST')` method can be used to submit an array of field values similar to submitting a form (`application/x-www-form-urlencoded`).
+The `submit($url, array $fields, $headers = array(), $method = 'POST'): PromiseInterface<ResponseInterface>` method can be used to
+submit an array of field values similar to submitting a form (`application/x-www-form-urlencoded`).
+
+```php
+$browser->submit($url, array('user' => 'test', 'password' => 'secret'));
+```
 
 #### send()
 
-The `send(RequestInterface $request)` method can be used to send an arbitrary
-instance implementing the [`RequestInterface`](#requestinterface) (PSR-7).
+The `send(RequestInterface $request): PromiseInterface<ResponseInterface>` method can be used to
+send an arbitrary instance implementing the [`RequestInterface`](#requestinterface) (PSR-7).
 
 All the above [predefined methods](#methods) default to sending requests as HTTP/1.0.
 If you need a custom HTTP protocol method or version, then you may want to use this
@@ -348,7 +353,8 @@ $browser->send($request)->then(…);
 
 #### withOptions()
 
-The `withOptions(array $options)` method can be used to change the [options](#options) to use:
+The `withOptions(array $options): Browser` method can be used to
+change the [options](#options) to use:
 
 ```php
 $newBrowser = $browser->withOptions($options);
@@ -361,8 +367,8 @@ See [options](#options) for more details.
 
 #### withBase()
 
-The `withBase($baseUri)` method can be used to change the base URI used to
-resolve relative URIs to.
+The `withBase($baseUri): Browser` method can be used to
+change the base URI used to resolve relative URIs to.
 
 ```php
 $newBrowser = $browser->withBase('http://api.example.com/v3');
@@ -371,12 +377,12 @@ $newBrowser = $browser->withBase('http://api.example.com/v3');
 Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withBase()` method
 actually returns a *new* [`Browser`](#browser) instance with the given base URI applied.
 
-Any requests to relative URIs will then be processed by first prepending the
-base URI.
-Please note that this merely prepends the base URI and does *not* resolve any
-relative path references (like `../` etc.).
-This is mostly useful for API calls where all endpoints (URIs) are located
-under a common base URI scheme.
+Any requests to relative URIs will then be processed by first prepending
+the (absolute) base URI.
+Please note that this merely prepends the base URI and does *not* resolve
+any relative path references (like `../` etc.).
+This is mostly useful for (RESTful) API calls where all endpoints (URIs)
+are located under a common base URI scheme.
 
 ```php
 // will request http://api.example.com/v3/example
@@ -385,7 +391,8 @@ $newBrowser->get('/example')->then(…);
 
 #### withoutBase()
 
-The `withoutBase()` method can be used to remove the base URI.
+The `withoutBase(): Browser` method can be used to
+remove the base URI.
 
 ```php
 $newBrowser = $browser->withoutBase();
@@ -431,9 +438,11 @@ a request promise if the remote server returns a non-success status code
 (anything but 2xx or 3xx).
 You can control this behavior via the ["obeySuccessCode" option](#options).
 
-The `getCode()` method can be used to return the HTTP response status code.
+The `getCode(): int` method can be used to
+return the HTTP response status code.
 
-The `getResponse()` method can be used to access its underlying [`ResponseInteface`](#responseinterface) object.
+The `getResponse(): ResponseInterface` method can be used to
+access its underlying [`ResponseInterface`](#responseinterface) object.
 
 ## Advanced
 

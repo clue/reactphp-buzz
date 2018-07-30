@@ -6,9 +6,13 @@ use RuntimeException;
 use Psr\Http\Message\ResponseInterface;
 
 /**
- * A ResponseException will be returned for valid Response objects that use an HTTP error code
+ * The `ResponseException` is an `Exception` sub-class that will be used to reject
+ * a request promise if the remote server returns a non-success status code
+ * (anything but 2xx or 3xx).
+ * You can control this behavior via the ["obeySuccessCode" option](#options).
  *
- * You can access the original ResponseInterface object via its getter.
+ * The `getCode(): int` method can be used to
+ * return the HTTP response status code.
  */
 class ResponseException extends RuntimeException
 {
@@ -28,7 +32,7 @@ class ResponseException extends RuntimeException
     }
 
     /**
-     * get Response message object
+     * Access its underlying [`ResponseInterface`](#responseinterface) object.
      *
      * @return ResponseInterface
      */
