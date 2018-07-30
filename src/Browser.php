@@ -11,6 +11,7 @@ use Psr\Http\Message\UriInterface;
 use React\EventLoop\LoopInterface;
 use React\Promise\PromiseInterface;
 use React\Socket\ConnectorInterface;
+use React\Stream\ReadableStreamInterface;
 
 class Browser
 {
@@ -20,7 +21,34 @@ class Browser
     private $options = array();
 
     /**
-     * Instantiate the Browser
+     * The `Browser` is responsible for sending HTTP requests to your HTTP server
+     * and keeps track of pending incoming HTTP responses.
+     * It also registers everything with the main [`EventLoop`](https://github.com/reactphp/event-loop#usage).
+     *
+     * ```php
+     * $loop = React\EventLoop\Factory::create();
+     *
+     * $browser = new Browser($loop);
+     * ```
+     *
+     * If you need custom connector settings (DNS resolution, TLS parameters, timeouts,
+     * proxy servers etc.), you can explicitly pass a custom instance of the
+     * [`ConnectorInterface`](https://github.com/reactphp/socket#connectorinterface):
+     *
+     * ```php
+     * $connector = new \React\Socket\Connector($loop, array(
+     *     'dns' => '127.0.0.1',
+     *     'tcp' => array(
+     *         'bindto' => '192.168.10.1:0'
+     *     ),
+     *     'tls' => array(
+     *         'verify_peer' => false,
+     *         'verify_peer_name' => false
+     *     )
+     * ));
+     *
+     * $browser = new Browser($loop, $connector);
+     * ```
      *
      * @param LoopInterface $loop
      * @param ConnectorInterface|null $connector [optional] Connector to use.
@@ -34,7 +62,7 @@ class Browser
 
     /**
      * @param string|UriInterface $url URI for the request.
-     * @param array $headers
+     * @param array               $headers
      * @return PromiseInterface
      */
     public function get($url, array $headers = array())
@@ -43,9 +71,9 @@ class Browser
     }
 
     /**
-     * @param string|UriInterface $url URI for the request.
-     * @param array $headers
-     * @param string $content
+     * @param string|UriInterface            $url     URI for the request.
+     * @param array                          $headers
+     * @param string|ReadableStreamInterface $content
      * @return PromiseInterface
      */
     public function post($url, array $headers = array(), $content = '')
@@ -54,8 +82,8 @@ class Browser
     }
 
     /**
-     * @param string|UriInterface $url URI for the request.
-     * @param array $headers
+     * @param string|UriInterface $url     URI for the request.
+     * @param array               $headers
      * @return PromiseInterface
      */
     public function head($url, array $headers = array())
@@ -64,9 +92,9 @@ class Browser
     }
 
     /**
-     * @param string|UriInterface $url URI for the request.
-     * @param array $headers
-     * @param string $content
+     * @param string|UriInterface            $url     URI for the request.
+     * @param array                          $headers
+     * @param string|ReadableStreamInterface $content
      * @return PromiseInterface
      */
     public function patch($url, array $headers = array(), $content = '')
@@ -75,9 +103,9 @@ class Browser
     }
 
     /**
-     * @param string|UriInterface $url URI for the request.
-     * @param array $headers
-     * @param string $content
+     * @param string|UriInterface            $url     URI for the request.
+     * @param array                          $headers
+     * @param string|ReadableStreamInterface $content
      * @return PromiseInterface
      */
     public function put($url, array $headers = array(), $content = '')
@@ -86,9 +114,9 @@ class Browser
     }
 
     /**
-     * @param string|UriInterface $url URI for the request.
-     * @param array $headers
-     * @param string $content
+     * @param string|UriInterface            $url     URI for the request.
+     * @param array                          $headers
+     * @param string|ReadableStreamInterface $content
      * @return PromiseInterface
      */
     public function delete($url, array $headers = array(), $content = '')
@@ -97,10 +125,16 @@ class Browser
     }
 
     /**
-     * @param string|UriInterface $url URI for the request.
-     * @param array $fields
-     * @param array $headers
-     * @param string $method
+     * Submits an array of field values similar to submitting a form (`application/x-www-form-urlencoded`).
+     *
+     * ```php
+     * $browser->submit($url, array('user' => 'test', 'password' => 'secret'));
+     * ```
+     *
+     * @param string|UriInterface $url     URI for the request.
+     * @param array               $fields
+     * @param array               $headers
+     * @param string              $method
      * @return PromiseInterface
      */
     public function submit($url, array $fields, $headers = array(), $method = 'POST')
@@ -112,6 +146,19 @@ class Browser
     }
 
     /**
+     * Sends an arbitrary instance implementing the [`RequestInterface`](#requestinterface) (PSR-7).
+     *
+     * All the above [predefined methods](#methods) default to sending requests as HTTP/1.0.
+     * If you need a custom HTTP protocol method or version, then you may want to use this
+     * method:
+     *
+     * ```php
+     * $request = new Request('OPTIONS', $url);
+     * $request = $request->withProtocolVersion('1.1');
+     *
+     * $browser->send($request)->then(…);
+     * ```
+     *
      * @param RequestInterface $request
      * @return PromiseInterface
      */
@@ -128,11 +175,26 @@ class Browser
     }
 
     /**
-     * Creates a new Browser instance with the given absolute base URI
+     * Changes the base URI used to resolve relative URIs to.
      *
-     * This is mostly useful for using (RESTful) HTTP APIs.
-     * Any relative URI passed to any of the request methods will simply be
-     * appended behind the given `$baseUri`.
+     * ```php
+     * $newBrowser = $browser->withBase('http://api.example.com/v3');
+     * ```
+     *
+     * Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withBase()` method
+     * actually returns a *new* [`Browser`](#browser) instance with the given base URI applied.
+     *
+     * Any requests to relative URIs will then be processed by first prepending
+     * the (absolute) base URI.
+     * Please note that this merely prepends the base URI and does *not* resolve
+     * any relative path references (like `../` etc.).
+     * This is mostly useful for (RESTful) API calls where all endpoints (URIs)
+     * are located under a common base URI scheme.
+     *
+     * ```php
+     * // will request http://api.example.com/v3/example
+     * $newBrowser->get('/example')->then(…);
+     * ```
      *
      * By definition of this library, a given base URI MUST always absolute and
      * can not contain any placeholders.
@@ -155,7 +217,16 @@ class Browser
     }
 
     /**
-     * Creates a new Browser instance *without* a base URL
+     * Removes the base URI.
+     *
+     * ```php
+     * $newBrowser = $browser->withoutBase();
+     * ```
+     *
+     * Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withoutBase()` method
+     * actually returns a *new* [`Browser`](#browser) instance without any base URI applied.
+     *
+     * See also [`withBase()`](#withbase).
      *
      * @return self
      * @see self::withBase()
@@ -169,6 +240,17 @@ class Browser
     }
 
     /**
+     * Changes the [options](#options) to use:
+     *
+     * ```php
+     * $newBrowser = $browser->withOptions($options);
+     * ```
+     *
+     * Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withOptions()` method
+     * actually returns a *new* [`Browser`](#browser) instance with the [options](#options) applied.
+     *
+     * See [options](#options) for more details.
+     *
      * @param array $options
      * @return self
      */

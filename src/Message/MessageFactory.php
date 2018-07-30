@@ -2,10 +2,11 @@
 
 namespace Clue\React\Buzz\Message;
 
-use RingCentral\Psr7\Request;
-use RingCentral\Psr7\Uri;
-use RingCentral\Psr7\Response;
+use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;
+use RingCentral\Psr7\Request;
+use RingCentral\Psr7\Response;
+use RingCentral\Psr7\Uri;
 use RingCentral;
 use React\Stream\ReadableStreamInterface;
 
@@ -21,7 +22,7 @@ class MessageFactory
      * @param string|UriInterface            $uri
      * @param array                          $headers
      * @param string|ReadableStreamInterface $content
-     * @return RequestInterface
+     * @return Request
      */
     public function request($method, $uri, $headers = array(), $content = '')
     {
@@ -36,7 +37,7 @@ class MessageFactory
      * @param string $reason
      * @param array  $headers
      * @param ReadableStreamInterface|string $body
-     * @return ResponseInterface
+     * @return Response
      * @uses self::body()
      */
     public function response($version, $status, $reason, $headers = array(), $body = '')
@@ -60,9 +61,9 @@ class MessageFactory
     }
 
     /**
-     * Creates a new instance of UriInterface for the given URI string or instance
+     * Creates a new instance of UriInterface for the given URI string
      *
-     * @param UriInterface|string $uri
+     * @param string $uri
      * @return UriInterface
      */
     public function uri($uri)
@@ -100,7 +101,6 @@ class MessageFactory
      * @param UriInterface $base
      * @return UriInterface
      * @throws \UnexpectedValueException
-     * @see Browser::resolve()
      */
     public function expandBase(UriInterface $uri, UriInterface $base)
     {

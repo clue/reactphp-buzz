@@ -10,6 +10,7 @@ use React\HttpClient\Client as HttpClient;
 use React\HttpClient\Request as RequestStream;
 use React\HttpClient\Response as ResponseStream;
 use React\Promise;
+use React\Promise\PromiseInterface;
 use React\Promise\Deferred;
 use React\Socket\Connector;
 use React\Socket\ConnectorInterface;
@@ -88,8 +89,8 @@ class Sender
         $body = $request->getBody();
 
         // automatically assign a Content-Length header if the body size is known
-        if ($body->getSize() !== null && $body->getSize() !== 0 && $request->hasHeader('Content-Length') !== null) {
-            $request = $request->withHeader('Content-Length', $body->getSize());
+        if ($body->getSize() !== null && $body->getSize() !== 0 && !$request->hasHeader('Content-Length')) {
+            $request = $request->withHeader('Content-Length', (string)$body->getSize());
         }
 
         if ($body instanceof ReadableStreamInterface && $body->isReadable() && !$request->hasHeader('Content-Length')) {
