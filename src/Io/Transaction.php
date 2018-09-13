@@ -162,7 +162,7 @@ class Transaction
 
         // Remove authorization if changing hostnames (but not if just changing ports or protocols).
         if ($location->getHost() !== $originalHost) {
-            $request = $request->withoutHeader('Authentication');
+            $request = $request->withoutHeader('Authorization');
         }
 
         // naïve approach..

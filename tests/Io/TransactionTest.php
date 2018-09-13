@@ -139,27 +139,27 @@ class TransactionTest extends TestCase
     {
         $messageFactory = new MessageFactory();
 
-        $customHeaders = array('Authentication' => 'secret');
-        $requestWithAuthentication = $messageFactory->request('GET', 'http://example.com', $customHeaders);
+        $customHeaders = array('Authorization' => 'secret');
+        $requestWithAuthorization = $messageFactory->request('GET', 'http://example.com', $customHeaders);
         $sender = $this->makeSenderMock();
 
         // mock sender to resolve promise with the given $redirectResponse in
-        // response to the given $requestWithAuthentication
+        // response to the given $requestWithAuthorization
         $redirectResponse = $messageFactory->response(1.0, 301, null, array('Location' => 'http://redirect.com'));
         $sender->expects($this->at(0))->method('send')->willReturn(Promise\resolve($redirectResponse));
 
         // mock sender to resolve promise with the given $okResponse in
-        // response to the given $requestWithAuthentication
+        // response to the given $requestWithAuthorization
         $okResponse = $messageFactory->response(1.0, 200, 'OK');
         $that = $this;
         $sender->expects($this->at(1))
             ->method('send')
             ->with($this->callback(function (RequestInterface $request) use ($that) {
-                $that->assertFalse($request->hasHeader('Authentication'));
+                $that->assertFalse($request->hasHeader('Authorization'));
                 return true;
             }))->willReturn(Promise\resolve($okResponse));
 
-        $transaction = new Transaction($requestWithAuthentication, $sender, array(), $messageFactory);
+        $transaction = new Transaction($requestWithAuthorization, $sender, array(), $messageFactory);
         $transaction->send();
     }
 
@@ -167,27 +167,27 @@ class TransactionTest extends TestCase
     {
         $messageFactory = new MessageFactory();
 
-        $customHeaders = array('Authentication' => 'secret');
-        $requestWithAuthentication = $messageFactory->request('GET', 'http://example.com', $customHeaders);
+        $customHeaders = array('Authorization' => 'secret');
+        $requestWithAuthorization = $messageFactory->request('GET', 'http://example.com', $customHeaders);
         $sender = $this->makeSenderMock();
 
         // mock sender to resolve promise with the given $redirectResponse in
-        // response to the given $requestWithAuthentication
+        // response to the given $requestWithAuthorization
         $redirectResponse = $messageFactory->response(1.0, 301, null, array('Location' => 'http://example.com/new'));
         $sender->expects($this->at(0))->method('send')->willReturn(Promise\resolve($redirectResponse));
 
         // mock sender to resolve promise with the given $okResponse in
-        // response to the given $requestWithAuthentication
+        // response to the given $requestWithAuthorization
         $okResponse = $messageFactory->response(1.0, 200, 'OK');
         $that = $this;
         $sender->expects($this->at(1))
             ->method('send')
             ->with($this->callback(function (RequestInterface $request) use ($that) {
-                $that->assertEquals(array('secret'), $request->getHeader('Authentication'));
+                $that->assertEquals(array('secret'), $request->getHeader('Authorization'));
                 return true;
             }))->willReturn(Promise\resolve($okResponse));
 
-        $transaction = new Transaction($requestWithAuthentication, $sender, array(), $messageFactory);
+        $transaction = new Transaction($requestWithAuthorization, $sender, array(), $messageFactory);
         $transaction->send();
     }
 
