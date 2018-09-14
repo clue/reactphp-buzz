@@ -35,6 +35,7 @@ mess with most of the low-level details.
     * [Methods](#methods)
     * [Promises](#promises)
     * [Cancellation](#cancellation)
+    * [Redirects](#redirects)
     * [Blocking](#blocking)
     * [Streaming](#streaming)
     * [submit()](#submit)
@@ -170,6 +171,48 @@ $loop->addTimer(2.0, function () use ($promise) {
     $promise->cancel();
 });
 ```
+
+#### Redirects
+
+By default, this library follows any redirects and obeys `3xx` (Redirection)
+status codes using the `Location` response header from the remote server.
+The promise will be resolved with the last response from the chain of redirects.
+Except for a few specific request headers listed below, the redirected requests
+will include the exact same request headers as the original request.
+
+```php
+$browser->get($uri, $headers)->then(function (ResponseInterface $response) {
+    // the final response will end up here
+    var_dump($response->getHeaders());
+});
+```
+
+If the original request contained a request body, this request body will never
+be passed to the redirected request. Accordingly, each redirected request will
+remove any `Content-Length` and `Content-Type` request headers.
+
+If the original request used HTTP authentication with an `Authorization` request
+header, this request header will only be passed as part of the redirected
+request if the redirected URI is using the same host. In other words, the
+`Authorizaton` request header will not be forwarded to other foreign hosts due to
+possible privacy/security concerns.
+
+You can use the [`maxRedirects` option](#options) to control the maximum number
+of redirects to follow or the [`followRedirects` option](#options) to return
+any redirect responses as-is and apply custom redirection logic like this:
+
+```php
+$browser = $browser->withOptions(array(
+    'followRedirects' => false
+));
+
+$browser->get($uri)->then(function (ResponseInterface $response) {
+    // any redirects will now end up here
+    var_dump($response->getHeaders());
+});
+```
+
+See also [`withOptions()`](#withoptions) for more details.
 
 #### Blocking
 
