@@ -99,6 +99,22 @@ class FunctionalBrowserTest extends TestCase
     }
 
     /**
+     * @expectedException RuntimeException
+     * @expectedExceptionMessage Request cancelled
+     * @group online
+     */
+    public function testCancelRedirectedRequestShouldReject()
+    {
+        $promise = $this->browser->get($this->base . 'redirect-to?url=delay%2F10');
+
+        $this->loop->addTimer(0.1, function () use ($promise) {
+            $promise->cancel();
+        });
+
+        Block\await($promise, $this->loop);
+    }
+
+    /**
      * @group online
      * @doesNotPerformAssertions
      */

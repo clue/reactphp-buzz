@@ -105,8 +105,8 @@ class Sender
         $requestStream = $this->http->request($request->getMethod(), (string)$uri, $headers, $request->getProtocolVersion());
 
         $deferred = new Deferred(function ($_, $reject) use ($requestStream) {
-            // close request stream if request is canceled
-            $reject(new \RuntimeException('Request canceled'));
+            // close request stream if request is cancelled
+            $reject(new \RuntimeException('Request cancelled'));
             $requestStream->close();
         });
 

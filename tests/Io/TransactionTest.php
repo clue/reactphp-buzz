@@ -356,6 +356,27 @@ class TransactionTest extends TestCase
 
         // mock sender to resolve promise with the given $redirectResponse in
         $first->resolve($messageFactory->response(1.0, 301, null, array('Location' => 'http://example.com/new'), $body));
+        $promise->cancel();
+    }
+
+    public function testCancelTransactionShouldCancelSendingPromise()
+    {
+        $messageFactory = new MessageFactory();
+
+        $request = $messageFactory->request('GET', 'http://example.com');
+        $sender = $this->makeSenderMock();
+
+        // mock sender to resolve promise with the given $redirectResponse in
+        $redirectResponse = $messageFactory->response(1.0, 301, null, array('Location' => 'http://example.com/new'));
+        $sender->expects($this->at(0))->method('send')->willReturn(Promise\resolve($redirectResponse));
+
+        $pending = new \React\Promise\Promise(function () { }, $this->expectCallableOnce());
+
+        // mock sender to return pending promise which should be cancelled when cancelling result
+        $sender->expects($this->at(1))->method('send')->willReturn($pending);
+
+        $transaction = new Transaction($request, $sender, array(), $messageFactory);
+        $promise = $transaction->send();
 
         $promise->cancel();
     }
