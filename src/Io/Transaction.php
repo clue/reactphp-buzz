@@ -7,11 +7,9 @@ use Clue\React\Buzz\Message\MessageFactory;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
-use React\Promise;
+use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
-use React\Promise\Stream;
 use React\Stream\ReadableStreamInterface;
-use Exception;
 
 /**
  * @internal
@@ -50,10 +48,22 @@ class Transaction
 
     public function send()
     {
-        return $this->next($this->request);
+        $deferred = new Deferred(function () use (&$deferred) {
+            if (isset($deferred->pending)) {
+                $deferred->pending->cancel();
+                unset($deferred->pending);
+            }
+        });
+
+        $this->next($this->request, $deferred)->then(
+            array($deferred, 'resolve'),
+            array($deferred, 'reject')
+        );
+
+        return $deferred->promise();
     }
 
-    private function next(RequestInterface $request)
+    private function next(RequestInterface $request, Deferred $deferred)
     {
         $this->progress('request', array($request));
 
@@ -63,12 +73,16 @@ class Transaction
         $promise = $this->sender->send($request, $this->messageFactory);
 
         if (!$this->streaming) {
-            $promise = $promise->then(array($that, 'bufferResponse'));
+            $promise = $promise->then(function ($response) use ($deferred, $that) {
+                return $that->bufferResponse($response, $deferred);
+            });
         }
 
+        $deferred->pending = $promise;
+
         return $promise->then(
-            function (ResponseInterface $response) use ($request, $that) {
-                return $that->onResponse($response, $request);
+            function (ResponseInterface $response) use ($request, $that, $deferred) {
+                return $that->onResponse($response, $request, $deferred);
             }
         );
     }
@@ -78,18 +92,18 @@ class Transaction
      * @param ResponseInterface $response
      * @return PromiseInterface Promise<ResponseInterface, Exception>
      */
-    public function bufferResponse(ResponseInterface $response)
+    public function bufferResponse(ResponseInterface $response, $deferred)
     {
         $stream = $response->getBody();
 
         // body is not streaming => already buffered
         if (!$stream instanceof ReadableStreamInterface) {
-            return Promise\resolve($response);
+            return \React\Promise\resolve($response);
         }
 
         // buffer stream and resolve with buffered body
         $messageFactory = $this->messageFactory;
-        return Stream\buffer($stream)->then(
+        $promise = \React\Promise\Stream\buffer($stream)->then(
             function ($body) use ($response, $messageFactory) {
                 return $response->withBody($messageFactory->body($body));
             },
@@ -100,6 +114,10 @@ class Transaction
                 throw $e;
             }
         );
+
+        $deferred->pending = $promise;
+
+        return $promise;
     }
 
     /**
@@ -109,12 +127,12 @@ class Transaction
      * @throws ResponseException
      * @return ResponseInterface|PromiseInterface
      */
-    public function onResponse(ResponseInterface $response, RequestInterface $request)
+    public function onResponse(ResponseInterface $response, RequestInterface $request, $deferred)
     {
         $this->progress('response', array($response, $request));
 
         if ($this->followRedirects && ($response->getStatusCode() >= 300 && $response->getStatusCode() < 400)) {
-            return $this->onResponseRedirect($response, $request);
+            return $this->onResponseRedirect($response, $request, $deferred);
         }
 
         // only status codes 200-399 are considered to be valid, reject otherwise
@@ -132,7 +150,7 @@ class Transaction
      * @return PromiseInterface
      * @throws \RuntimeException
      */
-    private function onResponseRedirect(ResponseInterface $response, RequestInterface $request)
+    private function onResponseRedirect(ResponseInterface $response, RequestInterface $request, $deferred)
     {
         // resolve location relative to last request URI
         $location = $this->messageFactory->uriRelative($request->getUri(), $response->getHeaderLine('Location'));
@@ -144,7 +162,7 @@ class Transaction
             throw new \RuntimeException('Maximum number of redirects (' . $this->maxRedirects . ') exceeded');
         }
 
-        return $this->next($request);
+        return $this->next($request, $deferred);
     }
 
     /**

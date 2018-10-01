@@ -10,6 +10,7 @@ use React\Promise;
 use Clue\React\Block;
 use React\EventLoop\Factory;
 use React\Stream\ThroughStream;
+use React\Promise\Deferred;
 
 class TransactionTest extends TestCase
 {
@@ -84,7 +85,7 @@ class TransactionTest extends TestCase
         $promise = $transaction->send();
         $promise->cancel();
 
-        Block\await($promise, $loop);
+        Block\await($promise, $loop, 0.001);
     }
 
     public function testReceivingStreamingBodyWillResolveWithStreamingResponseIfStreamingIsEnabled()
@@ -252,11 +253,154 @@ class TransactionTest extends TestCase
         $transaction->send();
     }
 
+    public function testCancelTransactionWillCancelRequest()
+    {
+        $messageFactory = new MessageFactory();
+
+        $request = $messageFactory->request('GET', 'http://example.com');
+        $sender = $this->makeSenderMock();
+
+        $pending = new \React\Promise\Promise(function () { }, $this->expectCallableOnce());
+
+        // mock sender to return pending promise which should be cancelled when cancelling result
+        $sender->expects($this->once())->method('send')->willReturn($pending);
+
+        $transaction = new Transaction($request, $sender, array(), $messageFactory);
+        $promise = $transaction->send();
+
+        $promise->cancel();
+    }
+
+    public function testCancelTransactionWillCancelRedirectedRequest()
+    {
+        $messageFactory = new MessageFactory();
+
+        $request = $messageFactory->request('GET', 'http://example.com');
+        $sender = $this->makeSenderMock();
+
+        // mock sender to resolve promise with the given $redirectResponse in
+        $redirectResponse = $messageFactory->response(1.0, 301, null, array('Location' => 'http://example.com/new'));
+        $sender->expects($this->at(0))->method('send')->willReturn(Promise\resolve($redirectResponse));
+
+        $pending = new \React\Promise\Promise(function () { }, $this->expectCallableOnce());
+
+        // mock sender to return pending promise which should be cancelled when cancelling result
+        $sender->expects($this->at(1))->method('send')->willReturn($pending);
+
+        $transaction = new Transaction($request, $sender, array(), $messageFactory);
+        $promise = $transaction->send();
+
+        $promise->cancel();
+    }
+
+    public function testCancelTransactionWillCancelRedirectedRequestAgain()
+    {
+        $messageFactory = new MessageFactory();
+
+        $request = $messageFactory->request('GET', 'http://example.com');
+        $sender = $this->makeSenderMock();
+
+        // mock sender to resolve promise with the given $redirectResponse in
+        $first = new Deferred();
+        $sender->expects($this->at(0))->method('send')->willReturn($first->promise());
+
+        $second = new \React\Promise\Promise(function () { }, $this->expectCallableOnce());
+
+        // mock sender to return pending promise which should be cancelled when cancelling result
+        $sender->expects($this->at(1))->method('send')->willReturn($second);
+
+        $transaction = new Transaction($request, $sender, array(), $messageFactory);
+        $promise = $transaction->send();
+
+        // mock sender to resolve promise with the given $redirectResponse in
+        $first->resolve($messageFactory->response(1.0, 301, null, array('Location' => 'http://example.com/new')));
+
+        $promise->cancel();
+    }
+
+    public function testCancelTransactionWillCloseBufferingStream()
+    {
+        $messageFactory = new MessageFactory();
+
+        $request = $messageFactory->request('GET', 'http://example.com');
+        $sender = $this->makeSenderMock();
+
+        $body = new ThroughStream();
+        $body->on('close', $this->expectCallableOnce());
+
+        // mock sender to resolve promise with the given $redirectResponse in
+        $redirectResponse = $messageFactory->response(1.0, 301, null, array('Location' => 'http://example.com/new'), $body);
+        $sender->expects($this->once())->method('send')->willReturn(Promise\resolve($redirectResponse));
+
+        $transaction = new Transaction($request, $sender, array(), $messageFactory);
+        $promise = $transaction->send();
+
+        $promise->cancel();
+    }
+
+    public function testCancelTransactionWillCloseBufferingStreamAgain()
+    {
+        $messageFactory = new MessageFactory();
+
+        $request = $messageFactory->request('GET', 'http://example.com');
+        $sender = $this->makeSenderMock();
+
+        $first = new Deferred();
+        $sender->expects($this->once())->method('send')->willReturn($first->promise());
+
+        $transaction = new Transaction($request, $sender, array(), $messageFactory);
+        $promise = $transaction->send();
+
+        $body = new ThroughStream();
+        $body->on('close', $this->expectCallableOnce());
+
+        // mock sender to resolve promise with the given $redirectResponse in
+        $first->resolve($messageFactory->response(1.0, 301, null, array('Location' => 'http://example.com/new'), $body));
+        $promise->cancel();
+    }
+
+    public function testCancelTransactionShouldCancelSendingPromise()
+    {
+        $messageFactory = new MessageFactory();
+
+        $request = $messageFactory->request('GET', 'http://example.com');
+        $sender = $this->makeSenderMock();
+
+        // mock sender to resolve promise with the given $redirectResponse in
+        $redirectResponse = $messageFactory->response(1.0, 301, null, array('Location' => 'http://example.com/new'));
+        $sender->expects($this->at(0))->method('send')->willReturn(Promise\resolve($redirectResponse));
+
+        $pending = new \React\Promise\Promise(function () { }, $this->expectCallableOnce());
+
+        // mock sender to return pending promise which should be cancelled when cancelling result
+        $sender->expects($this->at(1))->method('send')->willReturn($pending);
+
+        $transaction = new Transaction($request, $sender, array(), $messageFactory);
+        $promise = $transaction->send();
+
+        $promise->cancel();
+    }
+
     /**
      * @return MockObject
      */
     private function makeSenderMock()
     {
         return $this->getMockBuilder('Clue\React\Buzz\Io\Sender')->disableOriginalConstructor()->getMock();
+    }
+
+    protected function expectCallableOnce()
+    {
+        $mock = $this->createCallableMock();
+        $mock
+            ->expects($this->once())
+            ->method('__invoke');
+
+        return $mock;
+    }
+
+    protected function createCallableMock()
+    {
+        return $this->getMockBuilder('stdClass')->setMethods(array('__invoke'))->getMock();
     }
 }
