@@ -35,6 +35,7 @@ mess with most of the low-level details.
     * [Methods](#methods)
     * [Promises](#promises)
     * [Cancellation](#cancellation)
+    * [Authentication](#authentication)
     * [Redirects](#redirects)
     * [Blocking](#blocking)
     * [Streaming](#streaming)
@@ -172,6 +173,48 @@ $loop->addTimer(2.0, function () use ($promise) {
 });
 ```
 
+#### Authentication
+
+This library supports [HTTP Basic Authentication](https://en.wikipedia.org/wiki/Basic_access_authentication)
+using the `Authorization: Basic …` request header or allows you to set an explicit
+`Authorization` request header.
+
+By default, this library does not include an outgoing `Authorization` request
+header. If the server requires authentication, if may return a `401` (Unauthorized)
+status code which will reject the request by default (see also
+[`obeySuccessCode` option](#options) below).
+
+In order to pass authentication details, you can simple pass the username and
+password as part of the request URI like this:
+
+```php
+$promise = $browser->get('https://user:pass@example.com/api');
+```
+
+Note that special characters in the authentication details have to be
+percent-encoded, see also [`rawurlencode()`](http://php.net/rawurlencode).
+This example will automatically pass the base64-encoded authentiation details
+using the outgoing `Authorization: Basic …` request header. If the HTTP endpoint
+you're talking to requires any other authentication scheme, you can also pass
+this header explicitly. This is common when using (RESTful) HTTP APIs that use
+OAuth access tokens or JSON Web Tokens (JWT):
+
+```php
+$token = 'abc123';
+
+$promise = $browser->get(
+    'https://example.com/api',
+    array(
+        'Authorization' => 'Bearer ' . $token
+    )
+);
+```
+
+When following redirects, the `Authorization` request header will never be sent
+to any remote hosts by default. When following a redirect where the `Location`
+response header contains authentication details, these details will be sent for
+following requests. See also [redirects](#redirects) below.
+
 #### Redirects
 
 By default, this library follows any redirects and obeys `3xx` (Redirection)
@@ -195,7 +238,9 @@ If the original request used HTTP authentication with an `Authorization` request
 header, this request header will only be passed as part of the redirected
 request if the redirected URI is using the same host. In other words, the
 `Authorizaton` request header will not be forwarded to other foreign hosts due to
-possible privacy/security concerns.
+possible privacy/security concerns. When following a redirect where the `Location`
+response header contains authentication details, these details will be sent for
+following requests.
 
 You can use the [`maxRedirects` option](#options) to control the maximum number
 of redirects to follow or the [`followRedirects` option](#options) to return
