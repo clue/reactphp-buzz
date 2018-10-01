@@ -191,6 +191,34 @@ class TransactionTest extends TestCase
         $transaction->send();
     }
 
+    public function testAuthorizationHeaderIsForwardedWhenLocationContainsAuthentication()
+    {
+        $messageFactory = new MessageFactory();
+
+        $request = $messageFactory->request('GET', 'http://example.com');
+        $sender = $this->makeSenderMock();
+
+        // mock sender to resolve promise with the given $redirectResponse in
+        // response to the given $requestWithAuthorization
+        $redirectResponse = $messageFactory->response(1.0, 301, null, array('Location' => 'http://user:pass@example.com/new'));
+        $sender->expects($this->at(0))->method('send')->willReturn(Promise\resolve($redirectResponse));
+
+        // mock sender to resolve promise with the given $okResponse in
+        // response to the given $requestWithAuthorization
+        $okResponse = $messageFactory->response(1.0, 200, 'OK');
+        $that = $this;
+        $sender->expects($this->at(1))
+            ->method('send')
+            ->with($this->callback(function (RequestInterface $request) use ($that) {
+                $that->assertEquals('user:pass', $request->getUri()->getUserInfo());
+                $that->assertFalse($request->hasHeader('Authorization'));
+                return true;
+            }))->willReturn(Promise\resolve($okResponse));
+
+        $transaction = new Transaction($request, $sender, array(), $messageFactory);
+        $transaction->send();
+    }
+
     public function testSomeRequestHeadersShouldBeRemovedWhenRedirecting()
     {
         $messageFactory = new MessageFactory();

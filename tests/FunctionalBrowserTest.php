@@ -48,6 +48,57 @@ class FunctionalBrowserTest extends TestCase
     }
 
     /**
+     * @expectedException RuntimeException
+     * @group online
+     */
+    public function testRequestWithoutAuthenticationFails()
+    {
+        Block\await($this->browser->get($this->base . 'basic-auth/user/pass'), $this->loop);
+    }
+
+    /**
+     * @group online
+     * @doesNotPerformAssertions
+     */
+    public function testRequestWithAuthenticationSucceeds()
+    {
+        $base = str_replace('://', '://user:pass@', $this->base);
+
+        Block\await($this->browser->get($base . 'basic-auth/user/pass'), $this->loop);
+    }
+
+    /**
+     * ```bash
+     * $ curl -vL "http://httpbin.org/redirect-to?url=http://user:pass@httpbin.org/basic-auth/user/pass"
+     * ```
+     *
+     * @group online
+     * @doesNotPerformAssertions
+     */
+    public function testRedirectToPageWithAuthenticationSucceeds()
+    {
+        $target = str_replace('://', '://user:pass@', $this->base) . '/basic-auth/user/pass';
+
+        Block\await($this->browser->get($this->base . 'redirect-to?url=' . urlencode($target)), $this->loop);
+    }
+
+    /**
+     * ```bash
+     * $ curl -vL "http://unknown:invalid@httpbin.org/redirect-to?url=http://user:pass@httpbin.org/basic-auth/user/pass"
+     * ```
+     *
+     * @group online
+     * @doesNotPerformAssertions
+     */
+    public function testRedirectFromPageWithInvalidAuthToPageWithCorrectAuthenticationSucceeds()
+    {
+        $base = str_replace('://', '://unknown:invalid@', $this->base);
+        $target = str_replace('://', '://user:pass@', $this->base) . '/basic-auth/user/pass';
+
+        Block\await($this->browser->get($base . 'redirect-to?url=' . urlencode($target)), $this->loop);
+    }
+
+    /**
      * @group online
      * @doesNotPerformAssertions
      */
