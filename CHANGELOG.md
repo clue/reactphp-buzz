@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.4.0 (2018-10-02)
+
+*   Feature / Fix: Support cancellation forwarding and cancelling redirected requests.
+    (#110 by @clue)
+
+*   Feature / Fix: Remove `Authorization` request header for redirected cross-origin requests
+    and add documentation for HTTP redirects.
+    (#108 by @clue)
+
+*   Improve API documentation and add documentation for HTTP authentication and `Authorization` header.
+    (#104 and #109 by @clue)
+
+*   Update project homepage.
+    (#100 by @clue)
+
 ## 2.3.0 (2018-02-09)
 
 *   Feature / Fix: Pass custom request headers when following redirects

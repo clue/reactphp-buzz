@@ -21,7 +21,7 @@ mess with most of the low-level details.
   process their responses as soon as results come in.
   The Promise-based design provides a *sane* interface to working with out of bound responses.
 * **Lightweight, SOLID design** -
-  Provides a thin abstraction that is [*just good enough*](http://en.wikipedia.org/wiki/Principle_of_good_enough)
+  Provides a thin abstraction that is [*just good enough*](https://en.wikipedia.org/wiki/Principle_of_good_enough)
   and does not get in your way.
   Builds on top of well-tested components and well-established concepts instead of reinventing the wheel.
 * **Good test coverage** -
@@ -324,7 +324,7 @@ This resolves with a normal [`ResponseInterface`](#responseinterface), which
 can be used to access the response message parameters as usual.
 You can access the message body as usual, however it now also
 implements ReactPHP's [`ReadableStreamInterface`](https://github.com/reactphp/stream#readablestreaminterface)
-as well as parts of the PSR-7's [`StreamInterface`](http://www.php-fig.org/psr/psr-7/#3-4-psr-http-message-streaminterface).
+as well as parts of the PSR-7's [`StreamInterface`](https://www.php-fig.org/psr/psr-7/#3-4-psr-http-message-streaminterface).
 
 ```php
 // turn on streaming responses (does no longer buffer response body)
@@ -496,28 +496,28 @@ See also [`withBase()`](#withbase).
 The `Psr\Http\Message\ResponseInterface` represents the incoming response received from the [`Browser`](#browser).
 
 This is a standard interface defined in
-[PSR-7: HTTP message interfaces](http://www.php-fig.org/psr/psr-7/), see its
-[`ResponseInterface` definition](http://www.php-fig.org/psr/psr-7/#3-3-psr-http-message-responseinterface)
+[PSR-7: HTTP message interfaces](https://www.php-fig.org/psr/psr-7/), see its
+[`ResponseInterface` definition](https://www.php-fig.org/psr/psr-7/#3-3-psr-http-message-responseinterface)
 which in turn extends the
-[`MessageInterface` definition](http://www.php-fig.org/psr/psr-7/#3-1-psr-http-message-messageinterface).
+[`MessageInterface` definition](https://www.php-fig.org/psr/psr-7/#3-1-psr-http-message-messageinterface).
 
 ### RequestInterface
 
 The `Psr\Http\Message\RequestInterface` represents the outgoing request to be sent via the [`Browser`](#browser).
 
 This is a standard interface defined in
-[PSR-7: HTTP message interfaces](http://www.php-fig.org/psr/psr-7/), see its
-[`RequestInterface` definition](http://www.php-fig.org/psr/psr-7/#3-2-psr-http-message-requestinterface)
+[PSR-7: HTTP message interfaces](https://www.php-fig.org/psr/psr-7/), see its
+[`RequestInterface` definition](https://www.php-fig.org/psr/psr-7/#3-2-psr-http-message-requestinterface)
 which in turn extends the
-[`MessageInterface` definition](http://www.php-fig.org/psr/psr-7/#3-1-psr-http-message-messageinterface).
+[`MessageInterface` definition](https://www.php-fig.org/psr/psr-7/#3-1-psr-http-message-messageinterface).
 
 ### UriInterface
 
 The `Psr\Http\Message\UriInterface` represents an absolute or relative URI (aka URL).
 
 This is a standard interface defined in
-[PSR-7: HTTP message interfaces](http://www.php-fig.org/psr/psr-7/), see its
-[`UriInterface` definition](http://www.php-fig.org/psr/psr-7/#3-5-psr-http-message-uriinterface).
+[PSR-7: HTTP message interfaces](https://www.php-fig.org/psr/psr-7/), see its
+[`UriInterface` definition](https://www.php-fig.org/psr/psr-7/#3-5-psr-http-message-uriinterface).
 
 ### ResponseException
 
@@ -593,11 +593,11 @@ actually returns a *new* [`Browser`](#browser) instance with the options applied
 The recommended way to install this library is [through Composer](https://getcomposer.org).
 [New to Composer?](https://getcomposer.org/doc/00-intro.md)
 
-This project follows [SemVer](http://semver.org/).
+This project follows [SemVer](https://semver.org/).
 This will install the latest supported version:
 
 ```bash
-$ composer require clue/buzz-react:^2.3
+$ composer require clue/buzz-react:^2.4
 ```
 
 See also the [CHANGELOG](CHANGELOG.md) for details about version upgrades.
@@ -633,4 +633,7 @@ $ php vendor/bin/phpunit --exclude-group online
 
 ## License
 
-MIT
+This project is released under the permissive [MIT license](LICENSE).
+
+> Did you know that I offer custom development services and issuing invoices for
+  sponsorships of releases and for contributions? Contact me (@clue) for details.
