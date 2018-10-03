@@ -16,11 +16,8 @@ use React\Stream\ReadableStreamInterface;
  */
 class Transaction
 {
-    private $request;
     private $sender;
     private $messageFactory;
-
-    private $numRequests = 0;
 
     // context: http.follow_location
     private $followRedirects = true;
@@ -33,7 +30,7 @@ class Transaction
 
     private $streaming = false;
 
-    public function __construct(RequestInterface $request, Sender $sender, array $options = array(), MessageFactory $messageFactory)
+    public function __construct(Sender $sender, array $options = array(), MessageFactory $messageFactory)
     {
         foreach ($options as $name => $value) {
             if (property_exists($this, $name)) {
@@ -41,12 +38,11 @@ class Transaction
             }
         }
 
-        $this->request = $request;
         $this->sender = $sender;
         $this->messageFactory = $messageFactory;
     }
 
-    public function send()
+    public function send(RequestInterface $request)
     {
         $deferred = new Deferred(function () use (&$deferred) {
             if (isset($deferred->pending)) {
@@ -55,7 +51,9 @@ class Transaction
             }
         });
 
-        $this->next($this->request, $deferred)->then(
+        $deferred->numRequests = 0;
+
+        $this->next($request, $deferred)->then(
             array($deferred, 'resolve'),
             array($deferred, 'reject')
         );
@@ -68,7 +66,7 @@ class Transaction
         $this->progress('request', array($request));
 
         $that = $this;
-        ++$this->numRequests;
+        ++$deferred->numRequests;
 
         $promise = $this->sender->send($request, $this->messageFactory);
 
@@ -150,7 +148,7 @@ class Transaction
      * @return PromiseInterface
      * @throws \RuntimeException
      */
-    private function onResponseRedirect(ResponseInterface $response, RequestInterface $request, $deferred)
+    private function onResponseRedirect(ResponseInterface $response, RequestInterface $request, Deferred $deferred)
     {
         // resolve location relative to last request URI
         $location = $this->messageFactory->uriRelative($request->getUri(), $response->getHeaderLine('Location'));
@@ -158,7 +156,7 @@ class Transaction
         $request = $this->makeRedirectRequest($request, $location);
         $this->progress('redirect', array($request));
 
-        if ($this->numRequests >= $this->maxRedirects) {
+        if ($deferred->numRequests >= $this->maxRedirects) {
             throw new \RuntimeException('Maximum number of redirects (' . $this->maxRedirects . ') exceeded');
         }
 

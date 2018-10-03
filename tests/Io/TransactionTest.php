@@ -23,8 +23,8 @@ class TransactionTest extends TestCase
         $sender = $this->makeSenderMock();
         $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(Promise\resolve($response));
 
-        $transaction = new Transaction($request, $sender, array(), new MessageFactory());
-        $promise = $transaction->send();
+        $transaction = new Transaction($sender, array(), new MessageFactory());
+        $promise = $transaction->send($request);
 
         try {
             Block\await($promise, $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock());
@@ -53,8 +53,8 @@ class TransactionTest extends TestCase
         $sender = $this->makeSenderMock();
         $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(Promise\resolve($response));
 
-        $transaction = new Transaction($request, $sender, array(), $messageFactory);
-        $promise = $transaction->send();
+        $transaction = new Transaction($sender, array(), $messageFactory);
+        $promise = $transaction->send($request);
 
         $response = Block\await($promise, $loop);
 
@@ -81,8 +81,8 @@ class TransactionTest extends TestCase
         $sender = $this->makeSenderMock();
         $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(Promise\resolve($response));
 
-        $transaction = new Transaction($request, $sender, array(), $messageFactory);
-        $promise = $transaction->send();
+        $transaction = new Transaction($sender, array(), $messageFactory);
+        $promise = $transaction->send($request);
         $promise->cancel();
 
         Block\await($promise, $loop, 0.001);
@@ -99,8 +99,8 @@ class TransactionTest extends TestCase
         $sender = $this->makeSenderMock();
         $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(Promise\resolve($response));
 
-        $transaction = new Transaction($request, $sender, array('streaming' => true), $messageFactory);
-        $promise = $transaction->send();
+        $transaction = new Transaction($sender, array('streaming' => true), $messageFactory);
+        $promise = $transaction->send($request);
 
         $response = Block\await($promise, $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock());
 
@@ -132,8 +132,8 @@ class TransactionTest extends TestCase
                 return true;
             }))->willReturn(Promise\resolve($okResponse));
 
-        $transaction = new Transaction($requestWithUserAgent, $sender, array(), $messageFactory);
-        $transaction->send();
+        $transaction = new Transaction($sender, array(), $messageFactory);
+        $transaction->send($requestWithUserAgent);
     }
 
     public function testRemovingAuthorizationHeaderWhenChangingHostnamesDuringRedirect()
@@ -160,8 +160,8 @@ class TransactionTest extends TestCase
                 return true;
             }))->willReturn(Promise\resolve($okResponse));
 
-        $transaction = new Transaction($requestWithAuthorization, $sender, array(), $messageFactory);
-        $transaction->send();
+        $transaction = new Transaction($sender, array(), $messageFactory);
+        $transaction->send($requestWithAuthorization);
     }
 
     public function testAuthorizationHeaderIsForwardedWhenRedirectingToSameDomain()
@@ -188,8 +188,8 @@ class TransactionTest extends TestCase
                 return true;
             }))->willReturn(Promise\resolve($okResponse));
 
-        $transaction = new Transaction($requestWithAuthorization, $sender, array(), $messageFactory);
-        $transaction->send();
+        $transaction = new Transaction($sender, array(), $messageFactory);
+        $transaction->send($requestWithAuthorization);
     }
 
     public function testAuthorizationHeaderIsForwardedWhenLocationContainsAuthentication()
@@ -216,8 +216,8 @@ class TransactionTest extends TestCase
                 return true;
             }))->willReturn(Promise\resolve($okResponse));
 
-        $transaction = new Transaction($request, $sender, array(), $messageFactory);
-        $transaction->send();
+        $transaction = new Transaction($sender, array(), $messageFactory);
+        $transaction->send($request);
     }
 
     public function testSomeRequestHeadersShouldBeRemovedWhenRedirecting()
@@ -249,8 +249,8 @@ class TransactionTest extends TestCase
                 return true;
             }))->willReturn(Promise\resolve($okResponse));
 
-        $transaction = new Transaction($requestWithCustomHeaders, $sender, array(), $messageFactory);
-        $transaction->send();
+        $transaction = new Transaction($sender, array(), $messageFactory);
+        $transaction->send($requestWithCustomHeaders);
     }
 
     public function testCancelTransactionWillCancelRequest()
@@ -265,8 +265,8 @@ class TransactionTest extends TestCase
         // mock sender to return pending promise which should be cancelled when cancelling result
         $sender->expects($this->once())->method('send')->willReturn($pending);
 
-        $transaction = new Transaction($request, $sender, array(), $messageFactory);
-        $promise = $transaction->send();
+        $transaction = new Transaction($sender, array(), $messageFactory);
+        $promise = $transaction->send($request);
 
         $promise->cancel();
     }
@@ -287,8 +287,8 @@ class TransactionTest extends TestCase
         // mock sender to return pending promise which should be cancelled when cancelling result
         $sender->expects($this->at(1))->method('send')->willReturn($pending);
 
-        $transaction = new Transaction($request, $sender, array(), $messageFactory);
-        $promise = $transaction->send();
+        $transaction = new Transaction($sender, array(), $messageFactory);
+        $promise = $transaction->send($request);
 
         $promise->cancel();
     }
@@ -309,8 +309,8 @@ class TransactionTest extends TestCase
         // mock sender to return pending promise which should be cancelled when cancelling result
         $sender->expects($this->at(1))->method('send')->willReturn($second);
 
-        $transaction = new Transaction($request, $sender, array(), $messageFactory);
-        $promise = $transaction->send();
+        $transaction = new Transaction($sender, array(), $messageFactory);
+        $promise = $transaction->send($request);
 
         // mock sender to resolve promise with the given $redirectResponse in
         $first->resolve($messageFactory->response(1.0, 301, null, array('Location' => 'http://example.com/new')));
@@ -332,8 +332,8 @@ class TransactionTest extends TestCase
         $redirectResponse = $messageFactory->response(1.0, 301, null, array('Location' => 'http://example.com/new'), $body);
         $sender->expects($this->once())->method('send')->willReturn(Promise\resolve($redirectResponse));
 
-        $transaction = new Transaction($request, $sender, array(), $messageFactory);
-        $promise = $transaction->send();
+        $transaction = new Transaction($sender, array(), $messageFactory);
+        $promise = $transaction->send($request);
 
         $promise->cancel();
     }
@@ -348,8 +348,8 @@ class TransactionTest extends TestCase
         $first = new Deferred();
         $sender->expects($this->once())->method('send')->willReturn($first->promise());
 
-        $transaction = new Transaction($request, $sender, array(), $messageFactory);
-        $promise = $transaction->send();
+        $transaction = new Transaction($sender, array(), $messageFactory);
+        $promise = $transaction->send($request);
 
         $body = new ThroughStream();
         $body->on('close', $this->expectCallableOnce());
@@ -375,8 +375,8 @@ class TransactionTest extends TestCase
         // mock sender to return pending promise which should be cancelled when cancelling result
         $sender->expects($this->at(1))->method('send')->willReturn($pending);
 
-        $transaction = new Transaction($request, $sender, array(), $messageFactory);
-        $promise = $transaction->send();
+        $transaction = new Transaction($sender, array(), $messageFactory);
+        $promise = $transaction->send($request);
 
         $promise->cancel();
     }
