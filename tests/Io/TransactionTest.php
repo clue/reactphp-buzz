@@ -43,6 +43,20 @@ class TransactionTest extends TestCase
         $this->assertTrue($ref->getValue($transaction));
     }
 
+    public function testWithOptionsNullValueReturnsNewInstanceWithDefaultOption()
+    {
+        $sender = $this->makeSenderMock();
+        $transaction = new Transaction($sender, new MessageFactory());
+
+        $transaction = $transaction->withOptions(array('followRedirects' => false));
+        $transaction = $transaction->withOptions(array('followRedirects' => null));
+
+        $ref = new ReflectionProperty($transaction, 'followRedirects');
+        $ref->setAccessible(true);
+
+        $this->assertTrue($ref->getValue($transaction));
+    }
+
     public function testReceivingErrorResponseWillRejectWithResponseException()
     {
         $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();

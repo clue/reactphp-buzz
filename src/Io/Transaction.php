@@ -45,6 +45,12 @@ class Transaction
         $transaction = clone $this;
         foreach ($options as $name => $value) {
             if (property_exists($transaction, $name)) {
+                // restore default value if null is given
+                if ($value === null) {
+                    $default = new self($this->sender, $this->messageFactory);
+                    $value = $default->$name;
+                }
+
                 $transaction->$name = $value;
             }
         }
