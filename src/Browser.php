@@ -169,9 +169,9 @@ class Browser
             $request = $request->withUri($this->messageFactory->expandBase($request->getUri(), $this->baseUri));
         }
 
-        $transaction = new Transaction($this->sender, $this->options, $this->messageFactory);
+        $transaction = new Transaction($this->sender, $this->messageFactory);
 
-        return $transaction->send($request);
+        return $transaction->withOptions($this->options)->send($request);
     }
 
     /**

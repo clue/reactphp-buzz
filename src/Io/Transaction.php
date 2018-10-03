@@ -30,16 +30,26 @@ class Transaction
 
     private $streaming = false;
 
-    public function __construct(Sender $sender, array $options = array(), MessageFactory $messageFactory)
+    public function __construct(Sender $sender, MessageFactory $messageFactory)
     {
+        $this->sender = $sender;
+        $this->messageFactory = $messageFactory;
+    }
+
+    /**
+     * @param array $options
+     * @return self returns new instance, without modifying existing instance
+     */
+    public function withOptions(array $options)
+    {
+        $transaction = clone $this;
         foreach ($options as $name => $value) {
-            if (property_exists($this, $name)) {
-                $this->$name = $value;
+            if (property_exists($transaction, $name)) {
+                $transaction->$name = $value;
             }
         }
 
-        $this->sender = $sender;
-        $this->messageFactory = $messageFactory;
+        return $transaction;
     }
 
     public function send(RequestInterface $request)
