@@ -242,14 +242,26 @@ class Browser
     /**
      * Changes the [options](#options) to use:
      *
+     * The [`Browser`](#browser) class exposes several options for the handling of
+     * HTTP transactions. These options resemble some of PHP's
+     * [HTTP context options](http://php.net/manual/en/context.http.php) and
+     * can be controlled via the following API (and their defaults):
+     *
      * ```php
-     * $newBrowser = $browser->withOptions($options);
+     * $newBrowser = $browser->withOptions(array(
+     *     'followRedirects' => true,
+     *     'maxRedirects' => 10,
+     *     'obeySuccessCode' => true,
+     *     'streaming' => false,
+     * ));
      * ```
      *
-     * Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withOptions()` method
-     * actually returns a *new* [`Browser`](#browser) instance with the [options](#options) applied.
+     * See also [redirects](#redirects) and [streaming](#streaming) for more
+     * details.
      *
-     * See [options](#options) for more details.
+     * Notice that the [`Browser`](#browser) is an immutable object, i.e. this
+     * method actually returns a *new* [`Browser`](#browser) instance with the
+     * options applied.
      *
      * @param array $options
      * @return self

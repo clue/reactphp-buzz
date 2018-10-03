@@ -51,7 +51,6 @@ mess with most of the low-level details.
 * [Advanced](#advanced)
   * [SOCKS proxy](#socks-proxy)
   * [Unix domain sockets](#unix-domain-sockets)
-  * [Options](#options)
 * [Install](#install)
 * [Tests](#tests)
 * [License](#license)
@@ -182,7 +181,7 @@ using the `Authorization: Basic …` request header or allows you to set an expl
 By default, this library does not include an outgoing `Authorization` request
 header. If the server requires authentication, if may return a `401` (Unauthorized)
 status code which will reject the request by default (see also
-[`obeySuccessCode` option](#options) below).
+[`obeySuccessCode` option](#withoptions) below).
 
 In order to pass authentication details, you can simple pass the username and
 password as part of the request URI like this:
@@ -242,9 +241,10 @@ possible privacy/security concerns. When following a redirect where the `Locatio
 response header contains authentication details, these details will be sent for
 following requests.
 
-You can use the [`maxRedirects` option](#options) to control the maximum number
-of redirects to follow or the [`followRedirects` option](#options) to return
-any redirect responses as-is and apply custom redirection logic like this:
+You can use the [`maxRedirects` option](#withoptions) to control the maximum
+number of redirects to follow or the [`followRedirects` option](#withoptions)
+to return any redirect responses as-is and apply custom redirection logic
+like this:
 
 ```php
 $browser = $browser->withOptions(array(
@@ -442,16 +442,28 @@ $browser->send($request)->then(…);
 #### withOptions()
 
 The `withOptions(array $options): Browser` method can be used to
-change the [options](#options) to use:
+change the options to use:
+
+The [`Browser`](#browser) class exposes several options for the handling of
+HTTP transactions. These options resemble some of PHP's
+[HTTP context options](http://php.net/manual/en/context.http.php) and
+can be controlled via the following API (and their defaults):
 
 ```php
-$newBrowser = $browser->withOptions($options);
+$newBrowser = $browser->withOptions(array(
+    'followRedirects' => true,
+    'maxRedirects' => 10,
+    'obeySuccessCode' => true,
+    'streaming' => false,
+));
 ```
 
-Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withOptions()` method
-actually returns a *new* [`Browser`](#browser) instance with the [options](#options) applied.
+See also [redirects](#redirects) and [streaming](#streaming) for more
+details.
 
-See [options](#options) for more details.
+Notice that the [`Browser`](#browser) is an immutable object, i.e. this
+method actually returns a *new* [`Browser`](#browser) instance with the
+options applied.
 
 #### withBase()
 
@@ -524,7 +536,7 @@ This is a standard interface defined in
 The `ResponseException` is an `Exception` sub-class that will be used to reject
 a request promise if the remote server returns a non-success status code
 (anything but 2xx or 3xx).
-You can control this behavior via the ["obeySuccessCode" option](#options).
+You can control this behavior via the ["obeySuccessCode" option](#withoptions).
 
 The `getCode(): int` method can be used to
 return the HTTP response status code.
@@ -568,25 +580,6 @@ $client->get('http://localhost/info')->then(function (ResponseInterface $respons
 ```
 
 See also the [Unix Domain Sockets (UDS) example](examples/12-unix-domain-sockets.php).
-
-### Options
-
-The [`Browser`](#browser) class exposes several options for the handling of
-HTTP transactions. These options resemble some of PHP's
-[HTTP context options](http://php.net/manual/en/context.http.php) and
-can be controlled via the following API (and their defaults):
-
-```php
-$newBrowser = $browser->withOptions(array(
-    'followRedirects' => true,
-    'maxRedirects' => 10,
-    'obeySuccessCode' => true,
-    'streaming' => false,
-));
-```
-
-Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withOptions()` method
-actually returns a *new* [`Browser`](#browser) instance with the options applied.
 
 ## Install
 
