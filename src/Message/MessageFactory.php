@@ -7,7 +7,6 @@ use Psr\Http\Message\UriInterface;
 use RingCentral\Psr7\Request;
 use RingCentral\Psr7\Response;
 use RingCentral\Psr7\Uri;
-use RingCentral;
 use React\Stream\ReadableStreamInterface;
 
 /**
@@ -57,7 +56,7 @@ class MessageFactory
             return new ReadableBodyStream($body);
         }
 
-        return RingCentral\Psr7\stream_for($body);
+        return \RingCentral\Psr7\stream_for($body);
     }
 
     /**

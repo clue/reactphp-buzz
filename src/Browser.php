@@ -56,8 +56,8 @@ class Browser
      */
     public function __construct(LoopInterface $loop, ConnectorInterface $connector = null)
     {
-        $this->sender = Sender::createFromLoop($loop, $connector);
         $this->messageFactory = new MessageFactory();
+        $this->sender = Sender::createFromLoop($loop, $connector, $this->messageFactory);
     }
 
     /**

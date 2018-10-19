@@ -4,15 +4,11 @@ namespace Clue\React\Buzz\Io;
 
 use Clue\React\Buzz\Message\MessageFactory;
 use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
 use React\EventLoop\LoopInterface;
 use React\HttpClient\Client as HttpClient;
-use React\HttpClient\Request as RequestStream;
 use React\HttpClient\Response as ResponseStream;
-use React\Promise;
 use React\Promise\PromiseInterface;
 use React\Promise\Deferred;
-use React\Socket\Connector;
 use React\Socket\ConnectorInterface;
 use React\Stream\ReadableStreamInterface;
 
@@ -52,12 +48,13 @@ class Sender
      * @param ConnectorInterface|null $connector
      * @return self
      */
-    public static function createFromLoop(LoopInterface $loop, ConnectorInterface $connector = null)
+    public static function createFromLoop(LoopInterface $loop, ConnectorInterface $connector = null, MessageFactory $messageFactory)
     {
-        return new self(new HttpClient($loop, $connector));
+        return new self(new HttpClient($loop, $connector), $messageFactory);
     }
 
     private $http;
+    private $messageFactory;
 
     /**
      * [internal] Instantiate Sender
@@ -65,25 +62,25 @@ class Sender
      * @param HttpClient $http
      * @internal
      */
-    public function __construct(HttpClient $http)
+    public function __construct(HttpClient $http, MessageFactory $messageFactory)
     {
         $this->http = $http;
+        $this->messageFactory = $messageFactory;
     }
 
     /**
      *
      * @internal
      * @param RequestInterface $request
-     * @param MessageFactory $messageFactory
      * @return PromiseInterface Promise<ResponseInterface, Exception>
      */
-    public function send(RequestInterface $request, MessageFactory $messageFactory)
+    public function send(RequestInterface $request)
     {
         $uri = $request->getUri();
 
         // URIs are required to be absolute for the HttpClient to work
         if ($uri->getScheme() === '' || $uri->getHost() === '') {
-            return Promise\reject(new \InvalidArgumentException('Sending request requires absolute URI with scheme and host'));
+            return \React\Promise\reject(new \InvalidArgumentException('Sending request requires absolute URI with scheme and host'));
         }
 
         $body = $request->getBody();
@@ -114,6 +111,7 @@ class Sender
             $deferred->reject($error);
         });
 
+        $messageFactory = $this->messageFactory;
         $requestStream->on('response', function (ResponseStream $responseStream) use ($deferred, $messageFactory) {
             // apply response header values from response stream
             $deferred->resolve($messageFactory->response(

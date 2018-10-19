@@ -78,7 +78,7 @@ class Transaction
         $that = $this;
         ++$deferred->numRequests;
 
-        $promise = $this->sender->send($request, $this->messageFactory);
+        $promise = $this->sender->send($request);
 
         if (!$this->streaming) {
             $promise = $promise->then(function ($response) use ($deferred, $that) {
