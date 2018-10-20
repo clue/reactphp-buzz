@@ -19,6 +19,9 @@ class Browser
     private $messageFactory;
     private $baseUri = null;
 
+    /** @var LoopInterface $loop */
+    private $loop;
+
     /**
      * The `Browser` is responsible for sending HTTP requests to your HTTP server
      * and keeps track of pending incoming HTTP responses.
@@ -58,7 +61,8 @@ class Browser
         $this->messageFactory = new MessageFactory();
         $this->transaction = new Transaction(
             Sender::createFromLoop($loop, $connector, $this->messageFactory),
-            $this->messageFactory
+            $this->messageFactory,
+            $loop
         );
     }
 
@@ -249,6 +253,7 @@ class Browser
      *
      * ```php
      * $newBrowser = $browser->withOptions(array(
+     *     'timeout' => null,
      *     'followRedirects' => true,
      *     'maxRedirects' => 10,
      *     'obeySuccessCode' => true,
@@ -256,8 +261,8 @@ class Browser
      * ));
      * ```
      *
-     * See also [redirects](#redirects) and [streaming](#streaming) for more
-     * details.
+     * See also [timeouts](#timeouts), [redirects](#redirects) and
+     * [streaming](#streaming) for more details.
      *
      * Notice that the [`Browser`](#browser) is an immutable object, i.e. this
      * method actually returns a *new* [`Browser`](#browser) instance with the

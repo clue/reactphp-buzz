@@ -7,8 +7,10 @@ use Clue\React\Buzz\Message\MessageFactory;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
+use React\EventLoop\LoopInterface;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
+use React\Promise\Timer\TimeoutException;
 use React\Stream\ReadableStreamInterface;
 
 /**
@@ -18,22 +20,27 @@ class Transaction
 {
     private $sender;
     private $messageFactory;
+    private $loop;
 
-    // context: http.follow_location
+    // context: http.timeout (ini_get('default_socket_timeout'): 60)
+    private $timeout;
+
+    // context: http.follow_location (true)
     private $followRedirects = true;
 
-    // context: http.max_redirects
+    // context: http.max_redirects (10)
     private $maxRedirects = 10;
 
-    // context: http.ignore_errors
+    // context: http.ignore_errors (false)
     private $obeySuccessCode = true;
 
     private $streaming = false;
 
-    public function __construct(Sender $sender, MessageFactory $messageFactory)
+    public function __construct(Sender $sender, MessageFactory $messageFactory, LoopInterface $loop)
     {
         $this->sender = $sender;
         $this->messageFactory = $messageFactory;
+        $this->loop = $loop;
     }
 
     /**
@@ -47,7 +54,7 @@ class Transaction
             if (property_exists($transaction, $name)) {
                 // restore default value if null is given
                 if ($value === null) {
-                    $default = new self($this->sender, $this->messageFactory);
+                    $default = new self($this->sender, $this->messageFactory, $this->loop);
                     $value = $default->$name;
                 }
 
@@ -74,7 +81,20 @@ class Transaction
             array($deferred, 'reject')
         );
 
-        return $deferred->promise();
+        // use timeout from options or default to PHP's default_socket_timeout (60)
+        $timeout = (float)($this->timeout !== null ? $this->timeout : ini_get("default_socket_timeout"));
+        if ($timeout < 0) {
+            return $deferred->promise();
+        }
+
+        return \React\Promise\Timer\timeout($deferred->promise(), $timeout, $this->loop)->then(null, function ($e) {
+            if ($e instanceof TimeoutException) {
+                throw new \RuntimeException(
+                    'Request timed out after ' . $e->getTimeout() . ' seconds'
+                );
+            }
+            throw $e;
+        });
     }
 
     private function next(RequestInterface $request, Deferred $deferred)

@@ -115,6 +115,27 @@ class FunctionalBrowserTest extends TestCase
     }
 
     /**
+     * @expectedException RuntimeException
+     * @expectedExceptionMessage Request timed out after 0.1 seconds
+     * @group online
+     */
+    public function testTimeoutDelayedResponseShouldReject()
+    {
+        $promise = $this->browser->withOptions(array('timeout' => 0.1))->get($this->base . 'delay/10');
+
+        Block\await($promise, $this->loop);
+    }
+
+    /**
+     * @group online
+     * @doesNotPerformAssertions
+     */
+    public function testTimeoutNegativeShouldResolveSuccessfully()
+    {
+        Block\await($this->browser->withOptions(array('timeout' => -1))->get($this->base . 'get'), $this->loop);
+    }
+
+    /**
      * @group online
      * @doesNotPerformAssertions
      */
