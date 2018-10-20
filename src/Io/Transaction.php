@@ -10,6 +10,7 @@ use Psr\Http\Message\UriInterface;
 use React\EventLoop\LoopInterface;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
+use React\Promise\Timer\TimeoutException;
 use React\Stream\ReadableStreamInterface;
 
 /**
@@ -19,29 +20,24 @@ class Transaction
 {
     private $sender;
     private $messageFactory;
+    private $loop;
 
-    // context: http.follow_location
+    // context: http.timeout (ini_get('default_socket_timeout'): 60)
+    private $timeout;
+
+    // context: http.follow_location (true)
     private $followRedirects = true;
 
-    // context: http.max_redirects
+    // context: http.max_redirects (10)
     private $maxRedirects = 10;
 
-    // context: http.ignore_errors
+    // context: http.ignore_errors (false)
     private $obeySuccessCode = true;
 
     private $streaming = false;
 
-    /** @var int $timeout */
-    private $timeout;
-
-    /** @var LoopInterface $loop */
-    private $loop;
-
     public function __construct(Sender $sender, MessageFactory $messageFactory, LoopInterface $loop)
     {
-        // In case the timeout hasn't been set through the options
-        $this->timeout = ini_get('default_socket_timeout');
-
         $this->sender = $sender;
         $this->messageFactory = $messageFactory;
         $this->loop = $loop;
@@ -85,11 +81,20 @@ class Transaction
             array($deferred, 'reject')
         );
 
-        return \React\Promise\Timer\timeout(
-            $deferred->promise(),
-            $this->timeout,
-            $this->loop
-        );
+        // use timeout from options or default to PHP's default_socket_timeout (60)
+        $timeout = (float)($this->timeout !== null ? $this->timeout : ini_get("default_socket_timeout"));
+        if ($timeout < 0) {
+            return $deferred->promise();
+        }
+
+        return \React\Promise\Timer\timeout($deferred->promise(), $timeout, $this->loop)->then(null, function ($e) {
+            if ($e instanceof TimeoutException) {
+                throw new \RuntimeException(
+                    'Request timed out after ' . $e->getTimeout() . ' seconds'
+                );
+            }
+            throw $e;
+        });
     }
 
     private function next(RequestInterface $request, Deferred $deferred)

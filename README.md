@@ -35,6 +35,7 @@ mess with most of the low-level details.
     * [Methods](#methods)
     * [Promises](#promises)
     * [Cancellation](#cancellation)
+    * [Timeouts](#timeouts)
     * [Authentication](#authentication)
     * [Redirects](#redirects)
     * [Blocking](#blocking)
@@ -171,6 +172,42 @@ $loop->addTimer(2.0, function () use ($promise) {
     $promise->cancel();
 });
 ```
+
+#### Timeouts
+
+This library uses a very efficient HTTP implementation, so most HTTP requests
+should usually be completed in mere milliseconds. However, when sending HTTP
+requests over an unreliable network (the internet), there are a number of things
+that can go wrong and may cause the request to fail after a time. As such, this
+library respects PHP's `default_socket_timeout` setting (default 60s) as a timeout
+for sending the outgoing HTTP request and waiting for a successful response and
+will otherwise cancel the pending request and reject its value with an Exception.
+
+Note that this timeout value covers creating the underlying transport connection,
+sending the HTTP request, receiving the HTTP response headers and its full
+response body and following any eventual [redirects](#redirects). See also
+[redirects](#redirects) below to configure the number of redirects to follow (or
+disable following redirects altogether) and also [streaming](#streaming) below 
+to not take receiving large response bodies into account for this timeout.
+
+You can use the [`timeout` option](#withoptions) to pass a custom timeout value
+in seconds like this:
+
+```php
+$browser = $browser->withOptions(array(
+    'timeout' => 10.0
+));
+
+$browser->get($uri)->then(function (ResponseInterface $response) {
+    // response received within 10 seconds maximum
+    var_dump($response->getHeaders());
+});
+```
+
+Similarly, you can use a negative timeout value to not apply a timeout at all
+or use a `null` value to restore the default handling. Note that the underlying
+connection may still impose a different timeout value. See also
+[`Browser`](#browser) above and [`withOptions()`](#withoptions) for more details.
 
 #### Authentication
 
@@ -381,6 +418,12 @@ $body->read(); // throws BadMethodCallException
 $body->getContents(); // throws BadMethodCallException
 ```
 
+Note how [timeouts](#timeouts) apply slightly differently when using streaming.
+In streaming mode, the timeout value covers creating the underlying transport
+connection, sending the HTTP request, receiving the HTTP response headers and
+following any eventual [redirects](#redirects). In particular, the timeout value
+does not take receiving (possibly large) response bodies into account.
+
 If you want to integrate the streaming response into a higher level API, then
 working with Promise objects that resolve with Stream objects is often inconvenient.
 Consider looking into also using [react/promise-stream](https://github.com/reactphp/promise-stream).
@@ -451,6 +494,7 @@ can be controlled via the following API (and their defaults):
 
 ```php
 $newBrowser = $browser->withOptions(array(
+    'timeout' => null,
     'followRedirects' => true,
     'maxRedirects' => 10,
     'obeySuccessCode' => true,
@@ -458,8 +502,8 @@ $newBrowser = $browser->withOptions(array(
 ));
 ```
 
-See also [redirects](#redirects) and [streaming](#streaming) for more
-details.
+See also [timeouts](#timeouts), [redirects](#redirects) and
+[streaming](#streaming) for more details.
 
 Notice that the [`Browser`](#browser) is an immutable object, i.e. this
 method actually returns a *new* [`Browser`](#browser) instance with the

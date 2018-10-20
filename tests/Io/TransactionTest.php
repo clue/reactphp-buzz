@@ -441,7 +441,11 @@ class TransactionTest extends TestCase
         $promise->cancel();
     }
 
-    public function testTimeoutPromiseWillThrowTimeoutException()
+    /**
+     * @expectedException RuntimeException
+     * @expectedExceptionMessage Request timed out after 0.001 seconds
+     */
+    public function testTimeoutExplicitOptionWillThrowException()
     {
         $messageFactory = new MessageFactory();
         $loop = Factory::create();
@@ -462,14 +466,64 @@ class TransactionTest extends TestCase
         $transaction = $transaction->withOptions(array('timeout' => 0.001));
         $promise = $transaction->send($request);
 
-        $exception = false;
-        try {
-            $response = Block\await($promise, $loop);
-        } catch (Exception $exception) {
+        Block\await($promise, $loop);
+    }
 
-        }
+    /**
+     * @expectedException RuntimeException
+     * @expectedExceptionMessage Request timed out after 0.001 seconds
+     */
+    public function testTimeoutImplicitFromIniWillThrowException()
+    {
+        $messageFactory = new MessageFactory();
+        $loop = Factory::create();
 
-        $this->assertTrue(is_a($exception, 'React\Promise\Timer\TimeoutException'));
+        $stream = new ThroughStream();
+        $loop->addTimer(0.01, function () use ($stream) {
+            $stream->close();
+        });
+
+        $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
+        $response = $messageFactory->response(1.0, 200, 'OK', array(), $stream);
+
+        // mock sender to resolve promise with the given $response in response to the given $request
+        $sender = $this->getMockBuilder('Clue\React\Buzz\Io\Sender')->disableOriginalConstructor()->getMock();
+        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(Promise\resolve($response));
+
+        $transaction = new Transaction($sender, $messageFactory, $loop);
+
+        $old = ini_get('default_socket_timeout');
+        ini_set('default_socket_timeout', '0.001');
+        $promise = $transaction->send($request);
+        ini_set('default_socket_timeout', $old);
+
+        Block\await($promise, $loop);
+    }
+
+    public function testTimeoutExplicitNegativeWillNotTimeOut()
+    {
+        $messageFactory = new MessageFactory();
+        $loop = Factory::create();
+
+        $stream = new ThroughStream();
+        $loop->addTimer(0.001, function () use ($stream) {
+            $stream->close();
+        });
+
+        $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
+        $response = $messageFactory->response(1.0, 200, 'OK', array(), $stream);
+
+        // mock sender to resolve promise with the given $response in response to the given $request
+        $sender = $this->getMockBuilder('Clue\React\Buzz\Io\Sender')->disableOriginalConstructor()->getMock();
+        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(Promise\resolve($response));
+
+        $transaction = new Transaction($sender, $messageFactory, $loop);
+        $transaction = $transaction->withOptions(array('timeout' => -1));
+        $promise = $transaction->send($request);
+
+        $response = Block\await($promise, $loop);
+
+        $this->assertInstanceOf('Psr\Http\Message\ResponseInterface', $response);
     }
 
     /**
