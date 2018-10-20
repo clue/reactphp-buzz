@@ -50,6 +50,7 @@ mess with most of the low-level details.
   * [UriInterface](#uriinterface)
   * [ResponseException](#responseexception)
 * [Advanced](#advanced)
+  * [HTTP proxy](#http-proxy)
   * [SOCKS proxy](#socks-proxy)
   * [Unix domain sockets](#unix-domain-sockets)
 * [Install](#install)
@@ -590,15 +591,32 @@ access its underlying [`ResponseInterface`](#responseinterface) object.
 
 ## Advanced
 
+### HTTP proxy
+
+You can also establish your outgoing connections through an HTTP CONNECT proxy server
+by adding a dependency to [clue/reactphp-http-proxy](https://github.com/clue/reactphp-http-proxy).
+
+HTTP CONNECT proxy servers (also commonly known as "HTTPS proxy" or "SSL proxy")
+are commonly used to tunnel HTTPS traffic through an intermediary ("proxy"), to
+conceal the origin address (anonymity) or to circumvent address blocking
+(geoblocking). While many (public) HTTP CONNECT proxy servers often limit this
+to HTTPS port`443` only, this can technically be used to tunnel any TCP/IP-based
+protocol, such as plain HTTP and TLS-encrypted HTTPS.
+
+See also the [HTTP CONNECT proxy example](examples/11-http-proxy.php).
+
 ### SOCKS proxy
 
 You can also establish your outgoing connections through a SOCKS proxy server
 by adding a dependency to [clue/reactphp-socks](https://github.com/clue/reactphp-socks).
 
-The SOCKS protocol operates at the TCP/IP layer and thus requires minimal effort at the HTTP application layer.
-This works for both plain HTTP and SSL encrypted HTTPS requests.
+The SOCKS proxy protocol family (SOCKS5, SOCKS4 and SOCKS4a) is commonly used to
+tunnel HTTP(S) traffic through an intermediary ("proxy"), to conceal the origin
+address (anonymity) or to circumvent address blocking (geoblocking). While many
+(public) SOCKS proxy servers often limit this to HTTP(S) port `80` and `443`
+only, this can technically be used to tunnel any TCP/IP-based protocol.
 
-See also the [SOCKS example](examples/11-socks-proxy.php).
+See also the [SOCKS proxy example](examples/12-socks-proxy.php).
 
 ### Unix domain sockets
 
@@ -623,7 +641,7 @@ $client->get('http://localhost/info')->then(function (ResponseInterface $respons
 });
 ```
 
-See also the [Unix Domain Sockets (UDS) example](examples/12-unix-domain-sockets.php).
+See also the [Unix Domain Sockets (UDS) example](examples/13-unix-domain-sockets.php).
 
 ## Install
 
