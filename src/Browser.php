@@ -15,10 +15,9 @@ use React\Stream\ReadableStreamInterface;
 
 class Browser
 {
-    private $sender;
+    private $transaction;
     private $messageFactory;
     private $baseUri = null;
-    private $options = array();
 
     /**
      * The `Browser` is responsible for sending HTTP requests to your HTTP server
@@ -56,8 +55,11 @@ class Browser
      */
     public function __construct(LoopInterface $loop, ConnectorInterface $connector = null)
     {
-        $this->sender = Sender::createFromLoop($loop, $connector);
         $this->messageFactory = new MessageFactory();
+        $this->transaction = new Transaction(
+            Sender::createFromLoop($loop, $connector, $this->messageFactory),
+            $this->messageFactory
+        );
     }
 
     /**
@@ -169,9 +171,7 @@ class Browser
             $request = $request->withUri($this->messageFactory->expandBase($request->getUri(), $this->baseUri));
         }
 
-        $transaction = new Transaction($request, $this->sender, $this->options, $this->messageFactory);
-
-        return $transaction->send();
+        return $this->transaction->send($request);
     }
 
     /**
@@ -269,11 +269,7 @@ class Browser
     public function withOptions(array $options)
     {
         $browser = clone $this;
-
-        // merge all options, but remove those explicitly assigned a null value
-        $browser->options = array_filter($options + $this->options, function ($value) {
-            return ($value !== null);
-        });
+        $browser->transaction = $this->transaction->withOptions($options);
 
         return $browser;
     }

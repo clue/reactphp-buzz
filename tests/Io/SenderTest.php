@@ -18,9 +18,26 @@ class SenderTest extends TestCase
 
     public function testCreateFromLoop()
     {
-        $sender = Sender::createFromLoop($this->loop);
+        $sender = Sender::createFromLoop($this->loop, null, $this->getMockBuilder('Clue\React\Buzz\Message\MessageFactory')->getMock());
 
         $this->assertInstanceOf('Clue\React\Buzz\Io\Sender', $sender);
+    }
+
+    /**
+     * @expectedException InvalidArgumentException
+     */
+    public function testSenderRejectsInvalidUri()
+    {
+        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector->expects($this->never())->method('connect');
+
+        $sender = new Sender(new HttpClient($this->loop, $connector), $this->getMockBuilder('Clue\React\Buzz\Message\MessageFactory')->getMock());
+
+        $request = new Request('GET', 'www.google.com');
+
+        $promise = $sender->send($request);
+
+        Block\await($promise, $this->loop);
     }
 
     /**
@@ -31,11 +48,11 @@ class SenderTest extends TestCase
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->once())->method('connect')->willReturn(Promise\reject(new RuntimeException('Rejected')));
 
-        $sender = new Sender(new HttpClient($this->loop, $connector));
+        $sender = new Sender(new HttpClient($this->loop, $connector), $this->getMockBuilder('Clue\React\Buzz\Message\MessageFactory')->getMock());
 
         $request = new Request('GET', 'http://www.google.com/');
 
-        $promise = $sender->send($request, $this->getMockBuilder('Clue\React\Buzz\Message\MessageFactory')->getMock());
+        $promise = $sender->send($request);
 
         Block\await($promise, $this->loop);
     }
@@ -52,11 +69,11 @@ class SenderTest extends TestCase
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->once())->method('connect')->willReturn($promise);
 
-        $sender = new Sender(new HttpClient($this->loop, $connector));
+        $sender = new Sender(new HttpClient($this->loop, $connector), $this->getMockBuilder('Clue\React\Buzz\Message\MessageFactory')->getMock());
 
         $request = new Request('GET', 'http://www.google.com/');
 
-        $promise = $sender->send($request, $this->getMockBuilder('Clue\React\Buzz\Message\MessageFactory')->getMock());
+        $promise = $sender->send($request);
         $promise->cancel();
 
         Block\await($promise, $this->loop);
@@ -73,11 +90,11 @@ class SenderTest extends TestCase
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->once())->method('connect')->willReturn(Promise\resolve($connection));
 
-        $sender = new Sender(new HttpClient($this->loop, $connector));
+        $sender = new Sender(new HttpClient($this->loop, $connector), $this->getMockBuilder('Clue\React\Buzz\Message\MessageFactory')->getMock());
 
         $request = new Request('GET', 'http://www.google.com/');
 
-        $promise = $sender->send($request, $this->getMockBuilder('Clue\React\Buzz\Message\MessageFactory')->getMock());
+        $promise = $sender->send($request);
         $promise->cancel();
 
         Block\await($promise, $this->loop);
@@ -129,7 +146,7 @@ class SenderTest extends TestCase
 
         $http->expects($this->once())->method('request')->with($method, $uri, $headers, $protocolVersion)->willReturn($request);
 
-        $sender = new Sender($http);
-        $sender->send($Request, $this->getMockBuilder('Clue\React\Buzz\Message\MessageFactory')->getMock());
+        $sender = new Sender($http, $this->getMockBuilder('Clue\React\Buzz\Message\MessageFactory')->getMock());
+        $sender->send($Request);
     }
 }
