@@ -1,5 +1,38 @@
 # Changelog
 
+## 2.5.0 (2018-10-24)
+
+*   Feature: Add HTTP timeout option.
+    (#114 by @Rakdar and @clue)
+
+    This now respects PHP's `default_socket_timeout` setting (default 60s) as a
+    timeout for sending the outgoing HTTP request and waiting for a successful
+    response and will otherwise cancel the pending request and reject its value
+    with an Exception. You can now use the [`timeout` option](#withoptions) to
+    pass a custom timeout value in seconds like this:
+
+    ```php
+    $browser = $browser->withOptions(array(
+        'timeout' => 10.0
+    ));
+
+    $browser->get($uri)->then(function (ResponseInterface $response) {
+        // response received within 10 seconds maximum
+        var_dump($response->getHeaders());
+    });
+    ```
+
+    Similarly, you can use a negative timeout value to not apply a timeout at
+    all or use a `null` value to restore the default handling.
+
+*   Improve documentation for `withOptions()` and
+    add documentation and example for HTTP CONNECT proxy.
+    (#111 and #115 by @clue)
+
+*   Refactor `Browser` to reuse single `Transaction` instance internally
+    which now accepts sending individual requests and their options.
+    (#113 by @clue)
+
 ## 2.4.0 (2018-10-02)
 
 *   Feature / Fix: Support cancellation forwarding and cancelling redirected requests.

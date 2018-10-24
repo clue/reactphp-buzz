@@ -20,12 +20,16 @@ mess with most of the low-level details.
   Send any number of HTTP requests to any number of HTTP servers in parallel and
   process their responses as soon as results come in.
   The Promise-based design provides a *sane* interface to working with out of bound responses.
+* **Standard interfaces** -
+  Allows easy integration with existing higher-level components by implementing
+  [PSR-7 (http-message)](https://www.php-fig.org/psr/psr-7/) interfaces,
+  ReactPHP's standard [promises](#promises) and [streaming interfaces](#streaming).
 * **Lightweight, SOLID design** -
   Provides a thin abstraction that is [*just good enough*](https://en.wikipedia.org/wiki/Principle_of_good_enough)
   and does not get in your way.
   Builds on top of well-tested components and well-established concepts instead of reinventing the wheel.
 * **Good test coverage** -
-  Comes with an automated tests suite and is regularly tested in the *real world*
+  Comes with an automated tests suite and is regularly tested in the *real world*.
 
 **Table of contents**
 
@@ -652,7 +656,7 @@ This project follows [SemVer](https://semver.org/).
 This will install the latest supported version:
 
 ```bash
-$ composer require clue/buzz-react:^2.4
+$ composer require clue/buzz-react:^2.5
 ```
 
 See also the [CHANGELOG](CHANGELOG.md) for details about version upgrades.
