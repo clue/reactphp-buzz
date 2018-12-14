@@ -56,6 +56,7 @@ mess with most of the low-level details.
 * [Advanced](#advanced)
   * [HTTP proxy](#http-proxy)
   * [SOCKS proxy](#socks-proxy)
+  * [SSH proxy](#ssh-proxy)
   * [Unix domain sockets](#unix-domain-sockets)
 * [Install](#install)
 * [Tests](#tests)
@@ -622,6 +623,24 @@ only, this can technically be used to tunnel any TCP/IP-based protocol.
 
 See also the [SOCKS proxy example](examples/12-socks-proxy.php).
 
+### SSH proxy
+
+You can also establish your outgoing connections through an SSH server
+by adding a dependency to [clue/reactphp-ssh-proxy](https://github.com/clue/reactphp-ssh-proxy).
+
+[Secure Shell (SSH)](https://en.wikipedia.org/wiki/Secure_Shell) is a secure
+network protocol that is most commonly used to access a login shell on a remote
+server. Its architecture allows it to use multiple secure channels over a single
+connection. Among others, this can also be used to create an "SSH tunnel", which
+is commonly used to tunnel HTTP(S) traffic through an intermediary ("proxy"), to
+conceal the origin address (anonymity) or to circumvent address blocking
+(geoblocking). This can be used to tunnel any TCP/IP-based protocol (HTTP, SMTP,
+IMAP etc.), allows you to access local services that are otherwise not accessible
+from the outside (database behind firewall) and as such can also be used for
+plain HTTP and TLS-encrypted HTTPS.
+
+See also the [SSH proxy example](examples/13-ssh-proxy.php).
+
 ### Unix domain sockets
 
 By default, this library supports transport over plaintext TCP/IP and secure
@@ -645,7 +664,7 @@ $client->get('http://localhost/info')->then(function (ResponseInterface $respons
 });
 ```
 
-See also the [Unix Domain Sockets (UDS) example](examples/13-unix-domain-sockets.php).
+See also the [Unix Domain Sockets (UDS) example](examples/14-unix-domain-sockets.php).
 
 ## Install
 
