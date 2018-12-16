@@ -120,12 +120,19 @@ The `Browser` offers several methods that resemble the HTTP protocol methods:
 ```php
 $browser->get($url, array $headers = array());
 $browser->head($url, array $headers = array());
-$browser->post($url, array $headers = array(), string|ReadableStreamInterface $content = '');
-$browser->delete($url, array $headers = array(), string|ReadableStreamInterface $content = '');
-$browser->put($url, array $headers = array(), string|ReadableStreamInterface $content = '');
-$browser->patch($url, array $headers = array(), string|ReadableStreamInterface $content = '');
+$browser->post($url, array $headers = array(), string|ReadableStreamInterface $contents = '');
+$browser->delete($url, array $headers = array(), string|ReadableStreamInterface $contents = '');
+$browser->put($url, array $headers = array(), string|ReadableStreamInterface $contents = '');
+$browser->patch($url, array $headers = array(), string|ReadableStreamInterface $contents = '');
 ```
 
+Each method will automatically add a matching `Content-Length` request header if
+the size of the outgoing request body is known and non-empty. For an empty
+request body, if will only include a `Content-Length: 0` request header if the
+request method usually expects a request body (only applies to `POST`, `PUT` and
+`PATCH`). If you're using a [streaming request body](#streaming), it will
+default to using `Transfer-Encoding: chunked` unless you explicitly pass in a
+matching `Content-Length` request header.
 All the above methods default to sending requests as HTTP/1.0.
 If you need a custom HTTP protocol method or version, you can use the [`send()`](#send) method.
 
@@ -463,6 +470,19 @@ $browser->post($url, array(), $stream)->then(function (ResponseInterface $respon
 });
 ```
 
+If you're using a streaming request body (`ReadableStreamInterface`), it will
+default to using `Transfer-Encoding: chunked` or you have to explicitly pass in a
+matching `Content-Length` request header like so:
+
+```php
+$body = new ThroughStream();
+$loop->addTimer(1.0, function () use ($body) {
+    $body->end("hello world");
+});
+
+$browser->post($url, array('Content-Length' => '11'), $body);
+```
+
 #### submit()
 
 The `submit($url, array $fields, $headers = array(), $method = 'POST'): PromiseInterface<ResponseInterface>` method can be used to
@@ -487,6 +507,12 @@ $request = $request->withProtocolVersion('1.1');
 
 $browser->send($request)->then(…);
 ```
+
+This method will automatically add a matching `Content-Length` request
+header if the size of the outgoing request body is known and non-empty.
+For an empty request body, if will only include a `Content-Length: 0`
+request header if the request method usually expects a request body (only
+applies to `POST`, `PUT` and `PATCH`).
 
 #### withOptions()
 
