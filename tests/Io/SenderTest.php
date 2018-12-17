@@ -1,11 +1,13 @@
 <?php
 
+use Clue\React\Block;
 use Clue\React\Buzz\Io\Sender;
+use Clue\React\Buzz\Message\ReadableBodyStream;
 use React\HttpClient\Client as HttpClient;
 use React\HttpClient\RequestData;
-use RingCentral\Psr7\Request;
 use React\Promise;
-use Clue\React\Block;
+use React\Stream\ThroughStream;
+use RingCentral\Psr7\Request;
 
 class SenderTest extends TestCase
 {
@@ -55,6 +57,120 @@ class SenderTest extends TestCase
         $promise = $sender->send($request);
 
         Block\await($promise, $this->loop);
+    }
+
+    public function testSendPostWillAutomaticallySendContentLengthHeader()
+    {
+        $client = $this->getMockBuilder('React\HttpClient\Client')->disableOriginalConstructor()->getMock();
+        $client->expects($this->once())->method('request')->with(
+            'POST',
+            'http://www.google.com/',
+            array('Host' => 'www.google.com', 'Content-Length' => '5'),
+            '1.1'
+        )->willReturn($this->getMockBuilder('React\HttpClient\Request')->disableOriginalConstructor()->getMock());
+
+        $sender = new Sender($client, $this->getMockBuilder('Clue\React\Buzz\Message\MessageFactory')->getMock());
+
+        $request = new Request('POST', 'http://www.google.com/', array(), 'hello');
+        $sender->send($request);
+    }
+
+    public function testSendPostWillAutomaticallySendContentLengthZeroHeaderForEmptyRequestBody()
+    {
+        $client = $this->getMockBuilder('React\HttpClient\Client')->disableOriginalConstructor()->getMock();
+        $client->expects($this->once())->method('request')->with(
+            'POST',
+            'http://www.google.com/',
+            array('Host' => 'www.google.com', 'Content-Length' => '0'),
+            '1.1'
+        )->willReturn($this->getMockBuilder('React\HttpClient\Request')->disableOriginalConstructor()->getMock());
+
+        $sender = new Sender($client, $this->getMockBuilder('Clue\React\Buzz\Message\MessageFactory')->getMock());
+
+        $request = new Request('POST', 'http://www.google.com/', array(), '');
+        $sender->send($request);
+    }
+
+    public function testSendPostStreamWillAutomaticallySendTransferEncodingChunked()
+    {
+        $client = $this->getMockBuilder('React\HttpClient\Client')->disableOriginalConstructor()->getMock();
+        $client->expects($this->once())->method('request')->with(
+            'POST',
+            'http://www.google.com/',
+            array('Host' => 'www.google.com', 'Transfer-Encoding' => 'chunked'),
+            '1.1'
+        )->willReturn($this->getMockBuilder('React\HttpClient\Request')->disableOriginalConstructor()->getMock());
+
+        $sender = new Sender($client, $this->getMockBuilder('Clue\React\Buzz\Message\MessageFactory')->getMock());
+
+        $stream = new ThroughStream();
+        $request = new Request('POST', 'http://www.google.com/', array(), new ReadableBodyStream($stream));
+        $sender->send($request);
+    }
+
+    public function testSendPostStreamWithExplicitContentLengthWillSendHeaderAsIs()
+    {
+        $client = $this->getMockBuilder('React\HttpClient\Client')->disableOriginalConstructor()->getMock();
+        $client->expects($this->once())->method('request')->with(
+            'POST',
+            'http://www.google.com/',
+            array('Host' => 'www.google.com', 'Content-Length' => '100'),
+            '1.1'
+        )->willReturn($this->getMockBuilder('React\HttpClient\Request')->disableOriginalConstructor()->getMock());
+
+        $sender = new Sender($client, $this->getMockBuilder('Clue\React\Buzz\Message\MessageFactory')->getMock());
+
+        $stream = new ThroughStream();
+        $request = new Request('POST', 'http://www.google.com/', array('Content-Length' => '100'), new ReadableBodyStream($stream));
+        $sender->send($request);
+    }
+
+    public function testSendGetWillNotPassContentLengthHeaderForEmptyRequestBody()
+    {
+        $client = $this->getMockBuilder('React\HttpClient\Client')->disableOriginalConstructor()->getMock();
+        $client->expects($this->once())->method('request')->with(
+            'GET',
+            'http://www.google.com/',
+            array('Host' => 'www.google.com'),
+            '1.1'
+        )->willReturn($this->getMockBuilder('React\HttpClient\Request')->disableOriginalConstructor()->getMock());
+
+        $sender = new Sender($client, $this->getMockBuilder('Clue\React\Buzz\Message\MessageFactory')->getMock());
+
+        $request = new Request('GET', 'http://www.google.com/');
+        $sender->send($request);
+    }
+
+    public function testSendCustomMethodWillNotPassContentLengthHeaderForEmptyRequestBody()
+    {
+        $client = $this->getMockBuilder('React\HttpClient\Client')->disableOriginalConstructor()->getMock();
+        $client->expects($this->once())->method('request')->with(
+            'CUSTOM',
+            'http://www.google.com/',
+            array('Host' => 'www.google.com'),
+            '1.1'
+        )->willReturn($this->getMockBuilder('React\HttpClient\Request')->disableOriginalConstructor()->getMock());
+
+        $sender = new Sender($client, $this->getMockBuilder('Clue\React\Buzz\Message\MessageFactory')->getMock());
+
+        $request = new Request('CUSTOM', 'http://www.google.com/');
+        $sender->send($request);
+    }
+
+    public function testSendCustomMethodWithExplicitContentLengthZeroWillBePassedAsIs()
+    {
+        $client = $this->getMockBuilder('React\HttpClient\Client')->disableOriginalConstructor()->getMock();
+        $client->expects($this->once())->method('request')->with(
+            'CUSTOM',
+            'http://www.google.com/',
+            array('Host' => 'www.google.com', 'Content-Length' => '0'),
+            '1.1'
+        )->willReturn($this->getMockBuilder('React\HttpClient\Request')->disableOriginalConstructor()->getMock());
+
+        $sender = new Sender($client, $this->getMockBuilder('Clue\React\Buzz\Message\MessageFactory')->getMock());
+
+        $request = new Request('CUSTOM', 'http://www.google.com/', array('Content-Length' => '0'));
+        $sender->send($request);
     }
 
     /**
