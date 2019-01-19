@@ -8,6 +8,7 @@ use React\EventLoop\Factory;
 use React\Http\Response;
 use React\Http\StreamingServer;
 use React\Promise\Stream;
+use React\Promise\Timer\TimeoutException;
 use React\Socket\Connector;
 use React\Stream\ThroughStream;
 use RingCentral\Psr7\Request;
@@ -115,15 +116,20 @@ class FunctionalBrowserTest extends TestCase
     }
 
     /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Request timed out after 0.1 seconds
      * @group online
      */
     public function testTimeoutDelayedResponseShouldReject()
     {
-        $promise = $this->browser->withOptions(array('timeout' => 0.1))->get($this->base . 'delay/10');
+        $caught = false;
+        try {
+            $promise = $this->browser->withOptions(array('timeout' => 0.1))->get($this->base . 'delay/10');
 
-        Block\await($promise, $this->loop);
+            Block\await($promise, $this->loop);
+        } catch (TimeoutException $e) {
+            $caught = true;
+            $this->assertEquals(0.1, $e->getTimeout());
+        }
+        $this->assertTrue($caught);
     }
 
     /**

@@ -441,10 +441,6 @@ class TransactionTest extends TestCase
         $promise->cancel();
     }
 
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Request timed out after 0.001 seconds
-     */
     public function testTimeoutExplicitOptionWillThrowException()
     {
         $messageFactory = new MessageFactory();
@@ -462,17 +458,20 @@ class TransactionTest extends TestCase
         $sender = $this->getMockBuilder('Clue\React\Buzz\Io\Sender')->disableOriginalConstructor()->getMock();
         $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(Promise\resolve($response));
 
-        $transaction = new Transaction($sender, $messageFactory, $loop);
-        $transaction = $transaction->withOptions(array('timeout' => 0.001));
-        $promise = $transaction->send($request);
+        $caught = false;
+        try {
+            $transaction = new Transaction($sender, $messageFactory, $loop);
+            $transaction = $transaction->withOptions(array('timeout' => 0.001));
+            $promise = $transaction->send($request);
 
-        Block\await($promise, $loop);
+            Block\await($promise, $loop);
+        } catch (Promise\Timer\TimeoutException $e) {
+            $caught = true;
+            $this->assertEquals(0.001, $e->getTimeout());
+        }
+        $this->assertTrue($caught);
     }
 
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Request timed out after 0.001 seconds
-     */
     public function testTimeoutImplicitFromIniWillThrowException()
     {
         $messageFactory = new MessageFactory();
@@ -490,14 +489,21 @@ class TransactionTest extends TestCase
         $sender = $this->getMockBuilder('Clue\React\Buzz\Io\Sender')->disableOriginalConstructor()->getMock();
         $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(Promise\resolve($response));
 
-        $transaction = new Transaction($sender, $messageFactory, $loop);
+        $caught = false;
+        try {
+            $transaction = new Transaction($sender, $messageFactory, $loop);
 
-        $old = ini_get('default_socket_timeout');
-        ini_set('default_socket_timeout', '0.001');
-        $promise = $transaction->send($request);
-        ini_set('default_socket_timeout', $old);
+            $old = ini_get('default_socket_timeout');
+            ini_set('default_socket_timeout', '0.001');
+            $promise = $transaction->send($request);
+            ini_set('default_socket_timeout', $old);
 
-        Block\await($promise, $loop);
+            Block\await($promise, $loop);
+        } catch (Promise\Timer\TimeoutException $e) {
+            $caught = true;
+            $this->assertEquals(0.001, $e->getTimeout());
+        }
+        $this->assertTrue($caught);
     }
 
     public function testTimeoutExplicitNegativeWillNotTimeOut()

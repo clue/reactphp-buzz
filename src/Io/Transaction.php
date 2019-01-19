@@ -10,7 +10,6 @@ use Psr\Http\Message\UriInterface;
 use React\EventLoop\LoopInterface;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
-use React\Promise\Timer\TimeoutException;
 use React\Stream\ReadableStreamInterface;
 
 /**
@@ -87,14 +86,7 @@ class Transaction
             return $deferred->promise();
         }
 
-        return \React\Promise\Timer\timeout($deferred->promise(), $timeout, $this->loop)->then(null, function ($e) {
-            if ($e instanceof TimeoutException) {
-                throw new \RuntimeException(
-                    'Request timed out after ' . $e->getTimeout() . ' seconds'
-                );
-            }
-            throw $e;
-        });
+        return \React\Promise\Timer\timeout($deferred->promise(), $timeout, $this->loop);
     }
 
     private function next(RequestInterface $request, Deferred $deferred)
