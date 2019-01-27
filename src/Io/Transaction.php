@@ -21,6 +21,8 @@ class Transaction
     private $sender;
     private $messageFactory;
     private $loop;
+    private $requestHandlerQueue;
+    private $responseHandlerQueue;
 
     // context: http.timeout (ini_get('default_socket_timeout'): 60)
     private $timeout;
@@ -41,6 +43,8 @@ class Transaction
         $this->sender = $sender;
         $this->messageFactory = $messageFactory;
         $this->loop = $loop;
+        $this->requestHandlerQueue = array();
+        $this->responseHandlerQueue = array();
     }
 
     /**
@@ -67,6 +71,10 @@ class Transaction
 
     public function send(RequestInterface $request)
     {
+        foreach ($this->requestHandlerQueue as $handler) {
+            $request = $handler($request);
+        }
+
         $deferred = new Deferred(function () use (&$deferred) {
             if (isset($deferred->pending)) {
                 $deferred->pending->cancel();
@@ -164,6 +172,10 @@ class Transaction
     public function onResponse(ResponseInterface $response, RequestInterface $request, $deferred)
     {
         $this->progress('response', array($response, $request));
+        
+        foreach ($this->responseHandlerQueue as $handler) {
+            $response = $handler($response, $request);
+        }
 
         if ($this->followRedirects && ($response->getStatusCode() >= 300 && $response->getStatusCode() < 400)) {
             return $this->onResponseRedirect($response, $request, $deferred);
@@ -241,5 +253,33 @@ class Transaction
         }
 
         echo PHP_EOL;
+    }
+
+    public function addRequestHandler(callable $handler)
+    {
+        $this->requestHandlerQueue[] = $handler;
+    }
+
+    public function addResponseHandler(callable $handler)
+    {
+        $this->responseHandlerQueue[] = $handler;
+    }
+
+    public function removeRequestHandler(callable $handler) 
+    {
+        foreach ($this->requestHandlerQueue as $idx => $h) {
+            if ($handler == $h) {
+                unset($this->requestHandlerQueue[$idx]);
+            }
+        }
+    }
+
+    public function removeResponseHandler(callable $handler) 
+    {
+        foreach ($this->responseHandlerQueue as $idx => $h) {
+            if ($handler == $h) {
+                unset($this->responseHandlerQueue[$idx]);
+            }
+        }
     }
 }
