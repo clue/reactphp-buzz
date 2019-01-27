@@ -244,7 +244,8 @@ class CookieJar
         foreach ($cookieHeaders as $line) {
             $cookie = CookieSet::fromString($line);
 
-            if (empty($cookie->getDomain())) {
+            $domain = $cookie->getDomain();
+            if (empty($domain)) {
                 $cookie->setDomain($defaultHost);
             }
             $this->setCookie($cookie);
