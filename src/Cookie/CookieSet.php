@@ -7,7 +7,7 @@ namespace Clue\React\Buzz\Cookie;
 class CookieSet
 {
     /** @var array */
-    private static $properties = [
+    private static $properties = array(
         'Name'     => null,
         'Value'    => null,
         'Domain'   => null,
@@ -17,7 +17,7 @@ class CookieSet
         'Secure'   => false,
         'Discard'  => false,
         'HttpOnly' => false
-    ];
+    );
 
     /** @var array Cookie data */
     private $data;
