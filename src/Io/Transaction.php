@@ -255,16 +255,29 @@ class Transaction
         echo PHP_EOL;
     }
 
+    /**
+     * Add a handler (callable object) which receives the Request object and
+     * can (or not) modify it. This handler must return a request object,
+     * whether or not there was any change.
+     */
     public function addRequestHandler(callable $handler)
     {
         $this->requestHandlerQueue[] = $handler;
     }
 
+    /**
+     * Add a handler (callable object) which receives the Response and Request objects
+     * (each one as one argument) and can (or not) modify the Response object. 
+     * This handler must return a response object, whether or not there was any change.
+     */
     public function addResponseHandler(callable $handler)
     {
         $this->responseHandlerQueue[] = $handler;
     }
 
+    /**
+     * Remove a request-handler previously added in list
+     */
     public function removeRequestHandler(callable $handler) 
     {
         foreach ($this->requestHandlerQueue as $idx => $h) {
@@ -274,6 +287,9 @@ class Transaction
         }
     }
 
+    /**
+     * Remove a response-handler previously added in list
+     */
     public function removeResponseHandler(callable $handler) 
     {
         foreach ($this->responseHandlerQueue as $idx => $h) {
