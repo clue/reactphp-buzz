@@ -5,6 +5,7 @@ namespace Clue\React\Buzz;
 use Clue\React\Buzz\Io\Sender;
 use Clue\React\Buzz\Io\Transaction;
 use Clue\React\Buzz\Message\MessageFactory;
+use Clue\React\Buzz\Cookie\CookieJar;
 use InvalidArgumentException;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\UriInterface;
@@ -12,7 +13,6 @@ use React\EventLoop\LoopInterface;
 use React\Promise\PromiseInterface;
 use React\Socket\ConnectorInterface;
 use React\Stream\ReadableStreamInterface;
-use Clue\React\Buzz\Cookie\CookieJar;
 
 class Browser
 {
@@ -66,7 +66,6 @@ class Browser
             $this->messageFactory,
             $loop
         );
-
         $this->setCookieJar(new CookieJar());
     }
 
@@ -81,14 +80,30 @@ class Browser
     }
 
     /**
+     *
+     * This method will automatically add a matching `Content-Length` request
+     * header if the outgoing request body is a `string`. If you're using a
+     * streaming request body (`ReadableStreamInterface`), it will default to
+     * using `Transfer-Encoding: chunked` or you have to explicitly pass in a
+     * matching `Content-Length` request header like so:
+     *
+     * ```php
+     * $body = new ThroughStream();
+     * $loop->addTimer(1.0, function () use ($body) {
+     *     $body->end("hello world");
+     * });
+     *
+     * $browser->post($url, array('Content-Length' => '11'), $body);
+     * ```
+     *
      * @param string|UriInterface            $url     URI for the request.
      * @param array                          $headers
-     * @param string|ReadableStreamInterface $content
+     * @param string|ReadableStreamInterface $contents
      * @return PromiseInterface
      */
-    public function post($url, array $headers = array(), $content = '')
+    public function post($url, array $headers = array(), $contents = '')
     {
-        return $this->send($this->messageFactory->request('POST', $url, $headers, $content));
+        return $this->send($this->messageFactory->request('POST', $url, $headers, $contents));
     }
 
     /**
@@ -102,36 +117,68 @@ class Browser
     }
 
     /**
+     *
+     * This method will automatically add a matching `Content-Length` request
+     * header if the outgoing request body is a `string`. If you're using a
+     * streaming request body (`ReadableStreamInterface`), it will default to
+     * using `Transfer-Encoding: chunked` or you have to explicitly pass in a
+     * matching `Content-Length` request header like so:
+     *
+     * ```php
+     * $body = new ThroughStream();
+     * $loop->addTimer(1.0, function () use ($body) {
+     *     $body->end("hello world");
+     * });
+     *
+     * $browser->patch($url, array('Content-Length' => '11'), $body);
+     * ```
+     *
      * @param string|UriInterface            $url     URI for the request.
      * @param array                          $headers
-     * @param string|ReadableStreamInterface $content
+     * @param string|ReadableStreamInterface $contents
      * @return PromiseInterface
      */
-    public function patch($url, array $headers = array(), $content = '')
+    public function patch($url, array $headers = array(), $contents = '')
     {
-        return $this->send($this->messageFactory->request('PATCH', $url , $headers, $content));
+        return $this->send($this->messageFactory->request('PATCH', $url , $headers, $contents));
+    }
+
+    /**
+     *
+     * This method will automatically add a matching `Content-Length` request
+     * header if the outgoing request body is a `string`. If you're using a
+     * streaming request body (`ReadableStreamInterface`), it will default to
+     * using `Transfer-Encoding: chunked` or you have to explicitly pass in a
+     * matching `Content-Length` request header like so:
+     *
+     * ```php
+     * $body = new ThroughStream();
+     * $loop->addTimer(1.0, function () use ($body) {
+     *     $body->end("hello world");
+     * });
+     *
+     * $browser->put($url, array('Content-Length' => '11'), $body);
+     * ```
+     *
+     * @param string|UriInterface            $url     URI for the request.
+     * @param array                          $headers
+     * @param string|ReadableStreamInterface $contents
+     * @return PromiseInterface
+     */
+    public function put($url, array $headers = array(), $contents = '')
+    {
+        return $this->send($this->messageFactory->request('PUT', $url, $headers, $contents));
     }
 
     /**
      * @param string|UriInterface            $url     URI for the request.
      * @param array                          $headers
-     * @param string|ReadableStreamInterface $content
+     * @param string|ReadableStreamInterface $contents
      * @return PromiseInterface
      */
-    public function put($url, array $headers = array(), $content = '')
+    public function delete($url, array $headers = array(), $contents = '')
     {
-        return $this->send($this->messageFactory->request('PUT', $url, $headers, $content));
-    }
-
-    /**
-     * @param string|UriInterface            $url     URI for the request.
-     * @param array                          $headers
-     * @param string|ReadableStreamInterface $content
-     * @return PromiseInterface
-     */
-    public function delete($url, array $headers = array(), $content = '')
-    {
-        return $this->send($this->messageFactory->request('DELETE', $url, $headers, $content));
+        return $this->send($this->messageFactory->request('DELETE', $url, $headers, $contents));
     }
 
     /**
@@ -140,6 +187,9 @@ class Browser
      * ```php
      * $browser->submit($url, array('user' => 'test', 'password' => 'secret'));
      * ```
+     *
+     * This method will automatically add a matching `Content-Length` request
+     * header for the encoded length of the given `$fields`.
      *
      * @param string|UriInterface $url     URI for the request.
      * @param array               $fields
@@ -150,9 +200,9 @@ class Browser
     public function submit($url, array $fields, $headers = array(), $method = 'POST')
     {
         $headers['Content-Type'] = 'application/x-www-form-urlencoded';
-        $content = http_build_query($fields);
+        $contents = http_build_query($fields);
 
-        return $this->send($this->messageFactory->request($method, $url, $headers, $content));
+        return $this->send($this->messageFactory->request($method, $url, $headers, $contents));
     }
 
     /**
@@ -168,6 +218,12 @@ class Browser
      *
      * $browser->send($request)->then(…);
      * ```
+     *
+     * This method will automatically add a matching `Content-Length` request
+     * header if the size of the outgoing request body is known and non-empty.
+     * For an empty request body, if will only include a `Content-Length: 0`
+     * request header if the request method usually expects a request body (only
+     * applies to `POST`, `PUT` and `PATCH`).
      *
      * @param RequestInterface $request
      * @return PromiseInterface
@@ -283,11 +339,20 @@ class Browser
         return $browser;
     }
 
+    /**
+    * Returns the CookieJar handler.
+    * @return CookieJar
+    */
     public function getCookieJar()
     {
         return $this->cookieJar;
     }
 
+    /**
+    * Set the CookieJar handler.
+    * This object is responsible for managing cookies in all requests.
+    * @param CookieJar $cookieJar
+    */
     public function setCookieJar($cookieJar) {
         if ($this->cookieJar !== null) {
             $this->transaction->removeRequestHandler([$this->cookieJar, 'onRequest']);
