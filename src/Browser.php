@@ -355,8 +355,8 @@ class Browser
     */
     public function setCookieJar($cookieJar) {
         if ($this->cookieJar !== null) {
-            $this->transaction->removeRequestHandler([$this->cookieJar, 'onRequest']);
-            $this->transaction->removeResponseHandler([$this->cookieJar, 'onResponse']);
+            $this->transaction->removeRequestHandler(array($this->cookieJar, 'onRequest'));
+            $this->transaction->removeResponseHandler(array($this->cookieJar, 'onResponse'));
         }
         $this->cookieJar = $cookieJar;
 
