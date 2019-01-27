@@ -260,7 +260,7 @@ class Transaction
      * can (or not) modify it. This handler must return a request object,
      * whether or not there was any change.
      */
-    public function addRequestHandler(callable $handler)
+    public function addRequestHandler($handler)
     {
         $this->requestHandlerQueue[] = $handler;
     }
@@ -270,7 +270,7 @@ class Transaction
      * (each one as one argument) and can (or not) modify the Response object. 
      * This handler must return a response object, whether or not there was any change.
      */
-    public function addResponseHandler(callable $handler)
+    public function addResponseHandler($handler)
     {
         $this->responseHandlerQueue[] = $handler;
     }
@@ -278,7 +278,7 @@ class Transaction
     /**
      * Remove a request-handler previously added in list
      */
-    public function removeRequestHandler(callable $handler) 
+    public function removeRequestHandler($handler) 
     {
         foreach ($this->requestHandlerQueue as $idx => $h) {
             if ($handler == $h) {
@@ -290,7 +290,7 @@ class Transaction
     /**
      * Remove a response-handler previously added in list
      */
-    public function removeResponseHandler(callable $handler) 
+    public function removeResponseHandler($handler) 
     {
         foreach ($this->responseHandlerQueue as $idx => $h) {
             if ($handler == $h) {
