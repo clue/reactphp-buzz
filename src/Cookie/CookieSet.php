@@ -42,9 +42,11 @@ class CookieSet
                 $data['Name'] = $key;
                 $data['Value'] = $value;
             } else {
-                $key = strcasecmp($key, 'HttpOnly') === 0 ? 'HttpOnly' : ucwords($key, ' -');
-                if (array_key_exists($key, self::$properties)) {
-                    $data[$key] = $value;
+                foreach (self::$properties as $k => $v) {
+                    if(strcasecmp($key, $k) === 0) {
+                        $data[$k] = $value;
+                        break;
+                    }
                 }
             }
         }
