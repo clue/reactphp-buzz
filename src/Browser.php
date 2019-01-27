@@ -361,8 +361,8 @@ class Browser
         $this->cookieJar = $cookieJar;
 
         if ($cookieJar !== null) {
-            $this->transaction->addRequestHandler([$this->cookieJar, 'onRequest']);
-            $this->transaction->addResponseHandler([$this->cookieJar, 'onResponse']);
+            $this->transaction->addRequestHandler(array($this->cookieJar, 'onRequest'));
+            $this->transaction->addResponseHandler(array($this->cookieJar, 'onResponse'));
         }
     }
 }
