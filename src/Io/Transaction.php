@@ -259,43 +259,47 @@ class Transaction
      * Add a handler (callable object) which receives the Request object and
      * can (or not) modify it. This handler must return a request object,
      * whether or not there was any change.
+     * 
+     * @param callable $handler
+     * @param string $identifier Name to identify this handler in the future
      */
-    public function addRequestHandler($handler)
+    public function addRequestHandler($handler, $identifier)
     {
-        $this->requestHandlerQueue[] = $handler;
+        $this->requestHandlerQueue[$identifier] = $handler;
     }
 
     /**
      * Add a handler (callable object) which receives the Response and Request objects
      * (each one as one argument) and can (or not) modify the Response object. 
      * This handler must return a response object, whether or not there was any change.
+     * 
+     * @param callable $handler
+     * @param string $identifier Name to identify this handler in the future
      */
-    public function addResponseHandler($handler)
+    public function addResponseHandler($handler, $identifier)
     {
         $this->responseHandlerQueue[] = $handler;
     }
 
     /**
      * Remove a request-handler previously added in list
+     * @param string $handlerIdentifier
      */
-    public function removeRequestHandler($handler) 
+    public function removeRequestHandler($handlerIdentifier) 
     {
-        foreach ($this->requestHandlerQueue as $idx => $h) {
-            if ($handler == $h) {
-                unset($this->requestHandlerQueue[$idx]);
-            }
+        if (isset($this->requestHandlerQueue[$handlerIdentifier])) {
+            unset($this->requestHandlerQueue[$handlerIdentifier]);
         }
     }
 
     /**
      * Remove a response-handler previously added in list
+     * @param string $handlerIdentifier
      */
-    public function removeResponseHandler($handler) 
+    public function removeResponseHandler($handlerIdentifier) 
     {
-        foreach ($this->responseHandlerQueue as $idx => $h) {
-            if ($handler == $h) {
-                unset($this->responseHandlerQueue[$idx]);
-            }
+        if (isset($this->responseHandlerQueue[$handlerIdentifier])) {
+            unset($this->responseHandlerQueue[$handlerIdentifier]);
         }
     }
 }

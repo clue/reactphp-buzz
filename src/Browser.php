@@ -354,15 +354,17 @@ class Browser
     * @param CookieJar $cookieJar
     */
     public function setCookieJar($cookieJar) {
-        if ($this->cookieJar !== null) {
-            $this->transaction->removeRequestHandler(array($this->cookieJar, 'onRequest'));
-            $this->transaction->removeResponseHandler(array($this->cookieJar, 'onResponse'));
-        }
         $this->cookieJar = $cookieJar;
 
-        if ($cookieJar !== null) {
-            $this->transaction->addRequestHandler(array($this->cookieJar, 'onRequest'));
-            $this->transaction->addResponseHandler(array($this->cookieJar, 'onResponse'));
-        }
+        // to work with PHP 5.3
+        $jar = &$this->cookieJar;
+        $requestCallback = function($request) use ($jar) {
+            return $jar === null ? $request : $jar->onRequest($request);
+        };
+        $responseCallback = function($response, $request) use ($jar) {
+            return $jar === null ? $response : $jar->onResponse($response, $request);
+        };
+        $this->transaction->addRequestHandler($requestCallback, 'browser-cookie-jar');
+        $this->transaction->addResponseHandler($responseCallback, 'browser-cookie-jar');
     }
 }
