@@ -293,7 +293,7 @@ class CookieSet
     {
         return $this->data['HttpOnly'];
     }
-
+ 
     /**
      * Set whether or not this is an HTTP only cookie
      *
