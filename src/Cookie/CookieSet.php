@@ -43,12 +43,16 @@ class CookieSet
                 $data['Value'] = $value;
             } else {
                 foreach (self::$properties as $k => $v) {
-                    if(strcasecmp($key, $k) === 0) {
+                    if (strcasecmp($key, $k) === 0) {
                         $data[$k] = $value;
                         break;
                     }
                 }
             }
+        }
+
+        if ($data['Expires'] !== null && !is_numeric($data['Expires'])) {
+            $data['Expires'] = strtotime($data['Expires']);
         }
 
         return new self($data);
@@ -227,7 +231,7 @@ class CookieSet
      */
     public function setExpires($timestamp)
     {
-        $this->data['Expires'] = is_numeric($timestamp) ? (int) $timestamp : strtotime($timestamp);
+        $this->data['Expires'] = is_numeric($timestamp) ? (int)$timestamp : strtotime($timestamp);
     }
 
     /**
