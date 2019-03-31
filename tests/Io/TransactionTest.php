@@ -157,6 +157,42 @@ class TransactionTest extends TestCase
         $this->assertEquals('', (string)$response->getBody());
     }
 
+    public function testResponseCode304WithoutLocationWillResolveWithResponseAsIs()
+    {
+        $messageFactory = new MessageFactory();
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+
+        // conditional GET request will respond with 304 (Not Modified
+        $request = $messageFactory->request('GET', 'http://example.com', array('If-None-Match' => '"abc"'));
+        $response = $messageFactory->response(1.0, 304, null, array('ETag' => '"abc"'));
+        $sender = $this->makeSenderMock();
+        $sender->expects($this->once())->method('send')->with($request)->willReturn(Promise\resolve($response));
+
+        $transaction = new Transaction($sender, $messageFactory, $loop);
+        $promise = $transaction->send($request);
+
+        $promise->then($this->expectCallableOnceWith($response));
+    }
+
+    public function testCustomRedirectResponseCode333WillFollowLocationHeaderAndSendRedirectedRequest()
+    {
+        $messageFactory = new MessageFactory();
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+
+        // original GET request will respond with custom 333 redirect status code and follow location header
+        $requestOriginal = $messageFactory->request('GET', 'http://example.com');
+        $response = $messageFactory->response(1.0, 333, null, array('Location' => 'foo'));
+        $requestRedirected = $messageFactory->request('GET', 'http://example.com/foo');
+        $sender = $this->makeSenderMock();
+        $sender->expects($this->exactly(2))->method('send')->withConsecutive($requestOriginal, $requestRedirected)->willReturnOnConsecutiveCalls(
+            Promise\resolve($response),
+            new \React\Promise\Promise(function () { })
+        );
+
+        $transaction = new Transaction($sender, $messageFactory, $loop);
+        $transaction->send($requestOriginal);
+    }
+
     public function testFollowingRedirectWithSpecifiedHeaders()
     {
         $messageFactory = new MessageFactory();
@@ -540,6 +576,17 @@ class TransactionTest extends TestCase
         $mock
             ->expects($this->once())
             ->method('__invoke');
+
+        return $mock;
+    }
+
+    protected function expectCallableOnceWith($value)
+    {
+        $mock = $this->createCallableMock();
+        $mock
+            ->expects($this->once())
+            ->method('__invoke')
+            ->with($value);
 
         return $mock;
     }
