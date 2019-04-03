@@ -179,6 +179,15 @@ class FunctionalBrowserTest extends TestCase
      * @group online
      * @doesNotPerformAssertions
      */
+    public function testResponseStatus300WithoutLocationShouldResolveWithoutFollowingRedirect()
+    {
+        Block\await($this->browser->get($this->base . 'status/300'), $this->loop);
+    }
+
+    /**
+     * @group online
+     * @doesNotPerformAssertions
+     */
     public function testCanAccessHttps()
     {
         if (!function_exists('stream_socket_enable_crypto')) {

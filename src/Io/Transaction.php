@@ -165,7 +165,9 @@ class Transaction
     {
         $this->progress('response', array($response, $request));
 
-        if ($this->followRedirects && ($response->getStatusCode() >= 300 && $response->getStatusCode() < 400)) {
+        // follow 3xx (Redirection) response status codes if Location header is present and not explicitly disabled
+        // @link https://tools.ietf.org/html/rfc7231#section-6.4
+        if ($this->followRedirects && ($response->getStatusCode() >= 300 && $response->getStatusCode() < 400) && $response->hasHeader('Location')) {
             return $this->onResponseRedirect($response, $request, $deferred);
         }
 
