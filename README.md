@@ -241,7 +241,7 @@ $promise = $browser->get('https://user:pass@example.com/api');
 ```
 
 Note that special characters in the authentication details have to be
-percent-encoded, see also [`rawurlencode()`](http://php.net/rawurlencode).
+percent-encoded, see also [`rawurlencode()`](https://www.php.net/manual/en/function.rawurlencode.php).
 This example will automatically pass the base64-encoded authentiation details
 using the outgoing `Authorization: Basic …` request header. If the HTTP endpoint
 you're talking to requires any other authentication scheme, you can also pass
@@ -521,7 +521,7 @@ change the options to use:
 
 The [`Browser`](#browser) class exposes several options for the handling of
 HTTP transactions. These options resemble some of PHP's
-[HTTP context options](http://php.net/manual/en/context.http.php) and
+[HTTP context options](https://www.php.net/manual/en/context.http.php) and
 can be controlled via the following API (and their defaults):
 
 ```php
@@ -701,7 +701,7 @@ This project follows [SemVer](https://semver.org/).
 This will install the latest supported version:
 
 ```bash
-$ composer require clue/buzz-react:^2.5
+$ composer require clue/buzz-react:^2.6
 ```
 
 See also the [CHANGELOG](CHANGELOG.md) for details about version upgrades.

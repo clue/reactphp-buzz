@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.6.0 (2019-04-03)
+
+*   Feature / Fix: Add `Content-Length: 0` request header for empty `POST` request etc.
+    (#120 by @clue)
+
+*   Fix: Only try to follow redirects if `Location` response header is present.
+    (#130 by @clue)
+
+*   Documentation and example for SSH proxy (SSH tunnel) and update SOCKS proxy example.
+    (#116, #119 and #121 by @clue)
+
+*   Improve test suite and also run tests on PHP 7.3.
+    (#122 by @samnela)
+
 ## 2.5.0 (2018-10-24)
 
 *   Feature: Add HTTP timeout option.
