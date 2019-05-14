@@ -242,7 +242,7 @@ $promise = $browser->get('https://user:pass@example.com/api');
 
 Note that special characters in the authentication details have to be
 percent-encoded, see also [`rawurlencode()`](https://www.php.net/manual/en/function.rawurlencode.php).
-This example will automatically pass the base64-encoded authentiation details
+This example will automatically pass the base64-encoded authentication details
 using the outgoing `Authorization: Basic …` request header. If the HTTP endpoint
 you're talking to requires any other authentication scheme, you can also pass
 this header explicitly. This is common when using (RESTful) HTTP APIs that use
