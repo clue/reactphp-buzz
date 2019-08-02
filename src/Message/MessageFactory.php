@@ -8,12 +8,77 @@ use RingCentral\Psr7\Request;
 use RingCentral\Psr7\Response;
 use RingCentral\Psr7\Uri;
 use React\Stream\ReadableStreamInterface;
+use Clue\React\Zlib\ZlibFilterStream;
 
 /**
  * @internal
  */
 class MessageFactory
 {
+    /**
+     * Creates an associative array of lowercase header names to the actual header
+     *  casing.
+     *
+     * @param array $headers Associative array of HTML headers
+     *
+     * @return array
+     */
+    private static function _normalizeHeaderKeys(array $headers)
+    {
+        $result = [];
+
+        foreach (array_keys($headers) as $key) {
+            $result[strtolower($key)] = $key;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Automatically decode (decompress) responses when instructed.
+     *
+     * @param array                          $options Response options
+     * @param array                          $headers Response headers
+     * @param ReadableStreamInterface|string $body    Response body
+     * 
+     * @return ReadableStreamInterface|string
+     */
+    private static function _checkDecode(array $options, array &$headers, $body)
+    {
+        if (!empty($options['decodeContent'])
+            && $body instanceof ReadableStreamInterface
+            && extension_loaded('zlib')
+        ) {
+            $normalizedKeys = self::_normalizeHeaderKeys($headers);
+
+            if (isset($normalizedKeys['content-encoding'])) {
+                $encoding = $headers[$normalizedKeys['content-encoding']];
+
+                if ($encoding === 'gzip' || $encoding === 'deflate') {
+                    $body = $body->pipe(
+                        $encoding === 'gzip'
+                        ? ZlibFilterStream::createGzipDecompressor()
+                        : ZlibFilterStream::createZlibDecompressor()
+                    );
+
+                    // Remove content-encoding header
+                    $headers['x-encoded-content-encoding']
+                        = $headers[$normalizedKeys['content-encoding']];
+                    unset($headers[$normalizedKeys['content-encoding']]);
+
+                    if (isset($normalizedKeys['content-length'])) {
+                        // Remove content-length header
+                        $headers['x-encoded-content-length']
+                            = $headers[$normalizedKeys['content-length']];
+                        unset($headers[$normalizedKeys['content-length']]);
+                    }
+                }
+            }
+        }
+
+        return $body;
+    }
+
     /**
      * Creates a new instance of RequestInterface for the given request parameters
      *
@@ -36,11 +101,16 @@ class MessageFactory
      * @param string $reason
      * @param array  $headers
      * @param ReadableStreamInterface|string $body
+     * @param array $options Associative array containing the following options:
+     *                       'decodeContent' => [bool]: whether response body
+     *                       contents should be decoded (decompressed)
      * @return Response
      * @uses self::body()
      */
-    public function response($version, $status, $reason, $headers = array(), $body = '')
+    public function response($version, $status, $reason, $headers = array(), $body = '', $options = array())
     {
+        $body = self::_checkDecode($options, $headers, $body);
+
         return new Response($status, $headers, $this->body($body), $version, $reason);
     }
 

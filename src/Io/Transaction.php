@@ -36,6 +36,8 @@ class Transaction
 
     private $streaming = false;
 
+    private $decodeContent = true;
+
     public function __construct(Sender $sender, MessageFactory $messageFactory, LoopInterface $loop)
     {
         $this->sender = $sender;
@@ -104,7 +106,7 @@ class Transaction
         $that = $this;
         ++$deferred->numRequests;
 
-        $promise = $this->sender->send($request);
+        $promise = $this->sender->send($request, ['decodeContent' => $this->decodeContent]);
 
         if (!$this->streaming) {
             $promise = $promise->then(function ($response) use ($deferred, $that) {

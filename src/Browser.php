@@ -315,6 +315,7 @@ class Browser
      *     'maxRedirects' => 10,
      *     'obeySuccessCode' => true,
      *     'streaming' => false,
+     *     'decodeContent' => true
      * ));
      * ```
      *

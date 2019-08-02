@@ -72,9 +72,12 @@ class Sender
      *
      * @internal
      * @param RequestInterface $request
+     * @param array $options Associative array containing the following options:
+     *                       'decodeContent' => [bool]: whether response body
+     *                       contents should be decoded (decompressed)
      * @return PromiseInterface Promise<ResponseInterface, Exception>
      */
-    public function send(RequestInterface $request)
+    public function send(RequestInterface $request, array $options = [])
     {
         $body = $request->getBody();
         $size = $body->getSize();
@@ -111,14 +114,15 @@ class Sender
         });
 
         $messageFactory = $this->messageFactory;
-        $requestStream->on('response', function (ResponseStream $responseStream) use ($deferred, $messageFactory) {
+        $requestStream->on('response', function (ResponseStream $responseStream) use ($deferred, $messageFactory, &$options) {
             // apply response header values from response stream
             $deferred->resolve($messageFactory->response(
                 $responseStream->getVersion(),
                 $responseStream->getCode(),
                 $responseStream->getReasonPhrase(),
                 $responseStream->getHeaders(),
-                $responseStream
+                $responseStream,
+                $options
             ));
         });
 

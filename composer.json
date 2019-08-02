@@ -23,7 +23,8 @@
         "react/promise-timer": "^1.2",
         "react/socket": "^1.1",
         "react/stream": "^1.0 || ^0.7",
-        "ringcentral/psr7": "^1.2"
+        "ringcentral/psr7": "^1.2",
+        "clue/zlib-react": "^0.2.1"
     },
     "require-dev": {
         "clue/block-react": "^1.0",
