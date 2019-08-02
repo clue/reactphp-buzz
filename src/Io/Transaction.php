@@ -106,7 +106,7 @@ class Transaction
         $that = $this;
         ++$deferred->numRequests;
 
-        $promise = $this->sender->send($request, ['decodeContent' => $this->decodeContent]);
+        $promise = $this->sender->send($request, array('decodeContent' => $this->decodeContent));
 
         if (!$this->streaming) {
             $promise = $promise->then(function ($response) use ($deferred, $that) {

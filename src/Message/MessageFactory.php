@@ -25,7 +25,7 @@ class MessageFactory
      */
     private static function _normalizeHeaderKeys(array $headers)
     {
-        $result = [];
+        $result = array();
 
         foreach (array_keys($headers) as $key) {
             $result[strtolower($key)] = $key;

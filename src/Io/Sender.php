@@ -77,7 +77,7 @@ class Sender
      *                       contents should be decoded (decompressed)
      * @return PromiseInterface Promise<ResponseInterface, Exception>
      */
-    public function send(RequestInterface $request, array $options = [])
+    public function send(RequestInterface $request, array $options = array())
     {
         $body = $request->getBody();
         $size = $body->getSize();
