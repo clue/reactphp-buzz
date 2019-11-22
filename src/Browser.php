@@ -5,6 +5,7 @@ namespace Clue\React\Buzz;
 use Clue\React\Buzz\Io\Sender;
 use Clue\React\Buzz\Io\Transaction;
 use Clue\React\Buzz\Message\MessageFactory;
+use Clue\React\Buzz\Middleware\MiddlewareInterface;
 use InvalidArgumentException;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\UriInterface;
@@ -21,6 +22,8 @@ class Browser
 
     /** @var LoopInterface $loop */
     private $loop;
+
+    private $middleware = array();
 
     /**
      * The `Browser` is responsible for sending HTTP requests to your HTTP server
@@ -232,7 +235,37 @@ class Browser
             $request = $request->withUri($this->messageFactory->expandBase($request->getUri(), $this->baseUri));
         }
 
-        return $this->transaction->send($request);
+        $chain = $this->createMiddlewareChain($this->middleware, function (RequestInterface $request) {
+            return $this->transaction->send($request);
+        });
+
+        // Call the chain
+        return $chain($request);
+    }
+
+    /**
+     * Creates the middleware chain.
+     *
+     * @param MiddlewareInterface[] $middleware
+     * @param callable $requestChainLast
+     *
+     * @return callable
+     */
+    private function createMiddlewareChain(array $middleware, callable $requestChainLast): callable
+    {
+        $middleware = array_reverse($middleware);
+
+        // Build request chain
+        $requestChainNext = $requestChainLast;
+        foreach ($middleware as $m) {
+            $lastCallable = static function (RequestInterface $request) use ($m, $requestChainNext) {
+                return $m->handleRequest($request, $requestChainNext);
+            };
+
+            $requestChainNext = $lastCallable;
+        }
+
+        return $requestChainNext;
     }
 
     /**
@@ -332,6 +365,25 @@ class Browser
     {
         $browser = clone $this;
         $browser->transaction = $this->transaction->withOptions($options);
+
+        return $browser;
+    }
+
+    /**
+     * Adds a [`MiddlewareInterface`] to the [`Browser`](#browser).
+     *
+     * Notice that the [`Browser`](#browser) is an immutable object, i.e. this
+     * method actually returns a *new* [`Browser`](#browser) instance with the
+     * options applied.
+     *
+     * @param MiddlewareInterface $middleware
+     *
+     * @return Browser
+     */
+    public function withMiddleware(MiddlewareInterface $middleware)
+    {
+        $browser = clone $this;
+        $browser->middleware[] = $middleware;
 
         return $browser;
     }
