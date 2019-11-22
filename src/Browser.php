@@ -23,6 +23,7 @@ class Browser
     /** @var LoopInterface $loop */
     private $loop;
 
+    /** @var MiddlewareInterface[] */
     private $middleware = array();
 
     /**
