@@ -236,8 +236,9 @@ class Browser
             $request = $request->withUri($this->messageFactory->expandBase($request->getUri(), $this->baseUri));
         }
 
-        $chain = $this->createMiddlewareChain($this->middleware, function (RequestInterface $request) {
-            return $this->transaction->send($request);
+        $self = $this;
+        $chain = $this->createMiddlewareChain($this->middleware, function (RequestInterface $request) use ($self) {
+            return $self->transaction->send($request);
         });
 
         // Call the chain
@@ -252,7 +253,7 @@ class Browser
      *
      * @return callable
      */
-    private function createMiddlewareChain(array $middleware, callable $requestChainLast): callable
+    private function createMiddlewareChain(array $middleware, callable $requestChainLast)
     {
         $middleware = array_reverse($middleware);
 
