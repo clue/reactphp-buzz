@@ -184,7 +184,7 @@ class TransactionTest extends TestCase
         $response = $messageFactory->response(1.0, 333, null, array('Location' => 'foo'));
         $requestRedirected = $messageFactory->request('GET', 'http://example.com/foo');
         $sender = $this->makeSenderMock();
-        $sender->expects($this->exactly(2))->method('send')->withConsecutive($requestOriginal, $requestRedirected)->willReturnOnConsecutiveCalls(
+        $sender->expects($this->exactly(2))->method('send')->withConsecutive(array($requestOriginal))->willReturnOnConsecutiveCalls(
             Promise\resolve($response),
             new \React\Promise\Promise(function () { })
         );
