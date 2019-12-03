@@ -13,7 +13,7 @@ php:
   - hhvm # ignore errors, see below
 
 # lock distro so new future defaults will not break the build
-dist: trusty
+dist: xenial
 
 matrix:
   include:
