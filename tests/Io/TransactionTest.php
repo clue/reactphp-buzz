@@ -1,16 +1,16 @@
 <?php
 
+use Clue\React\Block;
 use Clue\React\Buzz\Io\Transaction;
+use Clue\React\Buzz\Message\MessageFactory;
 use Clue\React\Buzz\Message\ResponseException;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Http\Message\RequestInterface;
-use RingCentral\Psr7\Response;
-use Clue\React\Buzz\Message\MessageFactory;
-use React\Promise;
-use Clue\React\Block;
 use React\EventLoop\Factory;
-use React\Stream\ThroughStream;
+use React\Promise;
 use React\Promise\Deferred;
+use React\Stream\ThroughStream;
+use RingCentral\Psr7\Response;
 
 class TransactionTest extends TestCase
 {
@@ -182,9 +182,13 @@ class TransactionTest extends TestCase
         // original GET request will respond with custom 333 redirect status code and follow location header
         $requestOriginal = $messageFactory->request('GET', 'http://example.com');
         $response = $messageFactory->response(1.0, 333, null, array('Location' => 'foo'));
-        $requestRedirected = $messageFactory->request('GET', 'http://example.com/foo');
         $sender = $this->makeSenderMock();
-        $sender->expects($this->exactly(2))->method('send')->withConsecutive(array($requestOriginal))->willReturnOnConsecutiveCalls(
+        $sender->expects($this->exactly(2))->method('send')->withConsecutive(
+            array($requestOriginal),
+            array($this->callback(function (RequestInterface $request) {
+                return $request->getMethod() === 'GET' && (string)$request->getUri() === 'http://example.com/foo';
+            }))
+        )->willReturnOnConsecutiveCalls(
             Promise\resolve($response),
             new \React\Promise\Promise(function () { })
         );
