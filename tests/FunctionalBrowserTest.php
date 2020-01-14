@@ -1,8 +1,11 @@
 <?php
 
+namespace Clue\Tests\React\Buzz;
+
 use Clue\React\Block;
 use Clue\React\Buzz\Browser;
 use Clue\React\Buzz\Message\ResponseException;
+use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use React\EventLoop\Factory;
 use React\Http\Response;

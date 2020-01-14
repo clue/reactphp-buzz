@@ -1,8 +1,11 @@
 <?php
 
+namespace Clue\Tests\React\Buzz\Io;
+
 use Clue\React\Block;
 use Clue\React\Buzz\Io\Sender;
 use Clue\React\Buzz\Message\ReadableBodyStream;
+use PHPUnit\Framework\TestCase;
 use React\HttpClient\Client as HttpClient;
 use React\HttpClient\RequestData;
 use React\Promise;
@@ -48,7 +51,7 @@ class SenderTest extends TestCase
     public function testSenderConnectorRejection()
     {
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
-        $connector->expects($this->once())->method('connect')->willReturn(Promise\reject(new RuntimeException('Rejected')));
+        $connector->expects($this->once())->method('connect')->willReturn(Promise\reject(new \RuntimeException('Rejected')));
 
         $sender = new Sender(new HttpClient($this->loop, $connector), $this->getMockBuilder('Clue\React\Buzz\Message\MessageFactory')->getMock());
 
