@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.6.1 (2020-01-14)
+
+*   Improve test suite by testing against PHP 7.4 and simplify test setup and test matrix
+    and fix testing redirected request when following relative redirect.
+    (#145 and #147 by @clue)
+
+*   Add support / sponsorship info and fix documentation typo.
+    (#144 by @clue and #133 by @eislambey)
+
 ## 2.6.0 (2019-04-03)
 
 *   Feature / Fix: Add `Content-Length: 0` request header for empty `POST` request etc.
