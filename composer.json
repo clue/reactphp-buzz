@@ -13,6 +13,9 @@
     "autoload": {
         "psr-4": { "Clue\\React\\Buzz\\": "src/" }
     },
+    "autoload-dev": {
+        "psr-4": { "Clue\\Tests\\React\\Buzz\\": "tests/" }
+    },
     "require": {
         "php": ">=5.3",
         "psr/http-message": "^1.0",

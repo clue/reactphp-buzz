@@ -1,6 +1,9 @@
 <?php
 
+namespace Clue\Tests\React\Buzz\Message;
+
 use Clue\React\Buzz\Message\ReadableBodyStream;
+use PHPUnit\Framework\TestCase;
 use React\Stream\ThroughStream;
 
 class ReadableBodyStreamTest extends TestCase

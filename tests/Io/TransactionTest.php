@@ -1,10 +1,13 @@
 <?php
 
+namespace Clue\Tests\React\Buzz\Io;
+
 use Clue\React\Block;
 use Clue\React\Buzz\Io\Transaction;
 use Clue\React\Buzz\Message\MessageFactory;
 use Clue\React\Buzz\Message\ResponseException;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 use React\EventLoop\Factory;
 use React\Promise;
@@ -25,7 +28,7 @@ class TransactionTest extends TestCase
         $this->assertInstanceOf('Clue\React\Buzz\Io\Transaction', $new);
         $this->assertNotSame($transaction, $new);
 
-        $ref = new ReflectionProperty($new, 'followRedirects');
+        $ref = new \ReflectionProperty($new, 'followRedirects');
         $ref->setAccessible(true);
 
         $this->assertFalse($ref->getValue($new));
@@ -39,7 +42,7 @@ class TransactionTest extends TestCase
 
         $transaction->withOptions(array('followRedirects' => false));
 
-        $ref = new ReflectionProperty($transaction, 'followRedirects');
+        $ref = new \ReflectionProperty($transaction, 'followRedirects');
         $ref->setAccessible(true);
 
         $this->assertTrue($ref->getValue($transaction));
@@ -54,7 +57,7 @@ class TransactionTest extends TestCase
         $transaction = $transaction->withOptions(array('followRedirects' => false));
         $transaction = $transaction->withOptions(array('followRedirects' => null));
 
-        $ref = new ReflectionProperty($transaction, 'followRedirects');
+        $ref = new \ReflectionProperty($transaction, 'followRedirects');
         $ref->setAccessible(true);
 
         $this->assertTrue($ref->getValue($transaction));

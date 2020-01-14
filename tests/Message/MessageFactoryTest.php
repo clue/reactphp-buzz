@@ -1,6 +1,9 @@
 <?php
 
+namespace Clue\Tests\React\Buzz\Message;
+
 use Clue\React\Buzz\Message\MessageFactory;
+use PHPUnit\Framework\TestCase;
 
 class MessageFactoryTest extends TestCase
 {

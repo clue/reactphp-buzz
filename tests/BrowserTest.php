@@ -1,7 +1,10 @@
 <?php
 
+namespace Clue\Tests\React\Buzz;
+
 use Clue\React\Block;
 use Clue\React\Buzz\Browser;
+use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 use React\Promise\Promise;
 use RingCentral\Psr7\Uri;
@@ -18,7 +21,7 @@ class BrowserTest extends TestCase
         $this->sender = $this->getMockBuilder('Clue\React\Buzz\Io\Transaction')->disableOriginalConstructor()->getMock();
         $this->browser = new Browser($this->loop);
 
-        $ref = new ReflectionProperty($this->browser, 'transaction');
+        $ref = new \ReflectionProperty($this->browser, 'transaction');
         $ref->setAccessible(true);
         $ref->setValue($this->browser, $this->sender);
     }
