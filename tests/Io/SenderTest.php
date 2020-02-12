@@ -111,6 +111,44 @@ class SenderTest extends TestCase
         $sender->send($request);
     }
 
+    public function testSendPostStreamWillAutomaticallyPipeChunkEncodeBodyForWriteAndRespectRequestThrottling()
+    {
+        $outgoing = $this->getMockBuilder('React\HttpClient\Request')->disableOriginalConstructor()->getMock();
+        $outgoing->expects($this->once())->method('isWritable')->willReturn(true);
+        $outgoing->expects($this->once())->method('write')->with("5\r\nhello\r\n")->willReturn(false);
+
+        $client = $this->getMockBuilder('React\HttpClient\Client')->disableOriginalConstructor()->getMock();
+        $client->expects($this->once())->method('request')->willReturn($outgoing);
+
+        $sender = new Sender($client, $this->getMockBuilder('Clue\React\Buzz\Message\MessageFactory')->getMock());
+
+        $stream = new ThroughStream();
+        $request = new Request('POST', 'http://www.google.com/', array(), new ReadableBodyStream($stream));
+        $sender->send($request);
+
+        $ret = $stream->write('hello');
+        $this->assertFalse($ret);
+    }
+
+    public function testSendPostStreamWillAutomaticallyPipeChunkEncodeBodyForEnd()
+    {
+        $outgoing = $this->getMockBuilder('React\HttpClient\Request')->disableOriginalConstructor()->getMock();
+        $outgoing->expects($this->once())->method('isWritable')->willReturn(true);
+        $outgoing->expects($this->once())->method('write')->with("0\r\n\r\n")->willReturn(false);
+        $outgoing->expects($this->once())->method('end')->with(null);
+
+        $client = $this->getMockBuilder('React\HttpClient\Client')->disableOriginalConstructor()->getMock();
+        $client->expects($this->once())->method('request')->willReturn($outgoing);
+
+        $sender = new Sender($client, $this->getMockBuilder('Clue\React\Buzz\Message\MessageFactory')->getMock());
+
+        $stream = new ThroughStream();
+        $request = new Request('POST', 'http://www.google.com/', array(), new ReadableBodyStream($stream));
+        $sender->send($request);
+
+        $stream->end();
+    }
+
     public function testSendPostStreamWithExplicitContentLengthWillSendHeaderAsIs()
     {
         $client = $this->getMockBuilder('React\HttpClient\Client')->disableOriginalConstructor()->getMock();

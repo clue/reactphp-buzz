@@ -301,9 +301,7 @@ class FunctionalBrowserTest extends TestCase
         $stream = new ThroughStream();
 
         $this->loop->addTimer(0.001, function () use ($stream) {
-            $stream->emit('data', array('hello world'));
-            $stream->emit('end');
-            $stream->close();
+            $stream->end('hello world');
         });
 
         $response = Block\await($this->browser->post($this->base . 'post', array(), $stream), $this->loop);
