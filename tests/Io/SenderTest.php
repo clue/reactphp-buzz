@@ -96,13 +96,16 @@ class SenderTest extends TestCase
 
     public function testSendPostStreamWillAutomaticallySendTransferEncodingChunked()
     {
+        $outgoing = $this->getMockBuilder('React\HttpClient\Request')->disableOriginalConstructor()->getMock();
+        $outgoing->expects($this->once())->method('write')->with("");
+
         $client = $this->getMockBuilder('React\HttpClient\Client')->disableOriginalConstructor()->getMock();
         $client->expects($this->once())->method('request')->with(
             'POST',
             'http://www.google.com/',
             array('Host' => 'www.google.com', 'Transfer-Encoding' => 'chunked'),
             '1.1'
-        )->willReturn($this->getMockBuilder('React\HttpClient\Request')->disableOriginalConstructor()->getMock());
+        )->willReturn($outgoing);
 
         $sender = new Sender($client, $this->getMockBuilder('Clue\React\Buzz\Message\MessageFactory')->getMock());
 
@@ -115,7 +118,7 @@ class SenderTest extends TestCase
     {
         $outgoing = $this->getMockBuilder('React\HttpClient\Request')->disableOriginalConstructor()->getMock();
         $outgoing->expects($this->once())->method('isWritable')->willReturn(true);
-        $outgoing->expects($this->once())->method('write')->with("5\r\nhello\r\n")->willReturn(false);
+        $outgoing->expects($this->exactly(2))->method('write')->withConsecutive(array(""), array("5\r\nhello\r\n"))->willReturn(false);
 
         $client = $this->getMockBuilder('React\HttpClient\Client')->disableOriginalConstructor()->getMock();
         $client->expects($this->once())->method('request')->willReturn($outgoing);
@@ -134,7 +137,7 @@ class SenderTest extends TestCase
     {
         $outgoing = $this->getMockBuilder('React\HttpClient\Request')->disableOriginalConstructor()->getMock();
         $outgoing->expects($this->once())->method('isWritable')->willReturn(true);
-        $outgoing->expects($this->once())->method('write')->with("0\r\n\r\n")->willReturn(false);
+        $outgoing->expects($this->exactly(2))->method('write')->withConsecutive(array(""), array("0\r\n\r\n"))->willReturn(false);
         $outgoing->expects($this->once())->method('end')->with(null);
 
         $client = $this->getMockBuilder('React\HttpClient\Client')->disableOriginalConstructor()->getMock();
