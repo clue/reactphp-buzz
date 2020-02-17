@@ -399,7 +399,7 @@ $streamingBrowser->get($url)->then(function (ResponseInterface $response) {
 });
 ```
 
-See also the [stream bandwidth example](examples/91-stream-bandwidth.php) and
+See also the [stream download example](examples/91-benchmark-download.php) and
 the [stream forwarding example](examples/21-stream-forwarding.php).
 
 You can invoke the following methods on the message body:
