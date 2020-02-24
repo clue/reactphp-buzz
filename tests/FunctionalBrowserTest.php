@@ -327,6 +327,25 @@ class FunctionalBrowserTest extends TestCase
         $this->assertEquals('hello world', $data['data']);
     }
 
+    /**
+     * @doesNotPerformAssertions
+     */
+    public function testPostStreamWillStartSendingRequestEvenWhenBodyDoesNotEmitData()
+    {
+        $server = new StreamingServer(function (ServerRequestInterface $request) {
+            return new Response(200);
+        });
+        $socket = new \React\Socket\Server(0, $this->loop);
+        $server->listen($socket);
+
+        $this->base = str_replace('tcp:', 'http:', $socket->getAddress()) . '/';
+
+        $stream = new ThroughStream();
+        Block\await($this->browser->post($this->base . 'post', array(), $stream), $this->loop);
+
+        $socket->close();
+    }
+
     /** @group online */
     public function testPostStreamClosed()
     {

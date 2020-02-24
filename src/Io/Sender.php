@@ -129,7 +129,10 @@ class Sender
                     $body = new ChunkedEncoder($body);
                 }
 
+                // pipe body into request stream
+                // add dummy write to immediately start request even if body does not emit any data yet
                 $body->pipe($requestStream);
+                $requestStream->write('');
             } else {
                 // stream is not readable => end request without body
                 $requestStream->end();
