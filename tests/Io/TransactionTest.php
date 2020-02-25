@@ -619,6 +619,30 @@ class TransactionTest extends TestCase
         $promise->cancel();
     }
 
+    public function testCancelTransactionWillCancelTimeoutTimer()
+    {
+        $messageFactory = new MessageFactory();
+
+        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop->expects($this->once())->method('addTimer')->willReturn($timer);
+        $loop->expects($this->once())->method('cancelTimer')->with($timer);
+
+        $request = $messageFactory->request('GET', 'http://example.com');
+        $sender = $this->makeSenderMock();
+
+        $pending = new \React\Promise\Promise(function () { }, function () { throw new \RuntimeException(); });
+
+        // mock sender to return pending promise which should be cancelled when cancelling result
+        $sender->expects($this->once())->method('send')->willReturn($pending);
+
+        $transaction = new Transaction($sender, $messageFactory, $loop);
+        $transaction = $transaction->withOptions(array('timeout' => 2));
+        $promise = $transaction->send($request);
+
+        $promise->cancel();
+    }
+
     public function testCancelTransactionWillCancelRedirectedRequest()
     {
         $messageFactory = new MessageFactory();
