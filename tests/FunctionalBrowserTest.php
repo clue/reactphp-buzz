@@ -130,6 +130,20 @@ class FunctionalBrowserTest extends TestCase
     }
 
     /**
+     * @expectedException RuntimeException
+     * @expectedExceptionMessage Request timed out after 0.1 seconds
+     * @group online
+     */
+    public function testTimeoutDelayedResponseAfterStreamingRequestShouldReject()
+    {
+        $stream = new ThroughStream();
+        $promise = $this->browser->withOptions(array('timeout' => 0.1))->post($this->base . 'delay/10', array(), $stream);
+        $stream->close();
+
+        Block\await($promise, $this->loop);
+    }
+
+    /**
      * @group online
      * @doesNotPerformAssertions
      */

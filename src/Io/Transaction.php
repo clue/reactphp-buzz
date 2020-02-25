@@ -86,6 +86,27 @@ class Transaction
             return $deferred->promise();
         }
 
+        $body = $request->getBody();
+        if ($body instanceof ReadableStreamInterface && $body->isReadable()) {
+            $that = $this;
+            $body->on('close', function () use ($that, $deferred, $timeout) {
+                $that->applyTimeout($deferred, $timeout);
+            });
+        } else {
+            $this->applyTimeout($deferred, $timeout);
+        }
+
+        return $deferred->promise();
+    }
+
+    /**
+     * @internal
+     * @param Deferred $deferred
+     * @param number  $timeout
+     * @return void
+     */
+    public function applyTimeout(Deferred $deferred, $timeout)
+    {
         $timer = $this->loop->addTimer($timeout, function () use ($timeout, $deferred) {
             $deferred->reject(new \RuntimeException(
                 'Request timed out after ' . $timeout . ' seconds'
@@ -97,12 +118,10 @@ class Transaction
         });
 
         $loop = $this->loop;
-        return $deferred->promise()->then(function ($result) use ($loop, $timer){
+        $deferred->promise()->then(function () use ($loop, $timer){
             $loop->cancelTimer($timer);
-            return $result;
-        }, function ($reason) use ($loop, $timer) {
+        }, function () use ($loop, $timer) {
             $loop->cancelTimer($timer);
-            throw $reason;
         });
     }
 
