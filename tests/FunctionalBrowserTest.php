@@ -138,7 +138,7 @@ class FunctionalBrowserTest extends TestCase
     {
         $stream = new ThroughStream();
         $promise = $this->browser->withOptions(array('timeout' => 0.1))->post($this->base . 'delay/10', array(), $stream);
-        $stream->close();
+        $stream->end();
 
         Block\await($promise, $this->loop);
     }

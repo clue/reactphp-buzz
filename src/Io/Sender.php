@@ -133,6 +133,19 @@ class Sender
                 // add dummy write to immediately start request even if body does not emit any data yet
                 $body->pipe($requestStream);
                 $requestStream->write('');
+
+                $body->on('close', $close = function () use ($deferred, $requestStream) {
+                    $deferred->reject(new \RuntimeException('Request failed because request body closed unexpectedly'));
+                    $requestStream->close();
+                });
+                $body->on('error', function ($e) use ($deferred, $requestStream, $close, $body) {
+                    $body->removeListener('close', $close);
+                    $deferred->reject(new \RuntimeException('Request failed because request body reported an error', 0, $e));
+                    $requestStream->close();
+                });
+                $body->on('end', function () use ($close, $body) {
+                    $body->removeListener('close', $close);
+                });
             } else {
                 // stream is not readable => end request without body
                 $requestStream->end();
