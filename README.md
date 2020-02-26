@@ -499,6 +499,10 @@ $loop->addTimer(1.0, function () use ($body) {
 $browser->post($url, array('Content-Length' => '11'), $body);
 ```
 
+If the streaming request body emits an `error` event or is explicitly closed
+without emitting a successful `end` event first, the request will automatically
+be closed and rejected.
+
 #### submit()
 
 The `submit($url, array $fields, $headers = array(), $method = 'POST'): PromiseInterface<ResponseInterface>` method can be used to
