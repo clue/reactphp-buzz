@@ -218,9 +218,25 @@ $browser->get($uri)->then(function (ResponseInterface $response) {
 ```
 
 Similarly, you can use a negative timeout value to not apply a timeout at all
-or use a `null` value to restore the default handling. Note that the underlying
-connection may still impose a different timeout value. See also
-[`Browser`](#browser) above and [`withOptions()`](#withoptions) for more details.
+or use a `null` value to restore the default handling.
+See also [`withOptions()`](#withoptions) for more details.
+
+If you're using a [streaming response body](#streaming), the time it takes to
+receive the response body stream will not be included in the timeout. This
+allows you to keep this incoming stream open for a longer time, such as when
+downloading a very large stream or when streaming data over a long-lived
+connection.
+
+If you're using a [streaming request body](#streaming), the time it takes to
+send the request body stream will not be included in the timeout. This allows
+you to keep this outgoing stream open for a longer time, such as when uploading
+a very large stream.
+
+Note that this timeout handling applies to the higher-level HTTP layer. Lower
+layers such as socket and DNS may also apply (different) timeout values. In
+particular, the underlying socket connection uses the same `default_socket_timeout`
+setting to establish the underlying transport connection. To control this
+connection timeout behavior, you can [inject a custom `Connector`](#browser).
 
 #### Authentication
 
