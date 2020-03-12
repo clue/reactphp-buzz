@@ -124,7 +124,7 @@ class FunctionalBrowserTest extends TestCase
      */
     public function testTimeoutDelayedResponseShouldReject()
     {
-        $promise = $this->browser->withOptions(array('timeout' => 0.1))->get($this->base . 'delay/10');
+        $promise = $this->browser->withTimeout(0.1)->get($this->base . 'delay/10');
 
         Block\await($promise, $this->loop);
     }
@@ -137,7 +137,7 @@ class FunctionalBrowserTest extends TestCase
     public function testTimeoutDelayedResponseAfterStreamingRequestShouldReject()
     {
         $stream = new ThroughStream();
-        $promise = $this->browser->withOptions(array('timeout' => 0.1))->post($this->base . 'delay/10', array(), $stream);
+        $promise = $this->browser->withTimeout(0.1)->post($this->base . 'delay/10', array(), $stream);
         $stream->end();
 
         Block\await($promise, $this->loop);
@@ -149,7 +149,7 @@ class FunctionalBrowserTest extends TestCase
      */
     public function testTimeoutNegativeShouldResolveSuccessfully()
     {
-        Block\await($this->browser->withOptions(array('timeout' => -1))->get($this->base . 'get'), $this->loop);
+        Block\await($this->browser->withTimeout(-1)->get($this->base . 'get'), $this->loop);
     }
 
     /**
@@ -176,7 +176,7 @@ class FunctionalBrowserTest extends TestCase
      */
     public function testNotFollowingRedirectsResolvesWithRedirectResult()
     {
-        $browser = $this->browser->withOptions(array('followRedirects' => false));
+        $browser = $this->browser->withFollowRedirects(false);
 
         Block\await($browser->get($this->base . 'redirect/3'), $this->loop);
     }
@@ -187,7 +187,7 @@ class FunctionalBrowserTest extends TestCase
      */
     public function testRejectingRedirectsRejects()
     {
-        $browser = $this->browser->withOptions(array('maxRedirects' => 0));
+        $browser = $this->browser->withMaxRedirects(0);
 
         Block\await($browser->get($this->base . 'redirect/3'), $this->loop);
     }

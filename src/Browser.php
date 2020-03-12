@@ -327,6 +327,8 @@ class Browser
      *
      * @param array $options
      * @return self
+     *
+     * @deprecated Since 2.8.0 use withTimeout, withFollowRedirects, withMaxRedirects, or withObeySuccessCode instead.
      */
     public function withOptions(array $options)
     {
@@ -334,5 +336,53 @@ class Browser
         $browser->transaction = $this->transaction->withOptions($options);
 
         return $browser;
+    }
+
+    /**
+     * @param int $timeout
+     *
+     * @return Browser
+     */
+    public function withTimeout($timeout)
+    {
+        return $this->withOptions(array(
+            'timeout' => $timeout,
+        ));
+    }
+
+    /**
+     * @param bool $followRedirects
+     *
+     * @return Browser
+     */
+    public function withFollowRedirects($followRedirects)
+    {
+        return $this->withOptions(array(
+            'followRedirects' => $followRedirects,
+        ));
+    }
+
+    /**
+     * @param int $maxRedirects
+     *
+     * @return Browser
+     */
+    public function withMaxRedirects($maxRedirects)
+    {
+        return $this->withOptions(array(
+            'maxRedirects' => $maxRedirects,
+        ));
+    }
+
+    /**
+     * @param bool $obeySuccessCode
+     * 
+     * @return Browser
+     */
+    public function withObeySuccessCode($obeySuccessCode)
+    {
+        return $this->withOptions(array(
+            'obeySuccessCode' => $obeySuccessCode,
+        ));
     }
 }
