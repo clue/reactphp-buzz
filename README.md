@@ -464,7 +464,7 @@ use React\Promise\Stream;
 function download($url) {
     return Stream\unwrapReadable($streamingBrowser->get($url)->then(function (ResponseInterface $response) {
         return $response->getBody();
-    });
+    }));
 }
 
 $stream = download($url);
