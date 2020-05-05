@@ -41,7 +41,23 @@ class MessageFactory
      */
     public function response($version, $status, $reason, $headers = array(), $body = '')
     {
-        return new Response($status, $headers, $this->body($body), $version, $reason);
+        $response = new Response($status, $headers, $body instanceof ReadableStreamInterface ? null : $body, $version, $reason);
+
+        if ($body instanceof ReadableStreamInterface) {
+            $length = null;
+            $code = $response->getStatusCode();
+            if (($code >= 100 && $code < 200) || $code == 204 || $code == 304) {
+                $length = 0;
+            } elseif (\strtolower($response->getHeaderLine('Transfer-Encoding')) === 'chunked') {
+                $length = null;
+            } elseif ($response->hasHeader('Content-Length')) {
+                $length = (int)$response->getHeaderLine('Content-Length');
+            }
+
+            $response = $response->withBody(new ReadableBodyStream($body, $length));
+        }
+
+        return $response;
     }
 
     /**
