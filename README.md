@@ -126,13 +126,21 @@ $browser->put($url, array $headers = array(), string|ReadableStreamInterface $co
 $browser->patch($url, array $headers = array(), string|ReadableStreamInterface $contents = '');
 ```
 
-Each method will automatically add a matching `Content-Length` request header if
-the size of the outgoing request body is known and non-empty. For an empty
-request body, if will only include a `Content-Length: 0` request header if the
-request method usually expects a request body (only applies to `POST`, `PUT` and
-`PATCH`). If you're using a [streaming request body](#streaming), it will
-default to using `Transfer-Encoding: chunked` unless you explicitly pass in a
-matching `Content-Length` request header.
+Each of these methods requires a `$url` and some optional parameters to send an
+HTTP request. Each of these method names matches the respective HTTP request
+method, for example the `get()` method sends an HTTP `GET` request.
+
+You can optionally pass an associative array of additional `$headers` that will be
+sent with this HTTP request. Additionally, each method will automatically add a
+matching `Content-Length` request header if an outgoing request body is given and its
+size is known and non-empty. For an empty request body, if will only include a
+`Content-Length: 0` request header if the request method usually expects a request
+body (only applies to `POST`, `PUT` and `PATCH` HTTP request methods).
+
+If you're using a [streaming request body](#streaming), it will default to using
+`Transfer-Encoding: chunked` unless you explicitly pass in a matching `Content-Length` request
+header. See also [streaming](#streaming) for more details.
+
 All the above methods default to sending requests as HTTP/1.0.
 If you need a custom HTTP protocol method or version, you can use the [`send()`](#send) method.
 

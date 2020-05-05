@@ -26,6 +26,85 @@ class BrowserTest extends TestCase
         $ref->setValue($this->browser, $this->sender);
     }
 
+    public function testGetSendsGetRequest()
+    {
+        $that = $this;
+        $this->sender->expects($this->once())->method('send')->with($this->callback(function (RequestInterface $request) use ($that) {
+            $that->assertEquals('GET', $request->getMethod());
+            return true;
+        }))->willReturn(new Promise(function () { }));
+
+        $this->browser->get('http://example.com/');
+    }
+
+    public function testPostSendsPostRequest()
+    {
+        $that = $this;
+        $this->sender->expects($this->once())->method('send')->with($this->callback(function (RequestInterface $request) use ($that) {
+            $that->assertEquals('POST', $request->getMethod());
+            return true;
+        }))->willReturn(new Promise(function () { }));
+
+        $this->browser->post('http://example.com/');
+    }
+
+    public function testHeadSendsHeadRequest()
+    {
+        $that = $this;
+        $this->sender->expects($this->once())->method('send')->with($this->callback(function (RequestInterface $request) use ($that) {
+            $that->assertEquals('HEAD', $request->getMethod());
+            return true;
+        }))->willReturn(new Promise(function () { }));
+
+        $this->browser->head('http://example.com/');
+    }
+
+    public function testPatchSendsPatchRequest()
+    {
+        $that = $this;
+        $this->sender->expects($this->once())->method('send')->with($this->callback(function (RequestInterface $request) use ($that) {
+            $that->assertEquals('PATCH', $request->getMethod());
+            return true;
+        }))->willReturn(new Promise(function () { }));
+
+        $this->browser->patch('http://example.com/');
+    }
+
+    public function testPutSendsPutRequest()
+    {
+        $that = $this;
+        $this->sender->expects($this->once())->method('send')->with($this->callback(function (RequestInterface $request) use ($that) {
+            $that->assertEquals('PUT', $request->getMethod());
+            return true;
+        }))->willReturn(new Promise(function () { }));
+
+        $this->browser->put('http://example.com/');
+    }
+
+    public function testDeleteSendsDeleteRequest()
+    {
+        $that = $this;
+        $this->sender->expects($this->once())->method('send')->with($this->callback(function (RequestInterface $request) use ($that) {
+            $that->assertEquals('DELETE', $request->getMethod());
+            return true;
+        }))->willReturn(new Promise(function () { }));
+
+        $this->browser->delete('http://example.com/');
+    }
+
+    public function testSubmitSendsPostRequest()
+    {
+        $that = $this;
+        $this->sender->expects($this->once())->method('send')->with($this->callback(function (RequestInterface $request) use ($that) {
+            $that->assertEquals('POST', $request->getMethod());
+            $that->assertEquals('application/x-www-form-urlencoded', $request->getHeaderLine('Content-Type'));
+            $that->assertEquals('', (string)$request->getBody());
+            return true;
+        }))->willReturn(new Promise(function () { }));
+
+        $this->browser->submit('http://example.com/', array());
+    }
+
     public function testWithBase()
     {
         $browser = $this->browser->withBase('http://example.com/root');

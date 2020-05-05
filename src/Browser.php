@@ -73,7 +73,7 @@ class Browser
      */
     public function get($url, array $headers = array())
     {
-        return $this->send($this->messageFactory->request('GET', $url, $headers));
+        return $this->requestMayBeStreaming('GET', $url, $headers);
     }
 
     /**
@@ -100,7 +100,7 @@ class Browser
      */
     public function post($url, array $headers = array(), $contents = '')
     {
-        return $this->send($this->messageFactory->request('POST', $url, $headers, $contents));
+        return $this->requestMayBeStreaming('POST', $url, $headers, $contents);
     }
 
     /**
@@ -110,7 +110,7 @@ class Browser
      */
     public function head($url, array $headers = array())
     {
-        return $this->send($this->messageFactory->request('HEAD', $url, $headers));
+        return $this->requestMayBeStreaming('HEAD', $url, $headers);
     }
 
     /**
@@ -137,7 +137,7 @@ class Browser
      */
     public function patch($url, array $headers = array(), $contents = '')
     {
-        return $this->send($this->messageFactory->request('PATCH', $url , $headers, $contents));
+        return $this->requestMayBeStreaming('PATCH', $url , $headers, $contents);
     }
 
     /**
@@ -164,7 +164,7 @@ class Browser
      */
     public function put($url, array $headers = array(), $contents = '')
     {
-        return $this->send($this->messageFactory->request('PUT', $url, $headers, $contents));
+        return $this->requestMayBeStreaming('PUT', $url, $headers, $contents);
     }
 
     /**
@@ -175,7 +175,7 @@ class Browser
      */
     public function delete($url, array $headers = array(), $contents = '')
     {
-        return $this->send($this->messageFactory->request('DELETE', $url, $headers, $contents));
+        return $this->requestMayBeStreaming('DELETE', $url, $headers, $contents);
     }
 
     /**
@@ -199,7 +199,7 @@ class Browser
         $headers['Content-Type'] = 'application/x-www-form-urlencoded';
         $contents = http_build_query($fields);
 
-        return $this->send($this->messageFactory->request($method, $url, $headers, $contents));
+        return $this->requestMayBeStreaming($method, $url, $headers, $contents);
     }
 
     /**
@@ -334,5 +334,17 @@ class Browser
         $browser->transaction = $this->transaction->withOptions($options);
 
         return $browser;
+    }
+
+    /**
+     * @param string                         $method
+     * @param string|UriInterface            $url
+     * @param array                          $headers
+     * @param string|ReadableStreamInterface $contents
+     * @return PromiseInterface<ResponseInterface,Exception>
+     */
+    private function requestMayBeStreaming($method, $url, array $headers = array(), $contents = '')
+    {
+        return $this->send($this->messageFactory->request($method, $url, $headers, $contents));
     }
 }
