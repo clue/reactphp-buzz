@@ -14,24 +14,30 @@ use React\Stream\WritableStreamInterface;
 class ReadableBodyStream extends EventEmitter implements ReadableStreamInterface, StreamInterface
 {
     private $input;
+    private $position = 0;
+    private $size;
     private $closed = false;
 
-    public function __construct(ReadableStreamInterface $input)
+    public function __construct(ReadableStreamInterface $input, $size = null)
     {
         $this->input = $input;
+        $this->size = $size;
 
         $that = $this;
-        $input->on('data', function ($data) use ($that) {
+        $pos =& $this->position;
+        $input->on('data', function ($data) use ($that, &$pos, $size) {
             $that->emit('data', array($data));
+
+            $pos += \strlen($data);
+            if ($size !== null && $pos >= $size) {
+                $that->handleEnd();
+            }
         });
         $input->on('error', function ($error) use ($that) {
             $that->emit('error', array($error));
             $that->close();
         });
-        $input->on('end', function () use ($that) {
-            $that->emit('end');
-            $that->close();
-        });
+        $input->on('end', array($that, 'handleEnd'));
         $input->on('close', array($that, 'close'));
     }
 
@@ -85,7 +91,7 @@ class ReadableBodyStream extends EventEmitter implements ReadableStreamInterface
 
     public function getSize()
     {
-        return null;
+        return $this->size;
     }
 
     public function tell()
@@ -131,5 +137,17 @@ class ReadableBodyStream extends EventEmitter implements ReadableStreamInterface
     public function getMetadata($key = null)
     {
         return ($key === null) ? array() : null;
+    }
+
+    /** @internal */
+    public function handleEnd()
+    {
+        if ($this->position !== $this->size && $this->size !== null) {
+            $this->emit('error', array(new \UnderflowException('Unexpected end of response body after ' . $this->position . '/' . $this->size . ' bytes')));
+        } else {
+            $this->emit('end');
+        }
+
+        $this->close();
     }
 }

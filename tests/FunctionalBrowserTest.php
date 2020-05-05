@@ -288,10 +288,101 @@ class FunctionalBrowserTest extends TestCase
         $this->assertEquals('hello world', $data['data']);
     }
 
+    public function testReceiveStreamUntilConnectionsEndsForHttp10()
+    {
+        $loop = $this->loop;
+        $server = new StreamingServer(function (ServerRequestInterface $request) use ($loop) {
+            $stream = new ThroughStream();
+
+            $loop->futureTick(function () use ($stream) {
+                $stream->end('hello');
+            });
+
+            return new Response(
+                200,
+                array(),
+                $stream
+            );
+        });
+
+        $socket = new \React\Socket\Server(0, $this->loop);
+        $server->listen($socket);
+
+        $this->base = str_replace('tcp:', 'http:', $socket->getAddress()) . '/';
+
+        $response = Block\await($this->browser->get($this->base . 'get', array()), $this->loop);
+
+        $this->assertEquals('1.0', $response->getProtocolVersion());
+        $this->assertFalse($response->hasHeader('Transfer-Encoding'));
+        $this->assertEquals('hello', (string)$response->getBody());
+
+        $socket->close();
+    }
+
+    public function testReceiveStreamChunkedForHttp11()
+    {
+        $loop = $this->loop;
+        $server = new StreamingServer(function (ServerRequestInterface $request) use ($loop) {
+            $stream = new ThroughStream();
+
+            $loop->futureTick(function () use ($stream) {
+                $stream->end('hello');
+            });
+
+            return new Response(
+                200,
+                array(),
+                $stream
+            );
+        });
+
+        $socket = new \React\Socket\Server(0, $this->loop);
+        $server->listen($socket);
+
+        $this->base = str_replace('tcp:', 'http:', $socket->getAddress()) . '/';
+
+        $response = Block\await($this->browser->send(new Request('GET', $this->base . 'get', array(), null, '1.1')), $this->loop);
+
+        $this->assertEquals('1.1', $response->getProtocolVersion());
+
+        // underlying http-client automatically decodes and doesn't expose header
+        // @link https://github.com/reactphp/http-client/pull/58
+        // $this->assertEquals('chunked', $response->getHeaderLine('Transfer-Encoding'));
+        $this->assertFalse($response->hasHeader('Transfer-Encoding'));
+
+        $this->assertEquals('hello', (string)$response->getBody());
+
+        $socket->close();
+    }
+
+    public function testReceiveStreamAndExplicitlyCloseConnectionEvenWhenServerKeepsConnectionOpen()
+    {
+        $closed = new \React\Promise\Deferred();
+        $socket = new \React\Socket\Server(0, $this->loop);
+        $socket->on('connection', function (\React\Socket\ConnectionInterface $connection) use ($closed) {
+            $connection->on('data', function () use ($connection) {
+                $connection->write("HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nhello");
+            });
+            $connection->on('close', function () use ($closed) {
+                $closed->resolve(true);
+            });
+        });
+
+        $this->base = str_replace('tcp:', 'http:', $socket->getAddress()) . '/';
+
+        $response = Block\await($this->browser->get($this->base . 'get', array()), $this->loop);
+        $this->assertEquals('hello', (string)$response->getBody());
+
+        $ret = Block\await($closed->promise(), $this->loop, 0.1);
+        $this->assertTrue($ret);
+
+        $socket->close();
+    }
+
     public function testPostStreamChunked()
     {
         // httpbin used to support `Transfer-Encoding: chunked` for requests,
-        // but not rejects those, so let's start our own server instance
+        // but now rejects these, so let's start our own server instance
         $that = $this;
         $server = new StreamingServer(function (ServerRequestInterface $request) use ($that) {
             $that->assertFalse($request->hasHeader('Content-Length'));
