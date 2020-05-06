@@ -49,6 +49,7 @@ mess with most of the low-level details.
     * [withOptions()](#withoptions)
     * [withBase()](#withbase)
     * [withoutBase()](#withoutbase)
+    * [withProtocolVersion()](#withprotocolversion)
   * [ResponseInterface](#responseinterface)
   * [RequestInterface](#requestinterface)
   * [UriInterface](#uriinterface)
@@ -141,8 +142,11 @@ If you're using a [streaming request body](#streaming), it will default to using
 `Transfer-Encoding: chunked` unless you explicitly pass in a matching `Content-Length` request
 header. See also [streaming](#streaming) for more details.
 
-All the above methods default to sending requests as HTTP/1.0.
-If you need a custom HTTP protocol method or version, you can use the [`send()`](#send) method.
+By default, all of the above methods default to sending requests using the
+HTTP/1.1 protocol version. If you want to explicitly use the legacy HTTP/1.0
+protocol version, you can use the [`withProtocolVersion()`](#withprotocolversion)
+method. If you want to use any other or even custom HTTP request method, you can
+use the [`send()`](#send) method.
 
 Each of the above methods supports async operation and either *resolves* with a [`ResponseInterface`](#responseinterface) or
 *rejects* with an `Exception`.
@@ -525,13 +529,14 @@ $browser->submit($url, array('user' => 'test', 'password' => 'secret'));
 The `send(RequestInterface $request): PromiseInterface<ResponseInterface>` method can be used to
 send an arbitrary instance implementing the [`RequestInterface`](#requestinterface) (PSR-7).
 
-All the above [predefined methods](#methods) default to sending requests as HTTP/1.0.
-If you need a custom HTTP protocol method or version, then you may want to use this
-method:
+The preferred way to send an HTTP request is by using the above request
+methods, for example the `get()` method to send an HTTP `GET` request.
+
+As an alternative, if you want to use a custom HTTP request method, you
+can use this method:
 
 ```php
 $request = new Request('OPTIONS', $url);
-$request = $request->withProtocolVersion('1.1');
 
 $browser->send($request)->then(…);
 ```
@@ -606,6 +611,29 @@ Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withoutB
 actually returns a *new* [`Browser`](#browser) instance without any base URI applied.
 
 See also [`withBase()`](#withbase).
+
+#### withProtocolVersion()
+
+The `withProtocolVersion(string $protocolVersion): Browser` method can be used to
+change the HTTP protocol version that will be used for all subsequent requests.
+
+All the above [request methods](#methods) default to sending requests as
+HTTP/1.1. This is the preferred HTTP protocol version which also provides
+decent backwards-compatibility with legacy HTTP/1.0 servers. As such,
+there should rarely be a need to explicitly change this protocol version.
+
+If you want to explicitly use the legacy HTTP/1.0 protocol version, you
+can use this method:
+
+```php
+$newBrowser = $browser->withProtocolVersion('1.0');
+
+$newBrowser->get($url)->then(…);
+```
+
+Notice that the [`Browser`](#browser) is an immutable object, i.e. this
+method actually returns a *new* [`Browser`](#browser) instance with the
+new protocol version applied.
 
 ### ResponseInterface
 

@@ -18,6 +18,7 @@ class Browser
     private $transaction;
     private $messageFactory;
     private $baseUri = null;
+    private $protocolVersion = '1.1';
 
     /** @var LoopInterface $loop */
     private $loop;
@@ -205,13 +206,14 @@ class Browser
     /**
      * Sends an arbitrary instance implementing the [`RequestInterface`](#requestinterface) (PSR-7).
      *
-     * All the above [predefined methods](#methods) default to sending requests as HTTP/1.0.
-     * If you need a custom HTTP protocol method or version, then you may want to use this
-     * method:
+     * The preferred way to send an HTTP request is by using the above request
+     * methods, for example the `get()` method to send an HTTP `GET` request.
+     *
+     * As an alternative, if you want to use a custom HTTP request method, you
+     * can use this method:
      *
      * ```php
      * $request = new Request('OPTIONS', $url);
-     * $request = $request->withProtocolVersion('1.1');
      *
      * $browser->send($request)->then(…);
      * ```
@@ -337,6 +339,44 @@ class Browser
     }
 
     /**
+     * Changes the HTTP protocol version that will be used for all subsequent requests.
+     *
+     * All the above [request methods](#methods) default to sending requests as
+     * HTTP/1.1. This is the preferred HTTP protocol version which also provides
+     * decent backwards-compatibility with legacy HTTP/1.0 servers. As such,
+     * there should rarely be a need to explicitly change this protocol version.
+     *
+     * If you want to explicitly use the legacy HTTP/1.0 protocol version, you
+     * can use this method:
+     *
+     * ```php
+     * $newBrowser = $browser->withProtocolVersion('1.0');
+     *
+     * $newBrowser->get($url)->then(…);
+     * ```
+     *
+     * Notice that the [`Browser`](#browser) is an immutable object, i.e. this
+     * method actually returns a *new* [`Browser`](#browser) instance with the
+     * new protocol version applied.
+     *
+     * @param string $protocolVersion HTTP protocol version to use, must be one of "1.1" or "1.0"
+     * @return self
+     * @throws InvalidArgumentException
+     * @since 2.8.0
+     */
+    public function withProtocolVersion($protocolVersion)
+    {
+        if (!\in_array($protocolVersion, array('1.0', '1.1'), true)) {
+            throw new InvalidArgumentException('Invalid HTTP protocol version, must be one of "1.1" or "1.0"');
+        }
+
+        $browser = clone $this;
+        $browser->protocolVersion = (string) $protocolVersion;
+
+        return $browser;
+    }
+
+    /**
      * @param string                         $method
      * @param string|UriInterface            $url
      * @param array                          $headers
@@ -345,6 +385,6 @@ class Browser
      */
     private function requestMayBeStreaming($method, $url, array $headers = array(), $contents = '')
     {
-        return $this->send($this->messageFactory->request($method, $url, $headers, $contents));
+        return $this->send($this->messageFactory->request($method, $url, $headers, $contents, $this->protocolVersion));
     }
 }

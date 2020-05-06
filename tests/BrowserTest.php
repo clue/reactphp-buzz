@@ -245,6 +245,40 @@ class BrowserTest extends TestCase
         $this->browser->withBase('hello');
     }
 
+    public function testWithProtocolVersionFollowedByGetRequestSendsRequestWithProtocolVersion()
+    {
+        $this->browser = $this->browser->withProtocolVersion('1.0');
+
+        $that = $this;
+        $this->sender->expects($this->once())->method('send')->with($this->callback(function (RequestInterface $request) use ($that) {
+            $that->assertEquals('1.0', $request->getProtocolVersion());
+            return true;
+        }))->willReturn(new Promise(function () { }));
+
+        $this->browser->get('http://example.com/');
+    }
+
+    public function testWithProtocolVersionFollowedBySubmitRequestSendsRequestWithProtocolVersion()
+    {
+        $this->browser = $this->browser->withProtocolVersion('1.0');
+
+        $that = $this;
+        $this->sender->expects($this->once())->method('send')->with($this->callback(function (RequestInterface $request) use ($that) {
+            $that->assertEquals('1.0', $request->getProtocolVersion());
+            return true;
+        }))->willReturn(new Promise(function () { }));
+
+        $this->browser->submit('http://example.com/', array());
+    }
+
+    /**
+     * @expectedException InvalidArgumentException
+     */
+    public function testWithProtocolVersionInvalidThrows()
+    {
+        $this->browser->withProtocolVersion('1.2');
+    }
+
     public function testCancelGetRequestShouldCancelUnderlyingSocketConnection()
     {
         $pending = new Promise(function () { }, $this->expectCallableOnce());
