@@ -21,17 +21,18 @@ class MessageFactory
      * @param string|UriInterface            $uri
      * @param array                          $headers
      * @param string|ReadableStreamInterface $content
+     * @param string                         $protocolVersion
      * @return Request
      */
-    public function request($method, $uri, $headers = array(), $content = '')
+    public function request($method, $uri, $headers = array(), $content = '', $protocolVersion = '1.1')
     {
-        return new Request($method, $uri, $headers, $this->body($content), '1.0');
+        return new Request($method, $uri, $headers, $this->body($content), $protocolVersion);
     }
 
     /**
      * Creates a new instance of ResponseInterface for the given response parameters
      *
-     * @param string $version
+     * @param string $protocolVersion
      * @param int    $status
      * @param string $reason
      * @param array  $headers
@@ -39,9 +40,9 @@ class MessageFactory
      * @return Response
      * @uses self::body()
      */
-    public function response($version, $status, $reason, $headers = array(), $body = '')
+    public function response($protocolVersion, $status, $reason, $headers = array(), $body = '')
     {
-        $response = new Response($status, $headers, $body instanceof ReadableStreamInterface ? null : $body, $version, $reason);
+        $response = new Response($status, $headers, $body instanceof ReadableStreamInterface ? null : $body, $protocolVersion, $reason);
 
         if ($body instanceof ReadableStreamInterface) {
             $length = null;

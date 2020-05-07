@@ -310,7 +310,7 @@ class FunctionalBrowserTest extends TestCase
 
         $this->base = str_replace('tcp:', 'http:', $socket->getAddress()) . '/';
 
-        $response = Block\await($this->browser->get($this->base . 'get', array()), $this->loop);
+        $response = Block\await($this->browser->withProtocolVersion('1.0')->get($this->base . 'get', array()), $this->loop);
 
         $this->assertEquals('1.0', $response->getProtocolVersion());
         $this->assertFalse($response->hasHeader('Transfer-Encoding'));
@@ -463,7 +463,7 @@ class FunctionalBrowserTest extends TestCase
         $this->assertEquals('', $data['data']);
     }
 
-    public function testSendsHttp10ByDefault()
+    public function testSendsHttp11ByDefault()
     {
         $server = new StreamingServer(function (ServerRequestInterface $request) {
             return new Response(
@@ -478,12 +478,12 @@ class FunctionalBrowserTest extends TestCase
         $this->base = str_replace('tcp:', 'http:', $socket->getAddress()) . '/';
 
         $response = Block\await($this->browser->get($this->base), $this->loop);
-        $this->assertEquals('1.0', (string)$response->getBody());
+        $this->assertEquals('1.1', (string)$response->getBody());
 
         $socket->close();
     }
 
-    public function testSendsExplicitHttp11Request()
+    public function testSendsExplicitHttp10Request()
     {
         $server = new StreamingServer(function (ServerRequestInterface $request) {
             return new Response(
@@ -497,10 +497,8 @@ class FunctionalBrowserTest extends TestCase
 
         $this->base = str_replace('tcp:', 'http:', $socket->getAddress()) . '/';
 
-        $request = new Request('GET', $this->base, array(), '', '1.1');
-
-        $response = Block\await($this->browser->send($request), $this->loop);
-        $this->assertEquals('1.1', (string)$response->getBody());
+        $response = Block\await($this->browser->withProtocolVersion('1.0')->get($this->base), $this->loop);
+        $this->assertEquals('1.0', (string)$response->getBody());
 
         $socket->close();
     }
