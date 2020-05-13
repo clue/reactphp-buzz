@@ -1,5 +1,32 @@
 # Changelog
 
+## 2.8.0 (2020-05-13)
+
+*   Feature: Use HTTP/1.1 protocol version by default and add new `Browser::withProtocolVersion()`.
+    (#162 by @clue)
+
+    This is the preferred HTTP protocol version which also provides decent
+    backwards-compatibility with legacy HTTP/1.0 servers. As such, there should
+    rarely be a need to explicitly change this protocol version. You can revert
+    to legacy HTTP/1.0 like this:
+
+    ```php
+    $browser->withProtocolVersion('1.0')->get($url)->then(…);
+    ```
+
+*   Feature / Fix: Explicitly close connection after response body ends.
+    (#161 by @clue)
+
+    This improves support for servers ignoring the `Connection: close` request
+    header that would otherwise keep the connection open and could eventually
+    run into a timeout even though the transfer was completed.
+
+*   Fixed small issue in code example.
+    (#160 by @mmoreram)
+
+*   Clean up test suite and add `.gitattributes` to exclude dev files from exports.
+    (#163 by @SimonFrings)
+
 ## 2.7.0 (2020-02-26)
 
 *   Feature: Add backpressure support and support throttling for streaming outgoing chunked request body.
