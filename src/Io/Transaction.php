@@ -75,13 +75,29 @@ class Transaction
 
         $deferred->numRequests = 0;
 
-        $this->next($request, $deferred)->then(
-            array($deferred, 'resolve'),
-            array($deferred, 'reject')
-        );
-
         // use timeout from options or default to PHP's default_socket_timeout (60)
         $timeout = (float)($this->timeout !== null ? $this->timeout : ini_get("default_socket_timeout"));
+
+        $loop = $this->loop;
+        $this->next($request, $deferred)->then(
+            function (ResponseInterface $response) use ($deferred, $loop, &$timeout) {
+                if (isset($deferred->timeout)) {
+                    $loop->cancelTimer($deferred->timeout);
+                    unset($deferred->timeout);
+                }
+                $timeout = -1;
+                $deferred->resolve($response);
+            },
+            function ($e) use ($deferred, $loop, &$timeout) {
+                if (isset($deferred->timeout)) {
+                    $loop->cancelTimer($deferred->timeout);
+                    unset($deferred->timeout);
+                }
+                $timeout = -1;
+                $deferred->reject($e);
+            }
+        );
+
         if ($timeout < 0) {
             return $deferred->promise();
         }
@@ -107,7 +123,7 @@ class Transaction
      */
     public function applyTimeout(Deferred $deferred, $timeout)
     {
-        $timer = $this->loop->addTimer($timeout, function () use ($timeout, $deferred) {
+        $deferred->timeout = $this->loop->addTimer($timeout, function () use ($timeout, $deferred) {
             $deferred->reject(new \RuntimeException(
                 'Request timed out after ' . $timeout . ' seconds'
             ));
@@ -115,13 +131,6 @@ class Transaction
                 $deferred->pending->cancel();
                 unset($deferred->pending);
             }
-        });
-
-        $loop = $this->loop;
-        $deferred->promise()->then(function () use ($loop, $timer){
-            $loop->cancelTimer($timer);
-        }, function () use ($loop, $timer) {
-            $loop->cancelTimer($timer);
         });
     }
 
