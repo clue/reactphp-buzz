@@ -119,7 +119,7 @@ class TransactionTest extends TestCase
             $timeout = $cb;
             return true;
         }))->willReturn($timer);
-        $loop->expects($this->once())->method('cancelTimer')->with($timer);
+        $loop->expects($this->never())->method('cancelTimer');
 
         $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
 
@@ -142,14 +142,12 @@ class TransactionTest extends TestCase
         $this->assertEquals('Request timed out after 2 seconds', $exception->getMessage());
     }
 
-    public function testTimeoutExplicitOptionWillCancelTimeoutTimerWhenSenderResolves()
+    public function testTimeoutExplicitOptionWillNotStartTimeoutWhenSenderResolvesImmediately()
     {
         $messageFactory = new MessageFactory();
 
-        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $loop->expects($this->once())->method('addTimer')->willReturn($timer);
-        $loop->expects($this->once())->method('cancelTimer')->with($timer);
+        $loop->expects($this->never())->method('addTimer');
 
         $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
         $response = $messageFactory->response(1.0, 200, 'OK', array(), '');
@@ -165,7 +163,7 @@ class TransactionTest extends TestCase
         $promise->then($this->expectCallableOnceWith($response));
     }
 
-    public function testTimeoutExplicitOptionWillCancelTimeoutTimerWhenSenderRejects()
+    public function testTimeoutExplicitOptionWillCancelTimeoutTimerWhenSenderResolvesLaterOn()
     {
         $messageFactory = new MessageFactory();
 
@@ -173,6 +171,30 @@ class TransactionTest extends TestCase
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->once())->method('addTimer')->willReturn($timer);
         $loop->expects($this->once())->method('cancelTimer')->with($timer);
+
+        $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
+        $response = $messageFactory->response(1.0, 200, 'OK', array(), '');
+
+        $deferred = new Deferred();
+        $sender = $this->getMockBuilder('Clue\React\Buzz\Io\Sender')->disableOriginalConstructor()->getMock();
+        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn($deferred->promise());
+
+        $transaction = new Transaction($sender, $messageFactory, $loop);
+        $transaction = $transaction->withOptions(array('timeout' => 0.001));
+        $promise = $transaction->send($request);
+
+        $deferred->resolve($response);
+
+        $this->assertInstanceOf('React\Promise\PromiseInterface', $promise);
+        $promise->then($this->expectCallableOnceWith($response));
+    }
+
+    public function testTimeoutExplicitOptionWillNotStartTimeoutWhenSenderRejectsImmediately()
+    {
+        $messageFactory = new MessageFactory();
+
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop->expects($this->never())->method('addTimer');
 
         $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
         $exception = new \RuntimeException();
@@ -183,6 +205,32 @@ class TransactionTest extends TestCase
         $transaction = new Transaction($sender, $messageFactory, $loop);
         $transaction = $transaction->withOptions(array('timeout' => 0.001));
         $promise = $transaction->send($request);
+
+        $this->assertInstanceOf('React\Promise\PromiseInterface', $promise);
+        $promise->then(null, $this->expectCallableOnceWith($exception));
+    }
+
+    public function testTimeoutExplicitOptionWillCancelTimeoutTimerWhenSenderRejectsLaterOn()
+    {
+        $messageFactory = new MessageFactory();
+
+        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop->expects($this->once())->method('addTimer')->willReturn($timer);
+        $loop->expects($this->once())->method('cancelTimer')->with($timer);
+
+        $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
+
+        $deferred = new Deferred();
+        $sender = $this->getMockBuilder('Clue\React\Buzz\Io\Sender')->disableOriginalConstructor()->getMock();
+        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn($deferred->promise());
+
+        $transaction = new Transaction($sender, $messageFactory, $loop);
+        $transaction = $transaction->withOptions(array('timeout' => 0.001));
+        $promise = $transaction->send($request);
+
+        $exception = new \RuntimeException();
+        $deferred->reject($exception);
 
         $this->assertInstanceOf('React\Promise\PromiseInterface', $promise);
         $promise->then(null, $this->expectCallableOnceWith($exception));
@@ -285,7 +333,7 @@ class TransactionTest extends TestCase
             $timeout = $cb;
             return true;
         }))->willReturn($timer);
-        $loop->expects($this->once())->method('cancelTimer')->with($timer);
+        $loop->expects($this->never())->method('cancelTimer');
 
         $stream = new ThroughStream();
         $request = $messageFactory->request('POST', 'http://example.com', array(), $stream);

@@ -42,9 +42,23 @@ class FunctionalBrowserTest extends TestCase
      * @expectedException RuntimeException
      * @group online
      */
-    public function testCancelPromiseWillRejectRequest()
+    public function testCancelGetRequestWillRejectRequest()
     {
         $promise = $this->browser->get($this->base . 'get');
+        $promise->cancel();
+
+        Block\await($promise, $this->loop);
+    }
+
+    /**
+     * @expectedException RuntimeException
+     * @group online
+     */
+    public function testCancelSendWithPromiseFollowerWillRejectRequest()
+    {
+        $promise = $this->browser->send(new Request('GET', $this->base . 'get'))->then(function () {
+            var_dump('noop');
+        });
         $promise->cancel();
 
         Block\await($promise, $this->loop);
