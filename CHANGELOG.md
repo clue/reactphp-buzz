@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.8.1 (2020-05-19)
+
+*   Fix: Fix cancellation of pending requests with promise followers.
+    (#164 by @clue)
+
 ## 2.8.0 (2020-05-13)
 
 *   Feature: Use HTTP/1.1 protocol version by default and add new `Browser::withProtocolVersion()`.
