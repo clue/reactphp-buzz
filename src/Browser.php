@@ -341,10 +341,11 @@ class Browser
     /**
      * Changes the HTTP protocol version that will be used for all subsequent requests.
      *
-     * All the above [request methods](#methods) default to sending requests as
-     * HTTP/1.1. This is the preferred HTTP protocol version which also provides
-     * decent backwards-compatibility with legacy HTTP/1.0 servers. As such,
-     * there should rarely be a need to explicitly change this protocol version.
+     * All the above [request methods](#request-methods) default to sending
+     * requests as HTTP/1.1. This is the preferred HTTP protocol version which
+     * also provides decent backwards-compatibility with legacy HTTP/1.0
+     * servers. As such, there should rarely be a need to explicitly change this
+     * protocol version.
      *
      * If you want to explicitly use the legacy HTTP/1.0 protocol version, you
      * can use this method:

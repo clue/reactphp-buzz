@@ -23,7 +23,7 @@ mess with most of the low-level details.
 * **Standard interfaces** -
   Allows easy integration with existing higher-level components by implementing
   [PSR-7 (http-message)](https://www.php-fig.org/psr/psr-7/) interfaces,
-  ReactPHP's standard [promises](#promises) and [streaming interfaces](#streaming).
+  ReactPHP's standard [promises](#promises) and [streaming interfaces](#streaming-response).
 * **Lightweight, SOLID design** -
   Provides a thin abstraction that is [*just good enough*](https://en.wikipedia.org/wiki/Principle_of_good_enough)
   and does not get in your way.
@@ -36,30 +36,31 @@ mess with most of the low-level details.
 * [Support us](#support-us)
 * [Quickstart example](#quickstart-example)
 * [Usage](#usage)
-  * [Browser](#browser)
-    * [Methods](#methods)
+    * [Request methods](#request-methods)
     * [Promises](#promises)
     * [Cancellation](#cancellation)
     * [Timeouts](#timeouts)
     * [Authentication](#authentication)
     * [Redirects](#redirects)
     * [Blocking](#blocking)
-    * [Streaming](#streaming)
-    * [submit()](#submit)
-    * [send()](#send)
-    * [withOptions()](#withoptions)
-    * [withBase()](#withbase)
-    * [withoutBase()](#withoutbase)
-    * [withProtocolVersion()](#withprotocolversion)
-  * [ResponseInterface](#responseinterface)
-  * [RequestInterface](#requestinterface)
-  * [UriInterface](#uriinterface)
-  * [ResponseException](#responseexception)
-* [Advanced](#advanced)
-  * [HTTP proxy](#http-proxy)
-  * [SOCKS proxy](#socks-proxy)
-  * [SSH proxy](#ssh-proxy)
-  * [Unix domain sockets](#unix-domain-sockets)
+    * [Streaming response](#streaming-response)
+    * [Streaming request](#streaming-request)
+    * [HTTP proxy](#http-proxy)
+    * [SOCKS proxy](#socks-proxy)
+    * [SSH proxy](#ssh-proxy)
+    * [Unix domain sockets](#unix-domain-sockets)
+* [API](#api)
+    * [Browser](#browser)
+        * [submit()](#submit)
+        * [send()](#send)
+        * [withOptions()](#withoptions)
+        * [withBase()](#withbase)
+        * [withoutBase()](#withoutbase)
+        * [withProtocolVersion()](#withprotocolversion)
+    * [ResponseInterface](#responseinterface)
+    * [RequestInterface](#requestinterface)
+    * [UriInterface](#uriinterface)
+    * [ResponseException](#responseexception)
 * [Install](#install)
 * [Tests](#tests)
 * [License](#license)
@@ -94,40 +95,12 @@ See also the [examples](examples).
 
 ## Usage
 
-### Browser
+### Request methods
 
-The `Browser` is responsible for sending HTTP requests to your HTTP server
-and keeps track of pending incoming HTTP responses.
-It also registers everything with the main [`EventLoop`](https://github.com/reactphp/event-loop#usage).
+<a id="methods"></a><!-- legacy fragment id -->
 
-```php
-$loop = React\EventLoop\Factory::create();
-
-$browser = new Browser($loop);
-```
-
-If you need custom connector settings (DNS resolution, TLS parameters, timeouts,
-proxy servers etc.), you can explicitly pass a custom instance of the
-[`ConnectorInterface`](https://github.com/reactphp/socket#connectorinterface):
-
-```php
-$connector = new \React\Socket\Connector($loop, array(
-    'dns' => '127.0.0.1',
-    'tcp' => array(
-        'bindto' => '192.168.10.1:0'
-    ),
-    'tls' => array(
-        'verify_peer' => false,
-        'verify_peer_name' => false
-    )
-));
-
-$browser = new Browser($loop, $connector);
-```
-
-#### Methods
-
-The `Browser` offers several methods that resemble the HTTP protocol methods:
+Most importantly, this project provides a [`Browser`](#browser) object that
+offers several methods that resemble the HTTP protocol methods:
 
 ```php
 $browser->get($url, array $headers = array());
@@ -149,9 +122,9 @@ size is known and non-empty. For an empty request body, if will only include a
 `Content-Length: 0` request header if the request method usually expects a request
 body (only applies to `POST`, `PUT` and `PATCH` HTTP request methods).
 
-If you're using a [streaming request body](#streaming), it will default to using
-`Transfer-Encoding: chunked` unless you explicitly pass in a matching `Content-Length` request
-header. See also [streaming](#streaming) for more details.
+If you're using a [streaming request body](#streaming-request), it will default
+to using `Transfer-Encoding: chunked` unless you explicitly pass in a matching `Content-Length`
+request header. See also [streaming request](#streaming-request) for more details.
 
 By default, all of the above methods default to sending requests using the
 HTTP/1.1 protocol version. If you want to explicitly use the legacy HTTP/1.0
@@ -163,7 +136,7 @@ Each of the above methods supports async operation and either *resolves* with a 
 *rejects* with an `Exception`.
 Please see the following chapter about [promises](#promises) for more details.
 
-#### Promises
+### Promises
 
 Sending requests is async (non-blocking), so you can actually send multiple requests in parallel.
 The `Browser` will respond to each request with a [`ResponseInterface`](#responseinterface) message, the order is not guaranteed.
@@ -187,14 +160,14 @@ whole response body has to be kept in memory.
 This is easy to get started and works reasonably well for smaller responses
 (such as common HTML pages or RESTful or JSON API requests).
 
-You may also want to look into the [streaming API](#streaming):
+You may also want to look into the [streaming API](#streaming-response):
 
 * If you're dealing with lots of concurrent requests (100+) or
 * If you want to process individual data chunks as they happen (without having to wait for the full response body) or
 * If you're expecting a big response body size (1 MiB or more, for example when downloading binary files) or
 * If you're unsure about the response body size (better be safe than sorry when accessing arbitrary remote HTTP endpoints and the response body size is unknown in advance).
 
-#### Cancellation
+### Cancellation
 
 The returned Promise is implemented in such a way that it can be cancelled
 when it is still pending.
@@ -209,7 +182,7 @@ $loop->addTimer(2.0, function () use ($promise) {
 });
 ```
 
-#### Timeouts
+### Timeouts
 
 This library uses a very efficient HTTP implementation, so most HTTP requests
 should usually be completed in mere milliseconds. However, when sending HTTP
@@ -223,8 +196,8 @@ Note that this timeout value covers creating the underlying transport connection
 sending the HTTP request, receiving the HTTP response headers and its full
 response body and following any eventual [redirects](#redirects). See also
 [redirects](#redirects) below to configure the number of redirects to follow (or
-disable following redirects altogether) and also [streaming](#streaming) below 
-to not take receiving large response bodies into account for this timeout.
+disable following redirects altogether) and also [streaming](#streaming-response)
+below to not take receiving large response bodies into account for this timeout.
 
 You can use the [`timeout` option](#withoptions) to pass a custom timeout value
 in seconds like this:
@@ -244,16 +217,16 @@ Similarly, you can use a negative timeout value to not apply a timeout at all
 or use a `null` value to restore the default handling.
 See also [`withOptions()`](#withoptions) for more details.
 
-If you're using a [streaming response body](#streaming), the time it takes to
-receive the response body stream will not be included in the timeout. This
-allows you to keep this incoming stream open for a longer time, such as when
-downloading a very large stream or when streaming data over a long-lived
+If you're using a [streaming response body](#streaming-response), the time it
+takes to receive the response body stream will not be included in the timeout.
+This allows you to keep this incoming stream open for a longer time, such as
+when downloading a very large stream or when streaming data over a long-lived
 connection.
 
-If you're using a [streaming request body](#streaming), the time it takes to
-send the request body stream will not be included in the timeout. This allows
-you to keep this outgoing stream open for a longer time, such as when uploading
-a very large stream.
+If you're using a [streaming request body](#streaming-request), the time it
+takes to send the request body stream will not be included in the timeout. This
+allows you to keep this outgoing stream open for a longer time, such as when
+uploading a very large stream.
 
 Note that this timeout handling applies to the higher-level HTTP layer. Lower
 layers such as socket and DNS may also apply (different) timeout values. In
@@ -261,7 +234,7 @@ particular, the underlying socket connection uses the same `default_socket_timeo
 setting to establish the underlying transport connection. To control this
 connection timeout behavior, you can [inject a custom `Connector`](#browser).
 
-#### Authentication
+### Authentication
 
 This library supports [HTTP Basic Authentication](https://en.wikipedia.org/wiki/Basic_access_authentication)
 using the `Authorization: Basic …` request header or allows you to set an explicit
@@ -303,7 +276,7 @@ to any remote hosts by default. When following a redirect where the `Location`
 response header contains authentication details, these details will be sent for
 following requests. See also [redirects](#redirects) below.
 
-#### Redirects
+### Redirects
 
 By default, this library follows any redirects and obeys `3xx` (Redirection)
 status codes using the `Location` response header from the remote server.
@@ -348,7 +321,7 @@ $browser->get($uri)->then(function (ResponseInterface $response) {
 
 See also [`withOptions()`](#withoptions) for more details.
 
-#### Blocking
+### Blocking
 
 As stated above, this library provides you a powerful, async API by default.
 
@@ -388,9 +361,11 @@ Please refer to [clue/reactphp-block](https://github.com/clue/reactphp-block#rea
 
 Keep in mind the above remark about buffering the whole response message in memory.
 As an alternative, you may also see the following chapter for the
-[streaming API](#streaming).
+[streaming API](#streaming-response).
 
-#### Streaming
+### Streaming response
+
+<a id="streaming"></a><!-- legacy fragment id -->
 
 All of the above examples assume you want to store the whole response body in memory.
 This is easy to get started and works reasonably well for smaller responses.
@@ -496,12 +471,14 @@ $stream->on('data', function ($data) {
 });
 ```
 
+### Streaming request
+
 Besides streaming the response body, you can also stream the request body.
 This can be useful if you want to send big POST requests (uploading files etc.)
 or process many outgoing streams at once.
 Instead of passing the body as a string, you can simply pass an instance
 implementing ReactPHP's [`ReadableStreamInterface`](https://github.com/reactphp/stream#readablestreaminterface)
-to the [HTTP methods](#methods) like this:
+to the [request methods](#request-methods) like this:
 
 ```php
 $browser->post($url, array(), $stream)->then(function (ResponseInterface $response) {
@@ -525,169 +502,6 @@ $browser->post($url, array('Content-Length' => '11'), $body);
 If the streaming request body emits an `error` event or is explicitly closed
 without emitting a successful `end` event first, the request will automatically
 be closed and rejected.
-
-#### submit()
-
-The `submit($url, array $fields, $headers = array(), $method = 'POST'): PromiseInterface<ResponseInterface>` method can be used to
-submit an array of field values similar to submitting a form (`application/x-www-form-urlencoded`).
-
-```php
-$browser->submit($url, array('user' => 'test', 'password' => 'secret'));
-```
-
-#### send()
-
-The `send(RequestInterface $request): PromiseInterface<ResponseInterface>` method can be used to
-send an arbitrary instance implementing the [`RequestInterface`](#requestinterface) (PSR-7).
-
-The preferred way to send an HTTP request is by using the above request
-methods, for example the `get()` method to send an HTTP `GET` request.
-
-As an alternative, if you want to use a custom HTTP request method, you
-can use this method:
-
-```php
-$request = new Request('OPTIONS', $url);
-
-$browser->send($request)->then(…);
-```
-
-This method will automatically add a matching `Content-Length` request
-header if the size of the outgoing request body is known and non-empty.
-For an empty request body, if will only include a `Content-Length: 0`
-request header if the request method usually expects a request body (only
-applies to `POST`, `PUT` and `PATCH`).
-
-#### withOptions()
-
-The `withOptions(array $options): Browser` method can be used to
-change the options to use:
-
-The [`Browser`](#browser) class exposes several options for the handling of
-HTTP transactions. These options resemble some of PHP's
-[HTTP context options](https://www.php.net/manual/en/context.http.php) and
-can be controlled via the following API (and their defaults):
-
-```php
-$newBrowser = $browser->withOptions(array(
-    'timeout' => null,
-    'followRedirects' => true,
-    'maxRedirects' => 10,
-    'obeySuccessCode' => true,
-    'streaming' => false,
-));
-```
-
-See also [timeouts](#timeouts), [redirects](#redirects) and
-[streaming](#streaming) for more details.
-
-Notice that the [`Browser`](#browser) is an immutable object, i.e. this
-method actually returns a *new* [`Browser`](#browser) instance with the
-options applied.
-
-#### withBase()
-
-The `withBase($baseUri): Browser` method can be used to
-change the base URI used to resolve relative URIs to.
-
-```php
-$newBrowser = $browser->withBase('http://api.example.com/v3');
-```
-
-Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withBase()` method
-actually returns a *new* [`Browser`](#browser) instance with the given base URI applied.
-
-Any requests to relative URIs will then be processed by first prepending
-the (absolute) base URI.
-Please note that this merely prepends the base URI and does *not* resolve
-any relative path references (like `../` etc.).
-This is mostly useful for (RESTful) API calls where all endpoints (URIs)
-are located under a common base URI scheme.
-
-```php
-// will request http://api.example.com/v3/example
-$newBrowser->get('/example')->then(…);
-```
-
-#### withoutBase()
-
-The `withoutBase(): Browser` method can be used to
-remove the base URI.
-
-```php
-$newBrowser = $browser->withoutBase();
-```
-
-Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withoutBase()` method
-actually returns a *new* [`Browser`](#browser) instance without any base URI applied.
-
-See also [`withBase()`](#withbase).
-
-#### withProtocolVersion()
-
-The `withProtocolVersion(string $protocolVersion): Browser` method can be used to
-change the HTTP protocol version that will be used for all subsequent requests.
-
-All the above [request methods](#methods) default to sending requests as
-HTTP/1.1. This is the preferred HTTP protocol version which also provides
-decent backwards-compatibility with legacy HTTP/1.0 servers. As such,
-there should rarely be a need to explicitly change this protocol version.
-
-If you want to explicitly use the legacy HTTP/1.0 protocol version, you
-can use this method:
-
-```php
-$newBrowser = $browser->withProtocolVersion('1.0');
-
-$newBrowser->get($url)->then(…);
-```
-
-Notice that the [`Browser`](#browser) is an immutable object, i.e. this
-method actually returns a *new* [`Browser`](#browser) instance with the
-new protocol version applied.
-
-### ResponseInterface
-
-The `Psr\Http\Message\ResponseInterface` represents the incoming response received from the [`Browser`](#browser).
-
-This is a standard interface defined in
-[PSR-7: HTTP message interfaces](https://www.php-fig.org/psr/psr-7/), see its
-[`ResponseInterface` definition](https://www.php-fig.org/psr/psr-7/#3-3-psr-http-message-responseinterface)
-which in turn extends the
-[`MessageInterface` definition](https://www.php-fig.org/psr/psr-7/#3-1-psr-http-message-messageinterface).
-
-### RequestInterface
-
-The `Psr\Http\Message\RequestInterface` represents the outgoing request to be sent via the [`Browser`](#browser).
-
-This is a standard interface defined in
-[PSR-7: HTTP message interfaces](https://www.php-fig.org/psr/psr-7/), see its
-[`RequestInterface` definition](https://www.php-fig.org/psr/psr-7/#3-2-psr-http-message-requestinterface)
-which in turn extends the
-[`MessageInterface` definition](https://www.php-fig.org/psr/psr-7/#3-1-psr-http-message-messageinterface).
-
-### UriInterface
-
-The `Psr\Http\Message\UriInterface` represents an absolute or relative URI (aka URL).
-
-This is a standard interface defined in
-[PSR-7: HTTP message interfaces](https://www.php-fig.org/psr/psr-7/), see its
-[`UriInterface` definition](https://www.php-fig.org/psr/psr-7/#3-5-psr-http-message-uriinterface).
-
-### ResponseException
-
-The `ResponseException` is an `Exception` sub-class that will be used to reject
-a request promise if the remote server returns a non-success status code
-(anything but 2xx or 3xx).
-You can control this behavior via the ["obeySuccessCode" option](#withoptions).
-
-The `getCode(): int` method can be used to
-return the HTTP response status code.
-
-The `getResponse(): ResponseInterface` method can be used to
-access its underlying [`ResponseInterface`](#responseinterface) object.
-
-## Advanced
 
 ### HTTP proxy
 
@@ -758,6 +572,201 @@ $client->get('http://localhost/info')->then(function (ResponseInterface $respons
 ```
 
 See also the [Unix Domain Sockets (UDS) example](examples/14-unix-domain-sockets.php).
+
+## API
+
+### Browser
+
+The `Clue\React\Buzz\Browser` is responsible for sending HTTP requests to your HTTP server
+and keeps track of pending incoming HTTP responses.
+It also registers everything with the main [`EventLoop`](https://github.com/reactphp/event-loop#usage).
+
+```php
+$loop = React\EventLoop\Factory::create();
+
+$browser = new Clue\React\Buzz\Browser($loop);
+```
+
+If you need custom connector settings (DNS resolution, TLS parameters, timeouts,
+proxy servers etc.), you can explicitly pass a custom instance of the
+[`ConnectorInterface`](https://github.com/reactphp/socket#connectorinterface):
+
+```php
+$connector = new React\Socket\Connector($loop, array(
+    'dns' => '127.0.0.1',
+    'tcp' => array(
+        'bindto' => '192.168.10.1:0'
+    ),
+    'tls' => array(
+        'verify_peer' => false,
+        'verify_peer_name' => false
+    )
+));
+
+$browser = new Clue\React\Buzz\Browser($loop, $connector);
+```
+
+#### submit()
+
+The `submit($url, array $fields, $headers = array(), $method = 'POST'): PromiseInterface<ResponseInterface>` method can be used to
+submit an array of field values similar to submitting a form (`application/x-www-form-urlencoded`).
+
+```php
+$browser->submit($url, array('user' => 'test', 'password' => 'secret'));
+```
+
+#### send()
+
+The `send(RequestInterface $request): PromiseInterface<ResponseInterface>` method can be used to
+send an arbitrary instance implementing the [`RequestInterface`](#requestinterface) (PSR-7).
+
+The preferred way to send an HTTP request is by using the above request
+methods, for example the `get()` method to send an HTTP `GET` request.
+
+As an alternative, if you want to use a custom HTTP request method, you
+can use this method:
+
+```php
+$request = new Request('OPTIONS', $url);
+
+$browser->send($request)->then(…);
+```
+
+This method will automatically add a matching `Content-Length` request
+header if the size of the outgoing request body is known and non-empty.
+For an empty request body, if will only include a `Content-Length: 0`
+request header if the request method usually expects a request body (only
+applies to `POST`, `PUT` and `PATCH`).
+
+#### withOptions()
+
+The `withOptions(array $options): Browser` method can be used to
+change the options to use:
+
+The [`Browser`](#browser) class exposes several options for the handling of
+HTTP transactions. These options resemble some of PHP's
+[HTTP context options](https://www.php.net/manual/en/context.http.php) and
+can be controlled via the following API (and their defaults):
+
+```php
+$newBrowser = $browser->withOptions(array(
+    'timeout' => null,
+    'followRedirects' => true,
+    'maxRedirects' => 10,
+    'obeySuccessCode' => true,
+    'streaming' => false,
+));
+```
+
+See also [timeouts](#timeouts), [redirects](#redirects) and
+[streaming](#streaming-response) for more details.
+
+Notice that the [`Browser`](#browser) is an immutable object, i.e. this
+method actually returns a *new* [`Browser`](#browser) instance with the
+options applied.
+
+#### withBase()
+
+The `withBase($baseUri): Browser` method can be used to
+change the base URI used to resolve relative URIs to.
+
+```php
+$newBrowser = $browser->withBase('http://api.example.com/v3');
+```
+
+Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withBase()` method
+actually returns a *new* [`Browser`](#browser) instance with the given base URI applied.
+
+Any requests to relative URIs will then be processed by first prepending
+the (absolute) base URI.
+Please note that this merely prepends the base URI and does *not* resolve
+any relative path references (like `../` etc.).
+This is mostly useful for (RESTful) API calls where all endpoints (URIs)
+are located under a common base URI scheme.
+
+```php
+// will request http://api.example.com/v3/example
+$newBrowser->get('/example')->then(…);
+```
+
+#### withoutBase()
+
+The `withoutBase(): Browser` method can be used to
+remove the base URI.
+
+```php
+$newBrowser = $browser->withoutBase();
+```
+
+Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withoutBase()` method
+actually returns a *new* [`Browser`](#browser) instance without any base URI applied.
+
+See also [`withBase()`](#withbase).
+
+#### withProtocolVersion()
+
+The `withProtocolVersion(string $protocolVersion): Browser` method can be used to
+change the HTTP protocol version that will be used for all subsequent requests.
+
+All the above [request methods](#request-methods) default to sending
+requests as HTTP/1.1. This is the preferred HTTP protocol version which
+also provides decent backwards-compatibility with legacy HTTP/1.0
+servers. As such, there should rarely be a need to explicitly change this
+protocol version.
+
+If you want to explicitly use the legacy HTTP/1.0 protocol version, you
+can use this method:
+
+```php
+$newBrowser = $browser->withProtocolVersion('1.0');
+
+$newBrowser->get($url)->then(…);
+```
+
+Notice that the [`Browser`](#browser) is an immutable object, i.e. this
+method actually returns a *new* [`Browser`](#browser) instance with the
+new protocol version applied.
+
+### ResponseInterface
+
+The `Psr\Http\Message\ResponseInterface` represents the incoming response received from the [`Browser`](#browser).
+
+This is a standard interface defined in
+[PSR-7: HTTP message interfaces](https://www.php-fig.org/psr/psr-7/), see its
+[`ResponseInterface` definition](https://www.php-fig.org/psr/psr-7/#3-3-psr-http-message-responseinterface)
+which in turn extends the
+[`MessageInterface` definition](https://www.php-fig.org/psr/psr-7/#3-1-psr-http-message-messageinterface).
+
+### RequestInterface
+
+The `Psr\Http\Message\RequestInterface` represents the outgoing request to be sent via the [`Browser`](#browser).
+
+This is a standard interface defined in
+[PSR-7: HTTP message interfaces](https://www.php-fig.org/psr/psr-7/), see its
+[`RequestInterface` definition](https://www.php-fig.org/psr/psr-7/#3-2-psr-http-message-requestinterface)
+which in turn extends the
+[`MessageInterface` definition](https://www.php-fig.org/psr/psr-7/#3-1-psr-http-message-messageinterface).
+
+### UriInterface
+
+The `Psr\Http\Message\UriInterface` represents an absolute or relative URI (aka URL).
+
+This is a standard interface defined in
+[PSR-7: HTTP message interfaces](https://www.php-fig.org/psr/psr-7/), see its
+[`UriInterface` definition](https://www.php-fig.org/psr/psr-7/#3-5-psr-http-message-uriinterface).
+
+### ResponseException
+
+The `ResponseException` is an `Exception` sub-class that will be used to reject
+a request promise if the remote server returns a non-success status code
+(anything but 2xx or 3xx).
+You can control this behavior via the ["obeySuccessCode" option](#withoptions).
+
+The `getCode(): int` method can be used to
+return the HTTP response status code.
+
+The `getResponse(): ResponseInterface` method can be used to
+access its underlying [`ResponseInterface`](#responseinterface) object.
 
 ## Install
 
