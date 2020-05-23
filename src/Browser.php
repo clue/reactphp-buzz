@@ -68,9 +68,11 @@ class Browser
     }
 
     /**
+     * Sends an HTTP GET request
+     *
      * @param string|UriInterface $url URI for the request.
      * @param array               $headers
-     * @return PromiseInterface
+     * @return PromiseInterface<ResponseInterface>
      */
     public function get($url, array $headers = array())
     {
@@ -78,6 +80,7 @@ class Browser
     }
 
     /**
+     * Sends an HTTP POST request
      *
      * This method will automatically add a matching `Content-Length` request
      * header if the outgoing request body is a `string`. If you're using a
@@ -97,7 +100,7 @@ class Browser
      * @param string|UriInterface            $url     URI for the request.
      * @param array                          $headers
      * @param string|ReadableStreamInterface $contents
-     * @return PromiseInterface
+     * @return PromiseInterface<ResponseInterface>
      */
     public function post($url, array $headers = array(), $contents = '')
     {
@@ -105,9 +108,11 @@ class Browser
     }
 
     /**
+     * Sends an HTTP HEAD request
+     *
      * @param string|UriInterface $url     URI for the request.
      * @param array               $headers
-     * @return PromiseInterface
+     * @return PromiseInterface<ResponseInterface>
      */
     public function head($url, array $headers = array())
     {
@@ -115,6 +120,7 @@ class Browser
     }
 
     /**
+     * Sends an HTTP PATCH request
      *
      * This method will automatically add a matching `Content-Length` request
      * header if the outgoing request body is a `string`. If you're using a
@@ -134,7 +140,7 @@ class Browser
      * @param string|UriInterface            $url     URI for the request.
      * @param array                          $headers
      * @param string|ReadableStreamInterface $contents
-     * @return PromiseInterface
+     * @return PromiseInterface<ResponseInterface>
      */
     public function patch($url, array $headers = array(), $contents = '')
     {
@@ -142,6 +148,7 @@ class Browser
     }
 
     /**
+     * Sends an HTTP PUT request
      *
      * This method will automatically add a matching `Content-Length` request
      * header if the outgoing request body is a `string`. If you're using a
@@ -161,7 +168,7 @@ class Browser
      * @param string|UriInterface            $url     URI for the request.
      * @param array                          $headers
      * @param string|ReadableStreamInterface $contents
-     * @return PromiseInterface
+     * @return PromiseInterface<ResponseInterface>
      */
     public function put($url, array $headers = array(), $contents = '')
     {
@@ -169,10 +176,12 @@ class Browser
     }
 
     /**
+     * Sends an HTTP DELETE request
+     *
      * @param string|UriInterface            $url     URI for the request.
      * @param array                          $headers
      * @param string|ReadableStreamInterface $contents
-     * @return PromiseInterface
+     * @return PromiseInterface<ResponseInterface>
      */
     public function delete($url, array $headers = array(), $contents = '')
     {
@@ -193,7 +202,7 @@ class Browser
      * @param array               $fields
      * @param array               $headers
      * @param string              $method
-     * @return PromiseInterface
+     * @return PromiseInterface<ResponseInterface>
      */
     public function submit($url, array $fields, $headers = array(), $method = 'POST')
     {
@@ -225,7 +234,7 @@ class Browser
      * applies to `POST`, `PUT` and `PATCH`).
      *
      * @param RequestInterface $request
-     * @return PromiseInterface
+     * @return PromiseInterface<ResponseInterface>
      */
     public function send(RequestInterface $request)
     {

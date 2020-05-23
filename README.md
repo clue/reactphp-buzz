@@ -51,6 +51,12 @@ mess with most of the low-level details.
     * [Unix domain sockets](#unix-domain-sockets)
 * [API](#api)
     * [Browser](#browser)
+        * [get()](#get)
+        * [post()](#post)
+        * [head()](#head)
+        * [patch()](#patch)
+        * [put()](#put)
+        * [delete()](#delete)
         * [submit()](#submit)
         * [send()](#send)
         * [withOptions()](#withoptions)
@@ -113,7 +119,7 @@ $browser->patch($url, array $headers = array(), string|ReadableStreamInterface $
 
 Each of these methods requires a `$url` and some optional parameters to send an
 HTTP request. Each of these method names matches the respective HTTP request
-method, for example the `get()` method sends an HTTP `GET` request.
+method, for example the [`get()`](#get) method sends an HTTP `GET` request.
 
 You can optionally pass an associative array of additional `$headers` that will be
 sent with this HTTP request. Additionally, each method will automatically add a
@@ -606,9 +612,84 @@ $connector = new React\Socket\Connector($loop, array(
 $browser = new Clue\React\Buzz\Browser($loop, $connector);
 ```
 
+#### get()
+
+The `get(string|UriInterface $url, array $headers = array()): PromiseInterface<ResponseInterface>` method can be used to
+send an HTTP GET request.
+
+#### post()
+
+The `post(string|UriInterface $url, array $headers = array(), string|ReadableStreamInterface $contents = ''): PromiseInterface<ResponseInterface>` method can be used to
+send an HTTP POST request.
+
+This method will automatically add a matching `Content-Length` request
+header if the outgoing request body is a `string`. If you're using a
+streaming request body (`ReadableStreamInterface`), it will default to
+using `Transfer-Encoding: chunked` or you have to explicitly pass in a
+matching `Content-Length` request header like so:
+
+```php
+$body = new ThroughStream();
+$loop->addTimer(1.0, function () use ($body) {
+    $body->end("hello world");
+});
+
+$browser->post($url, array('Content-Length' => '11'), $body);
+```
+
+#### head()
+
+The `head(string|UriInterface $url, array $headers = array()): PromiseInterface<ResponseInterface>` method can be used to
+send an HTTP HEAD request.
+
+#### patch()
+
+The `patch(string|UriInterface $url, array $headers = array(), string|ReadableStreamInterface $contents = ''): PromiseInterface<ResponseInterface>` method can be used to
+send an HTTP PATCH request.
+
+This method will automatically add a matching `Content-Length` request
+header if the outgoing request body is a `string`. If you're using a
+streaming request body (`ReadableStreamInterface`), it will default to
+using `Transfer-Encoding: chunked` or you have to explicitly pass in a
+matching `Content-Length` request header like so:
+
+```php
+$body = new ThroughStream();
+$loop->addTimer(1.0, function () use ($body) {
+    $body->end("hello world");
+});
+
+$browser->patch($url, array('Content-Length' => '11'), $body);
+```
+
+#### put()
+
+The `put(string|UriInterface $url, array $headers = array()): PromiseInterface<ResponseInterface>` method can be used to
+send an HTTP PUT request.
+
+This method will automatically add a matching `Content-Length` request
+header if the outgoing request body is a `string`. If you're using a
+streaming request body (`ReadableStreamInterface`), it will default to
+using `Transfer-Encoding: chunked` or you have to explicitly pass in a
+matching `Content-Length` request header like so:
+
+```php
+$body = new ThroughStream();
+$loop->addTimer(1.0, function () use ($body) {
+    $body->end("hello world");
+});
+
+$browser->put($url, array('Content-Length' => '11'), $body);
+```
+
+#### delete()
+
+The `delete(string|UriInterface $url, array $headers = array()): PromiseInterface<ResponseInterface>` method can be used to
+send an HTTP DELETE request.
+
 #### submit()
 
-The `submit($url, array $fields, $headers = array(), $method = 'POST'): PromiseInterface<ResponseInterface>` method can be used to
+The `submit(string|UriInterface $url, array $fields, array $headers = array(), string $method = 'POST'): PromiseInterface<ResponseInterface>` method can be used to
 submit an array of field values similar to submitting a form (`application/x-www-form-urlencoded`).
 
 ```php
@@ -667,7 +748,7 @@ options applied.
 
 #### withBase()
 
-The `withBase($baseUri): Browser` method can be used to
+The `withBase(string|UriInterface $baseUri): Browser` method can be used to
 change the base URI used to resolve relative URIs to.
 
 ```php
