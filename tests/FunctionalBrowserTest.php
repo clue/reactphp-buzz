@@ -532,4 +532,27 @@ class FunctionalBrowserTest extends TestCase
         $this->assertEquals(0, $response->getBody()->getSize());
         $this->assertEquals('5', $response->getHeaderLine('Content-Length'));
     }
+
+    public function testRequestGetReceivesBufferedResponseEvenWhenStreamingHasBeenTurnedOn()
+    {
+        $server = new StreamingServer(function (ServerRequestInterface $request) {
+            return new Response(
+                200,
+                array(),
+                'hello'
+            );
+        });
+        $socket = new \React\Socket\Server(0, $this->loop);
+        $server->listen($socket);
+
+        $this->base = str_replace('tcp:', 'http:', $socket->getAddress()) . '/';
+
+        $response = Block\await(
+            $this->browser->withOptions(array('streaming' => true))->request('GET', $this->base . 'get'),
+            $this->loop
+        );
+        $this->assertEquals('hello', (string)$response->getBody());
+
+        $socket->close();
+    }
 }

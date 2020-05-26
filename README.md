@@ -57,8 +57,9 @@ mess with most of the low-level details.
         * [patch()](#patch)
         * [put()](#put)
         * [delete()](#delete)
+        * [request()](#request)
         * [submit()](#submit)
-        * [send()](#send)
+        * [~~send()~~](#send)
         * [withOptions()](#withoptions)
         * [withBase()](#withbase)
         * [withoutBase()](#withoutbase)
@@ -136,7 +137,7 @@ By default, all of the above methods default to sending requests using the
 HTTP/1.1 protocol version. If you want to explicitly use the legacy HTTP/1.0
 protocol version, you can use the [`withProtocolVersion()`](#withprotocolversion)
 method. If you want to use any other or even custom HTTP request method, you can
-use the [`send()`](#send) method.
+use the [`request()`](#request) method.
 
 Each of the above methods supports async operation and either *fulfills* with a
 [`ResponseInterface`](#responseinterface) or *rejects* with an `Exception`.
@@ -806,6 +807,47 @@ $browser->delete($url)->then(function (Psr\Http\Message\ResponseInterface $respo
 });
 ```
 
+#### request()
+
+The `request(string $method, string $url, array $headers = array(), string|ReadableStreamInterface $body = ''): PromiseInterface<ResponseInterface>` method can be used to
+send an arbitrary HTTP request.
+
+The preferred way to send an HTTP request is by using the above
+[request methods](#request-methods), for example the [`get()`](#get)
+method to send an HTTP `GET` request.
+
+As an alternative, if you want to use a custom HTTP request method, you
+can use this method:
+
+```php
+$browser->request('OPTIONS', $url)->then(function (Psr\Http\Message\ResponseInterface $response) {
+    var_dump((string)$response->getBody());
+});
+```
+
+This method will automatically add a matching `Content-Length` request
+header if the size of the outgoing request body is known and non-empty.
+For an empty request body, if will only include a `Content-Length: 0`
+request header if the request method usually expects a request body (only
+applies to `POST`, `PUT` and `PATCH`).
+
+If you're using a streaming request body (`ReadableStreamInterface`), it
+will default to using `Transfer-Encoding: chunked` or you have to
+explicitly pass in a matching `Content-Length` request header like so:
+
+```php
+$body = new React\Stream\ThroughStream();
+$loop->addTimer(1.0, function () use ($body) {
+    $body->end("hello world");
+});
+
+$browser->request('POST', $url, array('Content-Length' => '11'), $body);
+```
+
+> Note that this method is available as of v2.9.0 and always buffers the
+  response body before resolving.
+  It does not respect the [`streaming` option](#withoptions).
+
 #### submit()
 
 The `submit(string|UriInterface $url, array $fields, array $headers = array(), string $method = 'POST'): PromiseInterface<ResponseInterface>` method can be used to
@@ -815,13 +857,16 @@ submit an array of field values similar to submitting a form (`application/x-www
 $browser->submit($url, array('user' => 'test', 'password' => 'secret'));
 ```
 
-#### send()
+#### ~~send()~~
 
-The `send(RequestInterface $request): PromiseInterface<ResponseInterface>` method can be used to
+> Deprecated since v2.9.0, see [`request()`](#request) instead.
+
+The deprecated `send(RequestInterface $request): PromiseInterface<ResponseInterface>` method can be used to
 send an arbitrary instance implementing the [`RequestInterface`](#requestinterface) (PSR-7).
 
-The preferred way to send an HTTP request is by using the above request
-methods, for example the `get()` method to send an HTTP `GET` request.
+The preferred way to send an HTTP request is by using the above
+[request methods](#request-methods), for example the [`get()`](#get)
+method to send an HTTP `GET` request.
 
 As an alternative, if you want to use a custom HTTP request method, you
 can use this method:
@@ -829,6 +874,7 @@ can use this method:
 ```php
 $request = new Request('OPTIONS', $url);
 
+// deprecated: see request() instead
 $browser->send($request)->then(…);
 ```
 

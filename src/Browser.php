@@ -246,6 +246,57 @@ class Browser
     }
 
     /**
+     * Sends an arbitrary HTTP request.
+     *
+     * The preferred way to send an HTTP request is by using the above
+     * [request methods](#request-methods), for example the [`get()`](#get)
+     * method to send an HTTP `GET` request.
+     *
+     * As an alternative, if you want to use a custom HTTP request method, you
+     * can use this method:
+     *
+     * ```php
+     * $browser->request('OPTIONS', $url)->then(function (Psr\Http\Message\ResponseInterface $response) {
+     *     var_dump((string)$response->getBody());
+     * });
+     * ```
+     *
+     * This method will automatically add a matching `Content-Length` request
+     * header if the size of the outgoing request body is known and non-empty.
+     * For an empty request body, if will only include a `Content-Length: 0`
+     * request header if the request method usually expects a request body (only
+     * applies to `POST`, `PUT` and `PATCH`).
+     *
+     * If you're using a streaming request body (`ReadableStreamInterface`), it
+     * will default to using `Transfer-Encoding: chunked` or you have to
+     * explicitly pass in a matching `Content-Length` request header like so:
+     *
+     * ```php
+     * $body = new React\Stream\ThroughStream();
+     * $loop->addTimer(1.0, function () use ($body) {
+     *     $body->end("hello world");
+     * });
+     *
+     * $browser->request('POST', $url, array('Content-Length' => '11'), $body);
+     * ```
+     *
+     * > Note that this method is available as of v2.9.0 and always buffers the
+     *   response body before resolving.
+     *   It does not respect the [`streaming` option](#withoptions).
+     *
+     * @param string                         $method   HTTP request method, e.g. GET/HEAD/POST etc.
+     * @param string                         $url      URL for the request
+     * @param array                          $headers  Additional request headers
+     * @param string|ReadableStreamInterface $body     HTTP request body contents
+     * @return PromiseInterface<ResponseInterface,Exception>
+     * @since 2.9.0
+     */
+    public function request($method, $url, array $headers = array(), $body = '')
+    {
+        return $this->withOptions(array('streaming' => false))->requestMayBeStreaming($method, $url, $headers, $body);
+    }
+
+    /**
      * Submits an array of field values similar to submitting a form (`application/x-www-form-urlencoded`).
      *
      * ```php
@@ -270,10 +321,11 @@ class Browser
     }
 
     /**
-     * Sends an arbitrary instance implementing the [`RequestInterface`](#requestinterface) (PSR-7).
+     * [Deprecated] Sends an arbitrary instance implementing the [`RequestInterface`](#requestinterface) (PSR-7).
      *
-     * The preferred way to send an HTTP request is by using the above request
-     * methods, for example the `get()` method to send an HTTP `GET` request.
+     * The preferred way to send an HTTP request is by using the above
+     * [request methods](#request-methods), for example the [`get()`](#get)
+     * method to send an HTTP `GET` request.
      *
      * As an alternative, if you want to use a custom HTTP request method, you
      * can use this method:
@@ -281,6 +333,7 @@ class Browser
      * ```php
      * $request = new Request('OPTIONS', $url);
      *
+     * // deprecated: see request() instead
      * $browser->send($request)->then(…);
      * ```
      *
@@ -292,6 +345,8 @@ class Browser
      *
      * @param RequestInterface $request
      * @return PromiseInterface<ResponseInterface>
+     * @deprecated 2.9.0 See self::request() instead.
+     * @see self::request()
      */
     public function send(RequestInterface $request)
     {
