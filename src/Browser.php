@@ -282,7 +282,9 @@ class Browser
      *
      * > Note that this method is available as of v2.9.0 and always buffers the
      *   response body before resolving.
-     *   It does not respect the [`streaming` option](#withoptions).
+     *   It does not respect the deprecated [`streaming` option](#withoptions).
+     *   If you want to stream the response body, you can use the
+     *   [`requestStreaming()`](#requeststreaming) method instead.
      *
      * @param string                         $method   HTTP request method, e.g. GET/HEAD/POST etc.
      * @param string                         $url      URL for the request
@@ -294,6 +296,84 @@ class Browser
     public function request($method, $url, array $headers = array(), $body = '')
     {
         return $this->withOptions(array('streaming' => false))->requestMayBeStreaming($method, $url, $headers, $body);
+    }
+
+    /**
+     * Sends an arbitrary HTTP request and receives a streaming response without buffering the response body.
+     *
+     * The preferred way to send an HTTP request is by using the above
+     * [request methods](#request-methods), for example the [`get()`](#get)
+     * method to send an HTTP `GET` request. Each of these methods will buffer
+     * the whole response body in memory by default. This is easy to get started
+     * and works reasonably well for smaller responses.
+     *
+     * In some situations, it's a better idea to use a streaming approach, where
+     * only small chunks have to be kept in memory. You can use this method to
+     * send an arbitrary HTTP request and receive a streaming response. It uses
+     * the same HTTP message API, but does not buffer the response body in
+     * memory. It only processes the response body in small chunks as data is
+     * received and forwards this data through [ReactPHP's Stream API](https://github.com/reactphp/stream).
+     * This works for (any number of) responses of arbitrary sizes.
+     *
+     * ```php
+     * $browser->requestStreaming('GET', $url)->then(function (Psr\Http\Message\ResponseInterface $response) {
+     *     $body = $response->getBody();
+     *     assert($body instanceof Psr\Http\Message\StreamInterface);
+     *     assert($body instanceof React\Stream\ReadableStreamInterface);
+     *
+     *     $body->on('data', function ($chunk) {
+     *         echo $chunk;
+     *     });
+     *
+     *     $body->on('error', function (Exception $error) {
+     *         echo 'Error: ' . $error->getMessage() . PHP_EOL;
+     *     });
+     *
+     *     $body->on('close', function () {
+     *         echo '[DONE]' . PHP_EOL;
+     *     });
+     * });
+     * ```
+     *
+     * See also [`ReadableStreamInterface`](https://github.com/reactphp/stream#readablestreaminterface)
+     * and the [streaming response](#streaming-response) for more details,
+     * examples and possible use-cases.
+     *
+     * This method will automatically add a matching `Content-Length` request
+     * header if the size of the outgoing request body is known and non-empty.
+     * For an empty request body, if will only include a `Content-Length: 0`
+     * request header if the request method usually expects a request body (only
+     * applies to `POST`, `PUT` and `PATCH`).
+     *
+     * If you're using a streaming request body (`ReadableStreamInterface`), it
+     * will default to using `Transfer-Encoding: chunked` or you have to
+     * explicitly pass in a matching `Content-Length` request header like so:
+     *
+     * ```php
+     * $body = new React\Stream\ThroughStream();
+     * $loop->addTimer(1.0, function () use ($body) {
+     *     $body->end("hello world");
+     * });
+     *
+     * $browser->requestStreaming('POST', $url, array('Content-Length' => '11'), $body);
+     * ```
+     *
+     * > Note that this method is available as of v2.9.0 and always resolves the
+     *   response without buffering the response body.
+     *   It does not respect the deprecated [`streaming` option](#withoptions).
+     *   If you want to buffer the response body, use can use the
+     *   [`request()`](#request) method instead.
+     *
+     * @param string                         $method   HTTP request method, e.g. GET/HEAD/POST etc.
+     * @param string                         $url      URL for the request
+     * @param array                          $headers  Additional request headers
+     * @param string|ReadableStreamInterface $body     HTTP request body contents
+     * @return PromiseInterface<ResponseInterface,Exception>
+     * @since 2.9.0
+     */
+    public function requestStreaming($method, $url, $headers = array(), $contents = '')
+    {
+        return $this->withOptions(array('streaming' => true))->requestMayBeStreaming($method, $url, $headers, $contents);
     }
 
     /**
@@ -437,7 +517,7 @@ class Browser
      *     'followRedirects' => true,
      *     'maxRedirects' => 10,
      *     'obeySuccessCode' => true,
-     *     'streaming' => false,
+     *     'streaming' => false, // deprecated, see requestStreaming() instead
      * ));
      * ```
      *

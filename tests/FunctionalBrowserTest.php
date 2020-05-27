@@ -5,6 +5,7 @@ namespace Clue\Tests\React\Buzz;
 use Clue\React\Block;
 use Clue\React\Buzz\Browser;
 use Clue\React\Buzz\Message\ResponseException;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use React\EventLoop\Factory;
 use React\Http\Response;
@@ -533,26 +534,34 @@ class FunctionalBrowserTest extends TestCase
         $this->assertEquals('5', $response->getHeaderLine('Content-Length'));
     }
 
-    public function testRequestGetReceivesBufferedResponseEvenWhenStreamingHasBeenTurnedOn()
+    public function testRequestGetReceivesBufferedResponseEvenWhenStreamingOptionHasBeenTurnedOn()
     {
-        $server = new StreamingServer(function (ServerRequestInterface $request) {
-            return new Response(
-                200,
-                array(),
-                'hello'
-            );
-        });
-        $socket = new \React\Socket\Server(0, $this->loop);
-        $server->listen($socket);
-
-        $this->base = str_replace('tcp:', 'http:', $socket->getAddress()) . '/';
-
         $response = Block\await(
             $this->browser->withOptions(array('streaming' => true))->request('GET', $this->base . 'get'),
             $this->loop
         );
         $this->assertEquals('hello', (string)$response->getBody());
+    }
 
-        $socket->close();
+    public function testRequestStreamingGetReceivesStreamingResponseBody()
+    {
+        $buffer = Block\await(
+            $this->browser->requestStreaming('GET', $this->base . 'get')->then(function (ResponseInterface $response) {
+                return Stream\buffer($response->getBody());
+            }),
+            $this->loop
+        );
+
+        $this->assertEquals('hello', $buffer);
+    }
+
+    public function testRequestStreamingGetReceivesStreamingResponseEvenWhenStreamingOptionHasBeenTurnedOff()
+    {
+        $response = Block\await(
+            $this->browser->withOptions(array('streaming' => false))->requestStreaming('GET', $this->base . 'get'),
+            $this->loop
+        );
+        $this->assertInstanceOf('React\Stream\ReadableStreamInterface', $response->getBody());
+        $this->assertEquals('', (string)$response->getBody());
     }
 }

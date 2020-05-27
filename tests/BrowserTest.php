@@ -107,6 +107,19 @@ class BrowserTest extends TestCase
         $this->browser->request('OPTIONS', 'http://example.com/');
     }
 
+    public function testRequestStreamingGetSendsGetRequestWithStreamingExplicitlyEnabled()
+    {
+        $this->sender->expects($this->once())->method('withOptions')->with(array('streaming' => true))->willReturnSelf();
+
+        $that = $this;
+        $this->sender->expects($this->once())->method('send')->with($this->callback(function (RequestInterface $request) use ($that) {
+            $that->assertEquals('GET', $request->getMethod());
+            return true;
+        }))->willReturn(new Promise(function () { }));
+
+        $this->browser->requestStreaming('GET', 'http://example.com/');
+    }
+
     public function testSubmitSendsPostRequest()
     {
         $that = $this;
