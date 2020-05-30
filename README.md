@@ -59,7 +59,7 @@ mess with most of the low-level details.
         * [delete()](#delete)
         * [request()](#request)
         * [requestStreaming()](#requeststreaming)
-        * [submit()](#submit)
+        * [~~submit()~~](#submit)
         * [~~send()~~](#send)
         * [withOptions()](#withoptions)
         * [withBase()](#withbase)
@@ -709,6 +709,23 @@ $browser->post(
 
 See also [example 04](examples/04-post-json.php).
 
+This method is also commonly used to submit HTML form data:
+
+```php
+$data = [
+    'user' => 'Alice',
+    'password' => 'secret'
+];
+
+$browser->post(
+    $url,
+    [
+        'Content-Type' => 'application/x-www-form-urlencoded'
+    ],
+    http_build_query($data)
+);
+```
+
 This method will automatically add a matching `Content-Length` request
 header if the outgoing request body is a `string`. If you're using a
 streaming request body (`ReadableStreamInterface`), it will default to
@@ -923,12 +940,15 @@ $browser->requestStreaming('POST', $url, array('Content-Length' => '11'), $body)
   If you want to buffer the response body, use can use the
   [`request()`](#request) method instead.
 
-#### submit()
+#### ~~submit()~~
 
-The `submit(string|UriInterface $url, array $fields, array $headers = array(), string $method = 'POST'): PromiseInterface<ResponseInterface>` method can be used to
+> Deprecated since v2.9.0, see [`post()`](#post) instead.
+
+The deprecated `submit(string|UriInterface $url, array $fields, array $headers = array(), string $method = 'POST'): PromiseInterface<ResponseInterface>` method can be used to
 submit an array of field values similar to submitting a form (`application/x-www-form-urlencoded`).
 
 ```php
+// deprecated: see post() instead
 $browser->submit($url, array('user' => 'test', 'password' => 'secret'));
 ```
 
