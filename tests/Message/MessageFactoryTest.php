@@ -179,4 +179,16 @@ class MessageFactoryTest extends TestCase
         $this->assertEquals(0, $body->getSize());
         $this->assertEquals('', (string)$body);
     }
+
+    public function testResponseWithStreamingBodyHasZeroSizeForHeadRequestMethod()
+    {
+        $stream = $this->getMockBuilder('React\Stream\ReadableStreamInterface')->getMock();
+        $response = $this->messageFactory->response('1.1', 200, 'OK', array('Content-Length' => '100'), $stream, 'HEAD');
+
+        $body = $response->getBody();
+        $this->assertInstanceOf('Psr\Http\Message\StreamInterface', $body);
+        $this->assertInstanceOf('React\Stream\ReadableStreamInterface', $body);
+        $this->assertEquals(0, $body->getSize());
+        $this->assertEquals('', (string)$body);
+    }
 }

@@ -516,4 +516,26 @@ class FunctionalBrowserTest extends TestCase
 
         $socket->close();
     }
+
+    public function testHeadRequestReceivesResponseWithEmptyBodyButWithContentLengthResponseHeader()
+    {
+        $server = new StreamingServer(function (ServerRequestInterface $request) {
+            return new Response(
+                200,
+                array(),
+                'hello'
+            );
+        });
+        $socket = new \React\Socket\Server(0, $this->loop);
+        $server->listen($socket);
+
+        $this->base = str_replace('tcp:', 'http:', $socket->getAddress()) . '/';
+
+        $response = Block\await($this->browser->head($this->base . 'get'), $this->loop);
+        $this->assertEquals('', (string)$response->getBody());
+        $this->assertEquals(0, $response->getBody()->getSize());
+        $this->assertEquals('5', $response->getHeaderLine('Content-Length'));
+
+        $socket->close();
+    }
 }
