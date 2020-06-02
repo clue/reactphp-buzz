@@ -37,17 +37,18 @@ class MessageFactory
      * @param string $reason
      * @param array  $headers
      * @param ReadableStreamInterface|string $body
+     * @param ?string $requestMethod
      * @return Response
      * @uses self::body()
      */
-    public function response($protocolVersion, $status, $reason, $headers = array(), $body = '')
+    public function response($protocolVersion, $status, $reason, $headers = array(), $body = '', $requestMethod = null)
     {
         $response = new Response($status, $headers, $body instanceof ReadableStreamInterface ? null : $body, $protocolVersion, $reason);
 
         if ($body instanceof ReadableStreamInterface) {
             $length = null;
             $code = $response->getStatusCode();
-            if (($code >= 100 && $code < 200) || $code == 204 || $code == 304) {
+            if ($requestMethod === 'HEAD' || ($code >= 100 && $code < 200) || $code == 204 || $code == 304) {
                 $length = 0;
             } elseif (\strtolower($response->getHeaderLine('Transfer-Encoding')) === 'chunked') {
                 $length = null;

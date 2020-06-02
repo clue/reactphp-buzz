@@ -111,14 +111,15 @@ class Sender
         });
 
         $messageFactory = $this->messageFactory;
-        $requestStream->on('response', function (ResponseStream $responseStream) use ($deferred, $messageFactory) {
+        $requestStream->on('response', function (ResponseStream $responseStream) use ($deferred, $messageFactory, $request) {
             // apply response header values from response stream
             $deferred->resolve($messageFactory->response(
                 $responseStream->getVersion(),
                 $responseStream->getCode(),
                 $responseStream->getReasonPhrase(),
                 $responseStream->getHeaders(),
-                $responseStream
+                $responseStream,
+                $request->getMethod()
             ));
         });
 
