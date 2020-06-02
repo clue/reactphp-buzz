@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.8.2 (2020-06-02)
+
+*   Fix: HTTP `HEAD` requests should not expect a response body.
+    (#166 by @clue)
+
 ## 2.8.1 (2020-05-19)
 
 *   Fix: Fix cancellation of pending requests with promise followers.
