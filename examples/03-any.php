@@ -1,6 +1,6 @@
 <?php
 
-// concurrently request a number of URIs.
+// concurrently request a number of URLs.
 // return immediately once the first is completed, cancel all others.
 
 use Clue\React\Buzz\Browser;

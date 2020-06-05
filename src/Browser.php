@@ -17,11 +17,8 @@ class Browser
 {
     private $transaction;
     private $messageFactory;
-    private $baseUri = null;
+    private $baseUrl;
     private $protocolVersion = '1.1';
-
-    /** @var LoopInterface $loop */
-    private $loop;
 
     /**
      * The `Browser` is responsible for sending HTTP requests to your HTTP server
@@ -70,7 +67,7 @@ class Browser
     /**
      * Sends an HTTP GET request
      *
-     * @param string|UriInterface $url URI for the request.
+     * @param string|UriInterface $url URL for the request.
      * @param array               $headers
      * @return PromiseInterface<ResponseInterface>
      */
@@ -97,7 +94,7 @@ class Browser
      * $browser->post($url, array('Content-Length' => '11'), $body);
      * ```
      *
-     * @param string|UriInterface            $url     URI for the request.
+     * @param string|UriInterface            $url     URL for the request.
      * @param array                          $headers
      * @param string|ReadableStreamInterface $contents
      * @return PromiseInterface<ResponseInterface>
@@ -110,7 +107,7 @@ class Browser
     /**
      * Sends an HTTP HEAD request
      *
-     * @param string|UriInterface $url     URI for the request.
+     * @param string|UriInterface $url     URL for the request.
      * @param array               $headers
      * @return PromiseInterface<ResponseInterface>
      */
@@ -137,7 +134,7 @@ class Browser
      * $browser->patch($url, array('Content-Length' => '11'), $body);
      * ```
      *
-     * @param string|UriInterface            $url     URI for the request.
+     * @param string|UriInterface            $url     URL for the request.
      * @param array                          $headers
      * @param string|ReadableStreamInterface $contents
      * @return PromiseInterface<ResponseInterface>
@@ -165,7 +162,7 @@ class Browser
      * $browser->put($url, array('Content-Length' => '11'), $body);
      * ```
      *
-     * @param string|UriInterface            $url     URI for the request.
+     * @param string|UriInterface            $url     URL for the request.
      * @param array                          $headers
      * @param string|ReadableStreamInterface $contents
      * @return PromiseInterface<ResponseInterface>
@@ -178,7 +175,7 @@ class Browser
     /**
      * Sends an HTTP DELETE request
      *
-     * @param string|UriInterface            $url     URI for the request.
+     * @param string|UriInterface            $url     URL for the request.
      * @param array                          $headers
      * @param string|ReadableStreamInterface $contents
      * @return PromiseInterface<ResponseInterface>
@@ -198,7 +195,7 @@ class Browser
      * This method will automatically add a matching `Content-Length` request
      * header for the encoded length of the given `$fields`.
      *
-     * @param string|UriInterface $url     URI for the request.
+     * @param string|UriInterface $url     URL for the request.
      * @param array               $fields
      * @param array               $headers
      * @param string              $method
@@ -238,65 +235,65 @@ class Browser
      */
     public function send(RequestInterface $request)
     {
-        if ($this->baseUri !== null) {
-            // ensure we're actually below the base URI
-            $request = $request->withUri($this->messageFactory->expandBase($request->getUri(), $this->baseUri));
+        if ($this->baseUrl !== null) {
+            // ensure we're actually below the base URL
+            $request = $request->withUri($this->messageFactory->expandBase($request->getUri(), $this->baseUrl));
         }
 
         return $this->transaction->send($request);
     }
 
     /**
-     * Changes the base URI used to resolve relative URIs to.
+     * Changes the base URL used to resolve relative URLs to.
      *
      * ```php
      * $newBrowser = $browser->withBase('http://api.example.com/v3');
      * ```
      *
      * Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withBase()` method
-     * actually returns a *new* [`Browser`](#browser) instance with the given base URI applied.
+     * actually returns a *new* [`Browser`](#browser) instance with the given base URL applied.
      *
-     * Any requests to relative URIs will then be processed by first prepending
-     * the (absolute) base URI.
-     * Please note that this merely prepends the base URI and does *not* resolve
+     * Any requests to relative URLs will then be processed by first prepending
+     * the (absolute) base URL.
+     * Please note that this merely prepends the base URL and does *not* resolve
      * any relative path references (like `../` etc.).
-     * This is mostly useful for (RESTful) API calls where all endpoints (URIs)
-     * are located under a common base URI scheme.
+     * This is mostly useful for (RESTful) API calls where all endpoints (URLs)
+     * are located under a common base URL scheme.
      *
      * ```php
      * // will request http://api.example.com/v3/example
      * $newBrowser->get('/example')->then(…);
      * ```
      *
-     * By definition of this library, a given base URI MUST always absolute and
+     * By definition of this library, a given base URL MUST always absolute and
      * can not contain any placeholders.
      *
-     * @param string|UriInterface $baseUri absolute base URI
+     * @param string|UriInterface $baseUrl absolute base URL
      * @return self
-     * @throws InvalidArgumentException if the given $baseUri is not a valid absolute URI
+     * @throws InvalidArgumentException if the given $baseUri is not a valid absolute URL
      * @see self::withoutBase()
      */
-    public function withBase($baseUri)
+    public function withBase($baseUrl)
     {
         $browser = clone $this;
-        $browser->baseUri = $this->messageFactory->uri($baseUri);
+        $browser->baseUrl = $this->messageFactory->uri($baseUrl);
 
-        if ($browser->baseUri->getScheme() === '' || $browser->baseUri->getHost() === '') {
-            throw new \InvalidArgumentException('Base URI must be absolute');
+        if ($browser->baseUrl->getScheme() === '' || $browser->baseUrl->getHost() === '') {
+            throw new \InvalidArgumentException('Base URL must be absolute');
         }
 
         return $browser;
     }
 
     /**
-     * Removes the base URI.
+     * Removes the base URL.
      *
      * ```php
      * $newBrowser = $browser->withoutBase();
      * ```
      *
      * Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withoutBase()` method
-     * actually returns a *new* [`Browser`](#browser) instance without any base URI applied.
+     * actually returns a *new* [`Browser`](#browser) instance without any base URL applied.
      *
      * See also [`withBase()`](#withbase).
      *
@@ -306,7 +303,7 @@ class Browser
     public function withoutBase()
     {
         $browser = clone $this;
-        $browser->baseUri = null;
+        $browser->baseUrl = null;
 
         return $browser;
     }

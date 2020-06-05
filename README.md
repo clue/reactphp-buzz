@@ -213,7 +213,7 @@ $browser = $browser->withOptions(array(
     'timeout' => 10.0
 ));
 
-$browser->get($uri)->then(function (ResponseInterface $response) {
+$browser->get($url)->then(function (ResponseInterface $response) {
     // response received within 10 seconds maximum
     var_dump($response->getHeaders());
 });
@@ -252,7 +252,7 @@ status code which will reject the request by default (see also
 [`obeySuccessCode` option](#withoptions) below).
 
 In order to pass authentication details, you can simple pass the username and
-password as part of the request URI like this:
+password as part of the request URL like this:
 
 ```php
 $promise = $browser->get('https://user:pass@example.com/api');
@@ -291,7 +291,7 @@ Except for a few specific request headers listed below, the redirected requests
 will include the exact same request headers as the original request.
 
 ```php
-$browser->get($uri, $headers)->then(function (ResponseInterface $response) {
+$browser->get($url, $headers)->then(function (ResponseInterface $response) {
     // the final response will end up here
     var_dump($response->getHeaders());
 });
@@ -303,7 +303,7 @@ remove any `Content-Length` and `Content-Type` request headers.
 
 If the original request used HTTP authentication with an `Authorization` request
 header, this request header will only be passed as part of the redirected
-request if the redirected URI is using the same host. In other words, the
+request if the redirected URL is using the same host. In other words, the
 `Authorizaton` request header will not be forwarded to other foreign hosts due to
 possible privacy/security concerns. When following a redirect where the `Location`
 response header contains authentication details, these details will be sent for
@@ -319,7 +319,7 @@ $browser = $browser->withOptions(array(
     'followRedirects' => false
 ));
 
-$browser->get($uri)->then(function (ResponseInterface $response) {
+$browser->get($url)->then(function (ResponseInterface $response) {
     // any redirects will now end up here
     var_dump($response->getHeaders());
 });
@@ -557,11 +557,11 @@ See also the [SSH proxy example](examples/13-ssh-proxy.php).
 ### Unix domain sockets
 
 By default, this library supports transport over plaintext TCP/IP and secure
-TLS connections for the `http://` and `https://` URI schemes respectively.
+TLS connections for the `http://` and `https://` URL schemes respectively.
 This library also supports Unix domain sockets (UDS) when explicitly configured.
 
 In order to use a UDS path, you have to explicitly configure the connector to
-override the destination URI so that the hostname given in the request URI will
+override the destination URL so that the hostname given in the request URL will
 no longer be used to establish the connection:
 
 ```php
@@ -749,21 +749,21 @@ options applied.
 #### withBase()
 
 The `withBase(string|UriInterface $baseUri): Browser` method can be used to
-change the base URI used to resolve relative URIs to.
+change the base URL used to resolve relative URLs to.
 
 ```php
 $newBrowser = $browser->withBase('http://api.example.com/v3');
 ```
 
 Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withBase()` method
-actually returns a *new* [`Browser`](#browser) instance with the given base URI applied.
+actually returns a *new* [`Browser`](#browser) instance with the given base URL applied.
 
-Any requests to relative URIs will then be processed by first prepending
-the (absolute) base URI.
-Please note that this merely prepends the base URI and does *not* resolve
+Any requests to relative URLs will then be processed by first prepending
+the (absolute) base URL.
+Please note that this merely prepends the base URL and does *not* resolve
 any relative path references (like `../` etc.).
-This is mostly useful for (RESTful) API calls where all endpoints (URIs)
-are located under a common base URI scheme.
+This is mostly useful for (RESTful) API calls where all endpoints (URLs)
+are located under a common base URL scheme.
 
 ```php
 // will request http://api.example.com/v3/example
@@ -773,14 +773,14 @@ $newBrowser->get('/example')->then(…);
 #### withoutBase()
 
 The `withoutBase(): Browser` method can be used to
-remove the base URI.
+remove the base URL.
 
 ```php
 $newBrowser = $browser->withoutBase();
 ```
 
 Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withoutBase()` method
-actually returns a *new* [`Browser`](#browser) instance without any base URI applied.
+actually returns a *new* [`Browser`](#browser) instance without any base URL applied.
 
 See also [`withBase()`](#withbase).
 
