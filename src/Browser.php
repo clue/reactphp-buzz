@@ -28,7 +28,7 @@ class Browser
      * ```php
      * $loop = React\EventLoop\Factory::create();
      *
-     * $browser = new Browser($loop);
+     * $browser = new Clue\React\Buzz\Browser($loop);
      * ```
      *
      * If you need custom connector settings (DNS resolution, TLS parameters, timeouts,
@@ -36,7 +36,7 @@ class Browser
      * [`ConnectorInterface`](https://github.com/reactphp/socket#connectorinterface):
      *
      * ```php
-     * $connector = new \React\Socket\Connector($loop, array(
+     * $connector = new React\Socket\Connector($loop, array(
      *     'dns' => '127.0.0.1',
      *     'tcp' => array(
      *         'bindto' => '192.168.10.1:0'
@@ -47,7 +47,7 @@ class Browser
      *     )
      * ));
      *
-     * $browser = new Browser($loop, $connector);
+     * $browser = new Clue\React\Buzz\Browser($loop, $connector);
      * ```
      *
      * @param LoopInterface $loop
@@ -67,6 +67,14 @@ class Browser
     /**
      * Sends an HTTP GET request
      *
+     * ```php
+     * $browser->get($url)->then(function (Psr\Http\Message\ResponseInterface $response) {
+     *     var_dump((string)$response->getBody());
+     * });
+     * ```
+     *
+     * See also [example 01](../examples/01-google.php).
+     *
      * @param string|UriInterface $url URL for the request.
      * @param array               $headers
      * @return PromiseInterface<ResponseInterface>
@@ -79,6 +87,20 @@ class Browser
     /**
      * Sends an HTTP POST request
      *
+     * ```php
+     * $browser->post(
+     *     $url,
+     *     [
+     *         'Content-Type' => 'application/json'
+     *     ],
+     *     json_encode($data)
+     * )->then(function (Psr\Http\Message\ResponseInterface $response) {
+     *     var_dump(json_decode((string)$response->getBody()));
+     * });
+     * ```
+     *
+     * See also [example 04](../examples/04-post-json.php).
+     *
      * This method will automatically add a matching `Content-Length` request
      * header if the outgoing request body is a `string`. If you're using a
      * streaming request body (`ReadableStreamInterface`), it will default to
@@ -86,7 +108,7 @@ class Browser
      * matching `Content-Length` request header like so:
      *
      * ```php
-     * $body = new ThroughStream();
+     * $body = new React\Stream\ThroughStream();
      * $loop->addTimer(1.0, function () use ($body) {
      *     $body->end("hello world");
      * });
@@ -107,6 +129,12 @@ class Browser
     /**
      * Sends an HTTP HEAD request
      *
+     * ```php
+     * $browser->head($url)->then(function (Psr\Http\Message\ResponseInterface $response) {
+     *     var_dump($response->getHeaders());
+     * });
+     * ```
+     *
      * @param string|UriInterface $url     URL for the request.
      * @param array               $headers
      * @return PromiseInterface<ResponseInterface>
@@ -119,6 +147,18 @@ class Browser
     /**
      * Sends an HTTP PATCH request
      *
+     * ```php
+     * $browser->patch(
+     *     $url,
+     *     [
+     *         'Content-Type' => 'application/json'
+     *     ],
+     *     json_encode($data)
+     * )->then(function (Psr\Http\Message\ResponseInterface $response) {
+     *     var_dump(json_decode((string)$response->getBody()));
+     * });
+     * ```
+     *
      * This method will automatically add a matching `Content-Length` request
      * header if the outgoing request body is a `string`. If you're using a
      * streaming request body (`ReadableStreamInterface`), it will default to
@@ -126,7 +166,7 @@ class Browser
      * matching `Content-Length` request header like so:
      *
      * ```php
-     * $body = new ThroughStream();
+     * $body = new React\Stream\ThroughStream();
      * $loop->addTimer(1.0, function () use ($body) {
      *     $body->end("hello world");
      * });
@@ -147,6 +187,20 @@ class Browser
     /**
      * Sends an HTTP PUT request
      *
+     * ```php
+     * $browser->put(
+     *     $url,
+     *     [
+     *         'Content-Type' => 'text/xml'
+     *     ],
+     *     $xml->asXML()
+     * )->then(function (Psr\Http\Message\ResponseInterface $response) {
+     *     var_dump((string)$response->getBody());
+     * });
+     * ```
+     *
+     * See also [example 05](../examples/05-put-xml.php).
+     *
      * This method will automatically add a matching `Content-Length` request
      * header if the outgoing request body is a `string`. If you're using a
      * streaming request body (`ReadableStreamInterface`), it will default to
@@ -154,7 +208,7 @@ class Browser
      * matching `Content-Length` request header like so:
      *
      * ```php
-     * $body = new ThroughStream();
+     * $body = new React\Stream\ThroughStream();
      * $loop->addTimer(1.0, function () use ($body) {
      *     $body->end("hello world");
      * });
@@ -174,6 +228,12 @@ class Browser
 
     /**
      * Sends an HTTP DELETE request
+     *
+     * ```php
+     * $browser->delete($url)->then(function (Psr\Http\Message\ResponseInterface $response) {
+     *     var_dump((string)$response->getBody());
+     * });
+     * ```
      *
      * @param string|UriInterface            $url     URL for the request.
      * @param array                          $headers

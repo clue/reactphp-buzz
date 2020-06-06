@@ -88,9 +88,9 @@ HTTP webserver and send some simple HTTP GET requests:
 
 ```php
 $loop = React\EventLoop\Factory::create();
-$client = new Browser($loop);
+$client = new Clue\React\Buzz\Browser($loop);
 
-$client->get('http://www.google.com/')->then(function (ResponseInterface $response) {
+$client->get('http://www.google.com/')->then(function (Psr\Http\Message\ResponseInterface $response) {
     var_dump($response->getHeaders(), (string)$response->getBody());
 });
 
@@ -150,7 +150,7 @@ Sending requests uses a [Promise](https://github.com/reactphp/promise)-based int
 
 ```php
 $browser->get($url)->then(
-    function (ResponseInterface $response) {
+    function (Psr\Http\Message\ResponseInterface $response) {
         var_dump('Response received', $response);
     },
     function (Exception $error) {
@@ -213,7 +213,7 @@ $browser = $browser->withOptions(array(
     'timeout' => 10.0
 ));
 
-$browser->get($url)->then(function (ResponseInterface $response) {
+$browser->get($url)->then(function (Psr\Http\Message\ResponseInterface $response) {
     // response received within 10 seconds maximum
     var_dump($response->getHeaders());
 });
@@ -238,7 +238,20 @@ Note that this timeout handling applies to the higher-level HTTP layer. Lower
 layers such as socket and DNS may also apply (different) timeout values. In
 particular, the underlying socket connection uses the same `default_socket_timeout`
 setting to establish the underlying transport connection. To control this
-connection timeout behavior, you can [inject a custom `Connector`](#browser).
+connection timeout behavior, you can [inject a custom `Connector`](#browser)
+like this:
+
+```php
+$browser = new Clue\React\Buzz\Browser(
+    $loop,
+    new React\Socket\Connector(
+        $loop,
+        array(
+            'timeout' => 5
+        )
+    )
+);
+```
 
 ### Authentication
 
@@ -291,7 +304,7 @@ Except for a few specific request headers listed below, the redirected requests
 will include the exact same request headers as the original request.
 
 ```php
-$browser->get($url, $headers)->then(function (ResponseInterface $response) {
+$browser->get($url, $headers)->then(function (Psr\Http\Message\ResponseInterface $response) {
     // the final response will end up here
     var_dump($response->getHeaders());
 });
@@ -319,7 +332,7 @@ $browser = $browser->withOptions(array(
     'followRedirects' => false
 ));
 
-$browser->get($url)->then(function (ResponseInterface $response) {
+$browser->get($url)->then(function (Psr\Http\Message\ResponseInterface $response) {
     // any redirects will now end up here
     var_dump($response->getHeaders());
 });
@@ -401,18 +414,18 @@ as well as parts of the PSR-7's [`StreamInterface`](https://www.php-fig.org/psr/
 $streamingBrowser = $browser->withOptions(array('streaming' => true));
 
 // issue a normal GET request
-$streamingBrowser->get($url)->then(function (ResponseInterface $response) {
+$streamingBrowser->get($url)->then(function (Psr\Http\Message\ResponseInterface $response) {
     $body = $response->getBody();
-    /* @var $body \React\Stream\ReadableStreamInterface */
-    
+    assert($body instanceof React\Stream\ReadableStreamInterface);
+
     $body->on('data', function ($chunk) {
         echo $chunk;
     });
-    
+
     $body->on('error', function (Exception $error) {
         echo 'Error: ' . $error->getMessage() . PHP_EOL;
     });
-    
+
     $body->on('close', function () {
         echo '[DONE]' . PHP_EOL;
     });
@@ -428,7 +441,7 @@ You can invoke the following methods on the message body:
 $body->on($event, $callback);
 $body->eof();
 $body->isReadable();
-$body->pipe(WritableStreamInterface $dest, array $options = array());
+$body->pipe(React\Stream\WritableStreamInterface $dest, array $options = array());
 $body->close();
 $body->pause();
 $body->resume();
@@ -465,13 +478,15 @@ The resulting streaming code could look something like this:
 ```php
 use React\Promise\Stream;
 
-function download($url) {
-    return Stream\unwrapReadable($streamingBrowser->get($url)->then(function (ResponseInterface $response) {
-        return $response->getBody();
-    }));
+function download(Browser $browser, string $url): React\Stream\ReadableStreamInterface {
+    return Stream\unwrapReadable(
+        $browser->withOptions(['streaming' => true])->get($url)->then(function (Psr\Http\Message\ResponseInterface $response) {
+            return $response->getBody();
+        })
+    );
 }
 
-$stream = download($url);
+$stream = download($browser, $url);
 $stream->on('data', function ($data) {
     echo $data;
 });
@@ -487,17 +502,17 @@ implementing ReactPHP's [`ReadableStreamInterface`](https://github.com/reactphp/
 to the [request methods](#request-methods) like this:
 
 ```php
-$browser->post($url, array(), $stream)->then(function (ResponseInterface $response) {
+$browser->post($url, array(), $stream)->then(function (Psr\Http\Message\ResponseInterface $response) {
     echo 'Successfully sent.';
 });
 ```
 
-If you're using a streaming request body (`ReadableStreamInterface`), it will
+If you're using a streaming request body (`React\Stream\ReadableStreamInterface`), it will
 default to using `Transfer-Encoding: chunked` or you have to explicitly pass in a
 matching `Content-Length` request header like so:
 
 ```php
-$body = new ThroughStream();
+$body = new React\Stream\ThroughStream();
 $loop->addTimer(1.0, function () use ($body) {
     $body->end("hello world");
 });
@@ -521,6 +536,20 @@ conceal the origin address (anonymity) or to circumvent address blocking
 to HTTPS port`443` only, this can technically be used to tunnel any TCP/IP-based
 protocol, such as plain HTTP and TLS-encrypted HTTPS.
 
+```php
+$proxy = new Clue\React\HttpProxy\ProxyConnector(
+    'http://127.0.0.1:8080',
+    new React\Socket\Connector($loop)
+);
+
+$connector = new React\Socket\Connector($loop, array(
+    'tcp' => $proxy,
+    'dns' => false
+));
+
+$browser = new Clue\React\Buzz\Browser($loop, $connector);
+```
+
 See also the [HTTP CONNECT proxy example](examples/11-http-proxy.php).
 
 ### SOCKS proxy
@@ -533,6 +562,20 @@ tunnel HTTP(S) traffic through an intermediary ("proxy"), to conceal the origin
 address (anonymity) or to circumvent address blocking (geoblocking). While many
 (public) SOCKS proxy servers often limit this to HTTP(S) port `80` and `443`
 only, this can technically be used to tunnel any TCP/IP-based protocol.
+
+```php
+$proxy = new Clue\React\Socks\Client(
+    'socks://127.0.0.1:1080',
+    new React\Socket\Connector($loop)
+);
+
+$connector = new React\Socket\Connector($loop, array(
+    'tcp' => $proxy,
+    'dns' => false
+));
+
+$browser = new Clue\React\Buzz\Browser($loop, $connector);
+```
 
 See also the [SOCKS proxy example](examples/12-socks-proxy.php).
 
@@ -552,6 +595,17 @@ IMAP etc.), allows you to access local services that are otherwise not accessibl
 from the outside (database behind firewall) and as such can also be used for
 plain HTTP and TLS-encrypted HTTPS.
 
+```php
+$proxy = new Clue\React\SshProxy\SshSocksConnector('me@localhost:22', $loop);
+
+$connector = new React\Socket\Connector($loop, array(
+    'tcp' => $proxy,
+    'dns' => false
+));
+
+$browser = new Clue\React\Buzz\Browser($loop, $connector);
+```
+
 See also the [SSH proxy example](examples/13-ssh-proxy.php).
 
 ### Unix domain sockets
@@ -565,14 +619,14 @@ override the destination URL so that the hostname given in the request URL will
 no longer be used to establish the connection:
 
 ```php
-$connector = new \React\Socket\FixedUriConnector(
+$connector = new React\Socket\FixedUriConnector(
     'unix:///var/run/docker.sock',
-    new \React\Socket\UnixConnector($loop)
+    new React\Socket\UnixConnector($loop)
 );
 
 $browser = new Browser($loop, $connector);
 
-$client->get('http://localhost/info')->then(function (ResponseInterface $response) {
+$client->get('http://localhost/info')->then(function (Psr\Http\Message\ResponseInterface $response) {
     var_dump($response->getHeaders(), (string)$response->getBody());
 });
 ```
@@ -617,10 +671,32 @@ $browser = new Clue\React\Buzz\Browser($loop, $connector);
 The `get(string|UriInterface $url, array $headers = array()): PromiseInterface<ResponseInterface>` method can be used to
 send an HTTP GET request.
 
+```php
+$browser->get($url)->then(function (Psr\Http\Message\ResponseInterface $response) {
+    var_dump((string)$response->getBody());
+});
+```
+
+See also [example 01](examples/01-google.php).
+
 #### post()
 
 The `post(string|UriInterface $url, array $headers = array(), string|ReadableStreamInterface $contents = ''): PromiseInterface<ResponseInterface>` method can be used to
 send an HTTP POST request.
+
+```php
+$browser->post(
+    $url,
+    [
+        'Content-Type' => 'application/json'
+    ],
+    json_encode($data)
+)->then(function (Psr\Http\Message\ResponseInterface $response) {
+    var_dump(json_decode((string)$response->getBody()));
+});
+```
+
+See also [example 04](examples/04-post-json.php).
 
 This method will automatically add a matching `Content-Length` request
 header if the outgoing request body is a `string`. If you're using a
@@ -629,7 +705,7 @@ using `Transfer-Encoding: chunked` or you have to explicitly pass in a
 matching `Content-Length` request header like so:
 
 ```php
-$body = new ThroughStream();
+$body = new React\Stream\ThroughStream();
 $loop->addTimer(1.0, function () use ($body) {
     $body->end("hello world");
 });
@@ -642,10 +718,28 @@ $browser->post($url, array('Content-Length' => '11'), $body);
 The `head(string|UriInterface $url, array $headers = array()): PromiseInterface<ResponseInterface>` method can be used to
 send an HTTP HEAD request.
 
+```php
+$browser->head($url)->then(function (Psr\Http\Message\ResponseInterface $response) {
+    var_dump($response->getHeaders());
+});
+```
+
 #### patch()
 
 The `patch(string|UriInterface $url, array $headers = array(), string|ReadableStreamInterface $contents = ''): PromiseInterface<ResponseInterface>` method can be used to
 send an HTTP PATCH request.
+
+```php
+$browser->patch(
+    $url,
+    [
+        'Content-Type' => 'application/json'
+    ],
+    json_encode($data)
+)->then(function (Psr\Http\Message\ResponseInterface $response) {
+    var_dump(json_decode((string)$response->getBody()));
+});
+```
 
 This method will automatically add a matching `Content-Length` request
 header if the outgoing request body is a `string`. If you're using a
@@ -654,7 +748,7 @@ using `Transfer-Encoding: chunked` or you have to explicitly pass in a
 matching `Content-Length` request header like so:
 
 ```php
-$body = new ThroughStream();
+$body = new React\Stream\ThroughStream();
 $loop->addTimer(1.0, function () use ($body) {
     $body->end("hello world");
 });
@@ -667,6 +761,20 @@ $browser->patch($url, array('Content-Length' => '11'), $body);
 The `put(string|UriInterface $url, array $headers = array()): PromiseInterface<ResponseInterface>` method can be used to
 send an HTTP PUT request.
 
+```php
+$browser->put(
+    $url,
+    [
+        'Content-Type' => 'text/xml'
+    ],
+    $xml->asXML()
+)->then(function (Psr\Http\Message\ResponseInterface $response) {
+    var_dump((string)$response->getBody());
+});
+```
+
+See also [example 05](examples/05-put-xml.php).
+
 This method will automatically add a matching `Content-Length` request
 header if the outgoing request body is a `string`. If you're using a
 streaming request body (`ReadableStreamInterface`), it will default to
@@ -674,7 +782,7 @@ using `Transfer-Encoding: chunked` or you have to explicitly pass in a
 matching `Content-Length` request header like so:
 
 ```php
-$body = new ThroughStream();
+$body = new React\Stream\ThroughStream();
 $loop->addTimer(1.0, function () use ($body) {
     $body->end("hello world");
 });
@@ -686,6 +794,12 @@ $browser->put($url, array('Content-Length' => '11'), $body);
 
 The `delete(string|UriInterface $url, array $headers = array()): PromiseInterface<ResponseInterface>` method can be used to
 send an HTTP DELETE request.
+
+```php
+$browser->delete($url)->then(function (Psr\Http\Message\ResponseInterface $response) {
+    var_dump((string)$response->getBody());
+});
+```
 
 #### submit()
 
