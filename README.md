@@ -138,15 +138,19 @@ protocol version, you can use the [`withProtocolVersion()`](#withprotocolversion
 method. If you want to use any other or even custom HTTP request method, you can
 use the [`send()`](#send) method.
 
-Each of the above methods supports async operation and either *resolves* with a [`ResponseInterface`](#responseinterface) or
-*rejects* with an `Exception`.
+Each of the above methods supports async operation and either *fulfills* with a
+[`ResponseInterface`](#responseinterface) or *rejects* with an `Exception`.
 Please see the following chapter about [promises](#promises) for more details.
 
 ### Promises
 
-Sending requests is async (non-blocking), so you can actually send multiple requests in parallel.
-The `Browser` will respond to each request with a [`ResponseInterface`](#responseinterface) message, the order is not guaranteed.
-Sending requests uses a [Promise](https://github.com/reactphp/promise)-based interface that makes it easy to react to when a transaction is fulfilled (i.e. either successfully resolved or rejected with an error):
+Sending requests is async (non-blocking), so you can actually send multiple
+requests in parallel.
+The `Browser` will respond to each request with a [`ResponseInterface`](#responseinterface)
+message, the order is not guaranteed.
+Sending requests uses a [Promise](https://github.com/reactphp/promise)-based
+interface that makes it easy to react to when an HTTP request is completed
+(i.e. either successfully fulfilled or rejected with an error):
 
 ```php
 $browser->get($url)->then(
@@ -299,9 +303,7 @@ following requests. See also [redirects](#redirects) below.
 
 By default, this library follows any redirects and obeys `3xx` (Redirection)
 status codes using the `Location` response header from the remote server.
-The promise will be resolved with the last response from the chain of redirects.
-Except for a few specific request headers listed below, the redirected requests
-will include the exact same request headers as the original request.
+The promise will be fulfilled with the last response from the chain of redirects.
 
 ```php
 $browser->get($url, $headers)->then(function (Psr\Http\Message\ResponseInterface $response) {
@@ -310,6 +312,9 @@ $browser->get($url, $headers)->then(function (Psr\Http\Message\ResponseInterface
 });
 ```
 
+Any redirected requests will follow the semantics of the original request and
+will include the same request headers as the original request except for those
+listed below.
 If the original request contained a request body, this request body will never
 be passed to the redirected request. Accordingly, each redirected request will
 remove any `Content-Length` and `Content-Type` request headers.
