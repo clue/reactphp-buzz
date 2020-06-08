@@ -23,7 +23,7 @@ mess with most of the low-level details.
 * **Standard interfaces** -
   Allows easy integration with existing higher-level components by implementing
   [PSR-7 (http-message)](https://www.php-fig.org/psr/psr-7/) interfaces,
-  ReactPHP's standard [promises](#promises) and [streaming interfaces](#streaming).
+  ReactPHP's standard [promises](#promises) and [streaming interfaces](#streaming-response).
 * **Lightweight, SOLID design** -
   Provides a thin abstraction that is [*just good enough*](https://en.wikipedia.org/wiki/Principle_of_good_enough)
   and does not get in your way.
@@ -36,30 +36,37 @@ mess with most of the low-level details.
 * [Support us](#support-us)
 * [Quickstart example](#quickstart-example)
 * [Usage](#usage)
-  * [Browser](#browser)
-    * [Methods](#methods)
+    * [Request methods](#request-methods)
     * [Promises](#promises)
     * [Cancellation](#cancellation)
     * [Timeouts](#timeouts)
     * [Authentication](#authentication)
     * [Redirects](#redirects)
     * [Blocking](#blocking)
-    * [Streaming](#streaming)
-    * [submit()](#submit)
-    * [send()](#send)
-    * [withOptions()](#withoptions)
-    * [withBase()](#withbase)
-    * [withoutBase()](#withoutbase)
-    * [withProtocolVersion()](#withprotocolversion)
-  * [ResponseInterface](#responseinterface)
-  * [RequestInterface](#requestinterface)
-  * [UriInterface](#uriinterface)
-  * [ResponseException](#responseexception)
-* [Advanced](#advanced)
-  * [HTTP proxy](#http-proxy)
-  * [SOCKS proxy](#socks-proxy)
-  * [SSH proxy](#ssh-proxy)
-  * [Unix domain sockets](#unix-domain-sockets)
+    * [Streaming response](#streaming-response)
+    * [Streaming request](#streaming-request)
+    * [HTTP proxy](#http-proxy)
+    * [SOCKS proxy](#socks-proxy)
+    * [SSH proxy](#ssh-proxy)
+    * [Unix domain sockets](#unix-domain-sockets)
+* [API](#api)
+    * [Browser](#browser)
+        * [get()](#get)
+        * [post()](#post)
+        * [head()](#head)
+        * [patch()](#patch)
+        * [put()](#put)
+        * [delete()](#delete)
+        * [submit()](#submit)
+        * [send()](#send)
+        * [withOptions()](#withoptions)
+        * [withBase()](#withbase)
+        * [withoutBase()](#withoutbase)
+        * [withProtocolVersion()](#withprotocolversion)
+    * [ResponseInterface](#responseinterface)
+    * [RequestInterface](#requestinterface)
+    * [UriInterface](#uriinterface)
+    * [ResponseException](#responseexception)
 * [Install](#install)
 * [Tests](#tests)
 * [License](#license)
@@ -81,9 +88,9 @@ HTTP webserver and send some simple HTTP GET requests:
 
 ```php
 $loop = React\EventLoop\Factory::create();
-$client = new Browser($loop);
+$client = new Clue\React\Buzz\Browser($loop);
 
-$client->get('http://www.google.com/')->then(function (ResponseInterface $response) {
+$client->get('http://www.google.com/')->then(function (Psr\Http\Message\ResponseInterface $response) {
     var_dump($response->getHeaders(), (string)$response->getBody());
 });
 
@@ -94,40 +101,12 @@ See also the [examples](examples).
 
 ## Usage
 
-### Browser
+### Request methods
 
-The `Browser` is responsible for sending HTTP requests to your HTTP server
-and keeps track of pending incoming HTTP responses.
-It also registers everything with the main [`EventLoop`](https://github.com/reactphp/event-loop#usage).
+<a id="methods"></a><!-- legacy fragment id -->
 
-```php
-$loop = React\EventLoop\Factory::create();
-
-$browser = new Browser($loop);
-```
-
-If you need custom connector settings (DNS resolution, TLS parameters, timeouts,
-proxy servers etc.), you can explicitly pass a custom instance of the
-[`ConnectorInterface`](https://github.com/reactphp/socket#connectorinterface):
-
-```php
-$connector = new \React\Socket\Connector($loop, array(
-    'dns' => '127.0.0.1',
-    'tcp' => array(
-        'bindto' => '192.168.10.1:0'
-    ),
-    'tls' => array(
-        'verify_peer' => false,
-        'verify_peer_name' => false
-    )
-));
-
-$browser = new Browser($loop, $connector);
-```
-
-#### Methods
-
-The `Browser` offers several methods that resemble the HTTP protocol methods:
+Most importantly, this project provides a [`Browser`](#browser) object that
+offers several methods that resemble the HTTP protocol methods:
 
 ```php
 $browser->get($url, array $headers = array());
@@ -140,7 +119,7 @@ $browser->patch($url, array $headers = array(), string|ReadableStreamInterface $
 
 Each of these methods requires a `$url` and some optional parameters to send an
 HTTP request. Each of these method names matches the respective HTTP request
-method, for example the `get()` method sends an HTTP `GET` request.
+method, for example the [`get()`](#get) method sends an HTTP `GET` request.
 
 You can optionally pass an associative array of additional `$headers` that will be
 sent with this HTTP request. Additionally, each method will automatically add a
@@ -149,9 +128,9 @@ size is known and non-empty. For an empty request body, if will only include a
 `Content-Length: 0` request header if the request method usually expects a request
 body (only applies to `POST`, `PUT` and `PATCH` HTTP request methods).
 
-If you're using a [streaming request body](#streaming), it will default to using
-`Transfer-Encoding: chunked` unless you explicitly pass in a matching `Content-Length` request
-header. See also [streaming](#streaming) for more details.
+If you're using a [streaming request body](#streaming-request), it will default
+to using `Transfer-Encoding: chunked` unless you explicitly pass in a matching `Content-Length`
+request header. See also [streaming request](#streaming-request) for more details.
 
 By default, all of the above methods default to sending requests using the
 HTTP/1.1 protocol version. If you want to explicitly use the legacy HTTP/1.0
@@ -159,19 +138,23 @@ protocol version, you can use the [`withProtocolVersion()`](#withprotocolversion
 method. If you want to use any other or even custom HTTP request method, you can
 use the [`send()`](#send) method.
 
-Each of the above methods supports async operation and either *resolves* with a [`ResponseInterface`](#responseinterface) or
-*rejects* with an `Exception`.
+Each of the above methods supports async operation and either *fulfills* with a
+[`ResponseInterface`](#responseinterface) or *rejects* with an `Exception`.
 Please see the following chapter about [promises](#promises) for more details.
 
-#### Promises
+### Promises
 
-Sending requests is async (non-blocking), so you can actually send multiple requests in parallel.
-The `Browser` will respond to each request with a [`ResponseInterface`](#responseinterface) message, the order is not guaranteed.
-Sending requests uses a [Promise](https://github.com/reactphp/promise)-based interface that makes it easy to react to when a transaction is fulfilled (i.e. either successfully resolved or rejected with an error):
+Sending requests is async (non-blocking), so you can actually send multiple
+requests in parallel.
+The `Browser` will respond to each request with a [`ResponseInterface`](#responseinterface)
+message, the order is not guaranteed.
+Sending requests uses a [Promise](https://github.com/reactphp/promise)-based
+interface that makes it easy to react to when an HTTP request is completed
+(i.e. either successfully fulfilled or rejected with an error):
 
 ```php
 $browser->get($url)->then(
-    function (ResponseInterface $response) {
+    function (Psr\Http\Message\ResponseInterface $response) {
         var_dump('Response received', $response);
     },
     function (Exception $error) {
@@ -187,14 +170,14 @@ whole response body has to be kept in memory.
 This is easy to get started and works reasonably well for smaller responses
 (such as common HTML pages or RESTful or JSON API requests).
 
-You may also want to look into the [streaming API](#streaming):
+You may also want to look into the [streaming API](#streaming-response):
 
 * If you're dealing with lots of concurrent requests (100+) or
 * If you want to process individual data chunks as they happen (without having to wait for the full response body) or
 * If you're expecting a big response body size (1 MiB or more, for example when downloading binary files) or
 * If you're unsure about the response body size (better be safe than sorry when accessing arbitrary remote HTTP endpoints and the response body size is unknown in advance).
 
-#### Cancellation
+### Cancellation
 
 The returned Promise is implemented in such a way that it can be cancelled
 when it is still pending.
@@ -209,7 +192,7 @@ $loop->addTimer(2.0, function () use ($promise) {
 });
 ```
 
-#### Timeouts
+### Timeouts
 
 This library uses a very efficient HTTP implementation, so most HTTP requests
 should usually be completed in mere milliseconds. However, when sending HTTP
@@ -223,8 +206,8 @@ Note that this timeout value covers creating the underlying transport connection
 sending the HTTP request, receiving the HTTP response headers and its full
 response body and following any eventual [redirects](#redirects). See also
 [redirects](#redirects) below to configure the number of redirects to follow (or
-disable following redirects altogether) and also [streaming](#streaming) below 
-to not take receiving large response bodies into account for this timeout.
+disable following redirects altogether) and also [streaming](#streaming-response)
+below to not take receiving large response bodies into account for this timeout.
 
 You can use the [`timeout` option](#withoptions) to pass a custom timeout value
 in seconds like this:
@@ -234,7 +217,7 @@ $browser = $browser->withOptions(array(
     'timeout' => 10.0
 ));
 
-$browser->get($uri)->then(function (ResponseInterface $response) {
+$browser->get($url)->then(function (Psr\Http\Message\ResponseInterface $response) {
     // response received within 10 seconds maximum
     var_dump($response->getHeaders());
 });
@@ -244,24 +227,37 @@ Similarly, you can use a negative timeout value to not apply a timeout at all
 or use a `null` value to restore the default handling.
 See also [`withOptions()`](#withoptions) for more details.
 
-If you're using a [streaming response body](#streaming), the time it takes to
-receive the response body stream will not be included in the timeout. This
-allows you to keep this incoming stream open for a longer time, such as when
-downloading a very large stream or when streaming data over a long-lived
+If you're using a [streaming response body](#streaming-response), the time it
+takes to receive the response body stream will not be included in the timeout.
+This allows you to keep this incoming stream open for a longer time, such as
+when downloading a very large stream or when streaming data over a long-lived
 connection.
 
-If you're using a [streaming request body](#streaming), the time it takes to
-send the request body stream will not be included in the timeout. This allows
-you to keep this outgoing stream open for a longer time, such as when uploading
-a very large stream.
+If you're using a [streaming request body](#streaming-request), the time it
+takes to send the request body stream will not be included in the timeout. This
+allows you to keep this outgoing stream open for a longer time, such as when
+uploading a very large stream.
 
 Note that this timeout handling applies to the higher-level HTTP layer. Lower
 layers such as socket and DNS may also apply (different) timeout values. In
 particular, the underlying socket connection uses the same `default_socket_timeout`
 setting to establish the underlying transport connection. To control this
-connection timeout behavior, you can [inject a custom `Connector`](#browser).
+connection timeout behavior, you can [inject a custom `Connector`](#browser)
+like this:
 
-#### Authentication
+```php
+$browser = new Clue\React\Buzz\Browser(
+    $loop,
+    new React\Socket\Connector(
+        $loop,
+        array(
+            'timeout' => 5
+        )
+    )
+);
+```
+
+### Authentication
 
 This library supports [HTTP Basic Authentication](https://en.wikipedia.org/wiki/Basic_access_authentication)
 using the `Authorization: Basic …` request header or allows you to set an explicit
@@ -273,7 +269,7 @@ status code which will reject the request by default (see also
 [`obeySuccessCode` option](#withoptions) below).
 
 In order to pass authentication details, you can simple pass the username and
-password as part of the request URI like this:
+password as part of the request URL like this:
 
 ```php
 $promise = $browser->get('https://user:pass@example.com/api');
@@ -303,28 +299,29 @@ to any remote hosts by default. When following a redirect where the `Location`
 response header contains authentication details, these details will be sent for
 following requests. See also [redirects](#redirects) below.
 
-#### Redirects
+### Redirects
 
 By default, this library follows any redirects and obeys `3xx` (Redirection)
 status codes using the `Location` response header from the remote server.
-The promise will be resolved with the last response from the chain of redirects.
-Except for a few specific request headers listed below, the redirected requests
-will include the exact same request headers as the original request.
+The promise will be fulfilled with the last response from the chain of redirects.
 
 ```php
-$browser->get($uri, $headers)->then(function (ResponseInterface $response) {
+$browser->get($url, $headers)->then(function (Psr\Http\Message\ResponseInterface $response) {
     // the final response will end up here
     var_dump($response->getHeaders());
 });
 ```
 
+Any redirected requests will follow the semantics of the original request and
+will include the same request headers as the original request except for those
+listed below.
 If the original request contained a request body, this request body will never
 be passed to the redirected request. Accordingly, each redirected request will
 remove any `Content-Length` and `Content-Type` request headers.
 
 If the original request used HTTP authentication with an `Authorization` request
 header, this request header will only be passed as part of the redirected
-request if the redirected URI is using the same host. In other words, the
+request if the redirected URL is using the same host. In other words, the
 `Authorizaton` request header will not be forwarded to other foreign hosts due to
 possible privacy/security concerns. When following a redirect where the `Location`
 response header contains authentication details, these details will be sent for
@@ -340,7 +337,7 @@ $browser = $browser->withOptions(array(
     'followRedirects' => false
 ));
 
-$browser->get($uri)->then(function (ResponseInterface $response) {
+$browser->get($url)->then(function (Psr\Http\Message\ResponseInterface $response) {
     // any redirects will now end up here
     var_dump($response->getHeaders());
 });
@@ -348,7 +345,7 @@ $browser->get($uri)->then(function (ResponseInterface $response) {
 
 See also [`withOptions()`](#withoptions) for more details.
 
-#### Blocking
+### Blocking
 
 As stated above, this library provides you a powerful, async API by default.
 
@@ -388,9 +385,11 @@ Please refer to [clue/reactphp-block](https://github.com/clue/reactphp-block#rea
 
 Keep in mind the above remark about buffering the whole response message in memory.
 As an alternative, you may also see the following chapter for the
-[streaming API](#streaming).
+[streaming API](#streaming-response).
 
-#### Streaming
+### Streaming response
+
+<a id="streaming"></a><!-- legacy fragment id -->
 
 All of the above examples assume you want to store the whole response body in memory.
 This is easy to get started and works reasonably well for smaller responses.
@@ -420,18 +419,18 @@ as well as parts of the PSR-7's [`StreamInterface`](https://www.php-fig.org/psr/
 $streamingBrowser = $browser->withOptions(array('streaming' => true));
 
 // issue a normal GET request
-$streamingBrowser->get($url)->then(function (ResponseInterface $response) {
+$streamingBrowser->get($url)->then(function (Psr\Http\Message\ResponseInterface $response) {
     $body = $response->getBody();
-    /* @var $body \React\Stream\ReadableStreamInterface */
-    
+    assert($body instanceof React\Stream\ReadableStreamInterface);
+
     $body->on('data', function ($chunk) {
         echo $chunk;
     });
-    
+
     $body->on('error', function (Exception $error) {
         echo 'Error: ' . $error->getMessage() . PHP_EOL;
     });
-    
+
     $body->on('close', function () {
         echo '[DONE]' . PHP_EOL;
     });
@@ -447,7 +446,7 @@ You can invoke the following methods on the message body:
 $body->on($event, $callback);
 $body->eof();
 $body->isReadable();
-$body->pipe(WritableStreamInterface $dest, array $options = array());
+$body->pipe(React\Stream\WritableStreamInterface $dest, array $options = array());
 $body->close();
 $body->pause();
 $body->resume();
@@ -484,37 +483,41 @@ The resulting streaming code could look something like this:
 ```php
 use React\Promise\Stream;
 
-function download($url) {
-    return Stream\unwrapReadable($streamingBrowser->get($url)->then(function (ResponseInterface $response) {
-        return $response->getBody();
-    }));
+function download(Browser $browser, string $url): React\Stream\ReadableStreamInterface {
+    return Stream\unwrapReadable(
+        $browser->withOptions(['streaming' => true])->get($url)->then(function (Psr\Http\Message\ResponseInterface $response) {
+            return $response->getBody();
+        })
+    );
 }
 
-$stream = download($url);
+$stream = download($browser, $url);
 $stream->on('data', function ($data) {
     echo $data;
 });
 ```
+
+### Streaming request
 
 Besides streaming the response body, you can also stream the request body.
 This can be useful if you want to send big POST requests (uploading files etc.)
 or process many outgoing streams at once.
 Instead of passing the body as a string, you can simply pass an instance
 implementing ReactPHP's [`ReadableStreamInterface`](https://github.com/reactphp/stream#readablestreaminterface)
-to the [HTTP methods](#methods) like this:
+to the [request methods](#request-methods) like this:
 
 ```php
-$browser->post($url, array(), $stream)->then(function (ResponseInterface $response) {
+$browser->post($url, array(), $stream)->then(function (Psr\Http\Message\ResponseInterface $response) {
     echo 'Successfully sent.';
 });
 ```
 
-If you're using a streaming request body (`ReadableStreamInterface`), it will
+If you're using a streaming request body (`React\Stream\ReadableStreamInterface`), it will
 default to using `Transfer-Encoding: chunked` or you have to explicitly pass in a
 matching `Content-Length` request header like so:
 
 ```php
-$body = new ThroughStream();
+$body = new React\Stream\ThroughStream();
 $loop->addTimer(1.0, function () use ($body) {
     $body->end("hello world");
 });
@@ -526,9 +529,286 @@ If the streaming request body emits an `error` event or is explicitly closed
 without emitting a successful `end` event first, the request will automatically
 be closed and rejected.
 
+### HTTP proxy
+
+You can also establish your outgoing connections through an HTTP CONNECT proxy server
+by adding a dependency to [clue/reactphp-http-proxy](https://github.com/clue/reactphp-http-proxy).
+
+HTTP CONNECT proxy servers (also commonly known as "HTTPS proxy" or "SSL proxy")
+are commonly used to tunnel HTTPS traffic through an intermediary ("proxy"), to
+conceal the origin address (anonymity) or to circumvent address blocking
+(geoblocking). While many (public) HTTP CONNECT proxy servers often limit this
+to HTTPS port`443` only, this can technically be used to tunnel any TCP/IP-based
+protocol, such as plain HTTP and TLS-encrypted HTTPS.
+
+```php
+$proxy = new Clue\React\HttpProxy\ProxyConnector(
+    'http://127.0.0.1:8080',
+    new React\Socket\Connector($loop)
+);
+
+$connector = new React\Socket\Connector($loop, array(
+    'tcp' => $proxy,
+    'dns' => false
+));
+
+$browser = new Clue\React\Buzz\Browser($loop, $connector);
+```
+
+See also the [HTTP CONNECT proxy example](examples/11-http-proxy.php).
+
+### SOCKS proxy
+
+You can also establish your outgoing connections through a SOCKS proxy server
+by adding a dependency to [clue/reactphp-socks](https://github.com/clue/reactphp-socks).
+
+The SOCKS proxy protocol family (SOCKS5, SOCKS4 and SOCKS4a) is commonly used to
+tunnel HTTP(S) traffic through an intermediary ("proxy"), to conceal the origin
+address (anonymity) or to circumvent address blocking (geoblocking). While many
+(public) SOCKS proxy servers often limit this to HTTP(S) port `80` and `443`
+only, this can technically be used to tunnel any TCP/IP-based protocol.
+
+```php
+$proxy = new Clue\React\Socks\Client(
+    'socks://127.0.0.1:1080',
+    new React\Socket\Connector($loop)
+);
+
+$connector = new React\Socket\Connector($loop, array(
+    'tcp' => $proxy,
+    'dns' => false
+));
+
+$browser = new Clue\React\Buzz\Browser($loop, $connector);
+```
+
+See also the [SOCKS proxy example](examples/12-socks-proxy.php).
+
+### SSH proxy
+
+You can also establish your outgoing connections through an SSH server
+by adding a dependency to [clue/reactphp-ssh-proxy](https://github.com/clue/reactphp-ssh-proxy).
+
+[Secure Shell (SSH)](https://en.wikipedia.org/wiki/Secure_Shell) is a secure
+network protocol that is most commonly used to access a login shell on a remote
+server. Its architecture allows it to use multiple secure channels over a single
+connection. Among others, this can also be used to create an "SSH tunnel", which
+is commonly used to tunnel HTTP(S) traffic through an intermediary ("proxy"), to
+conceal the origin address (anonymity) or to circumvent address blocking
+(geoblocking). This can be used to tunnel any TCP/IP-based protocol (HTTP, SMTP,
+IMAP etc.), allows you to access local services that are otherwise not accessible
+from the outside (database behind firewall) and as such can also be used for
+plain HTTP and TLS-encrypted HTTPS.
+
+```php
+$proxy = new Clue\React\SshProxy\SshSocksConnector('me@localhost:22', $loop);
+
+$connector = new React\Socket\Connector($loop, array(
+    'tcp' => $proxy,
+    'dns' => false
+));
+
+$browser = new Clue\React\Buzz\Browser($loop, $connector);
+```
+
+See also the [SSH proxy example](examples/13-ssh-proxy.php).
+
+### Unix domain sockets
+
+By default, this library supports transport over plaintext TCP/IP and secure
+TLS connections for the `http://` and `https://` URL schemes respectively.
+This library also supports Unix domain sockets (UDS) when explicitly configured.
+
+In order to use a UDS path, you have to explicitly configure the connector to
+override the destination URL so that the hostname given in the request URL will
+no longer be used to establish the connection:
+
+```php
+$connector = new React\Socket\FixedUriConnector(
+    'unix:///var/run/docker.sock',
+    new React\Socket\UnixConnector($loop)
+);
+
+$browser = new Browser($loop, $connector);
+
+$client->get('http://localhost/info')->then(function (Psr\Http\Message\ResponseInterface $response) {
+    var_dump($response->getHeaders(), (string)$response->getBody());
+});
+```
+
+See also the [Unix Domain Sockets (UDS) example](examples/14-unix-domain-sockets.php).
+
+## API
+
+### Browser
+
+The `Clue\React\Buzz\Browser` is responsible for sending HTTP requests to your HTTP server
+and keeps track of pending incoming HTTP responses.
+It also registers everything with the main [`EventLoop`](https://github.com/reactphp/event-loop#usage).
+
+```php
+$loop = React\EventLoop\Factory::create();
+
+$browser = new Clue\React\Buzz\Browser($loop);
+```
+
+If you need custom connector settings (DNS resolution, TLS parameters, timeouts,
+proxy servers etc.), you can explicitly pass a custom instance of the
+[`ConnectorInterface`](https://github.com/reactphp/socket#connectorinterface):
+
+```php
+$connector = new React\Socket\Connector($loop, array(
+    'dns' => '127.0.0.1',
+    'tcp' => array(
+        'bindto' => '192.168.10.1:0'
+    ),
+    'tls' => array(
+        'verify_peer' => false,
+        'verify_peer_name' => false
+    )
+));
+
+$browser = new Clue\React\Buzz\Browser($loop, $connector);
+```
+
+#### get()
+
+The `get(string|UriInterface $url, array $headers = array()): PromiseInterface<ResponseInterface>` method can be used to
+send an HTTP GET request.
+
+```php
+$browser->get($url)->then(function (Psr\Http\Message\ResponseInterface $response) {
+    var_dump((string)$response->getBody());
+});
+```
+
+See also [example 01](examples/01-google.php).
+
+#### post()
+
+The `post(string|UriInterface $url, array $headers = array(), string|ReadableStreamInterface $contents = ''): PromiseInterface<ResponseInterface>` method can be used to
+send an HTTP POST request.
+
+```php
+$browser->post(
+    $url,
+    [
+        'Content-Type' => 'application/json'
+    ],
+    json_encode($data)
+)->then(function (Psr\Http\Message\ResponseInterface $response) {
+    var_dump(json_decode((string)$response->getBody()));
+});
+```
+
+See also [example 04](examples/04-post-json.php).
+
+This method will automatically add a matching `Content-Length` request
+header if the outgoing request body is a `string`. If you're using a
+streaming request body (`ReadableStreamInterface`), it will default to
+using `Transfer-Encoding: chunked` or you have to explicitly pass in a
+matching `Content-Length` request header like so:
+
+```php
+$body = new React\Stream\ThroughStream();
+$loop->addTimer(1.0, function () use ($body) {
+    $body->end("hello world");
+});
+
+$browser->post($url, array('Content-Length' => '11'), $body);
+```
+
+#### head()
+
+The `head(string|UriInterface $url, array $headers = array()): PromiseInterface<ResponseInterface>` method can be used to
+send an HTTP HEAD request.
+
+```php
+$browser->head($url)->then(function (Psr\Http\Message\ResponseInterface $response) {
+    var_dump($response->getHeaders());
+});
+```
+
+#### patch()
+
+The `patch(string|UriInterface $url, array $headers = array(), string|ReadableStreamInterface $contents = ''): PromiseInterface<ResponseInterface>` method can be used to
+send an HTTP PATCH request.
+
+```php
+$browser->patch(
+    $url,
+    [
+        'Content-Type' => 'application/json'
+    ],
+    json_encode($data)
+)->then(function (Psr\Http\Message\ResponseInterface $response) {
+    var_dump(json_decode((string)$response->getBody()));
+});
+```
+
+This method will automatically add a matching `Content-Length` request
+header if the outgoing request body is a `string`. If you're using a
+streaming request body (`ReadableStreamInterface`), it will default to
+using `Transfer-Encoding: chunked` or you have to explicitly pass in a
+matching `Content-Length` request header like so:
+
+```php
+$body = new React\Stream\ThroughStream();
+$loop->addTimer(1.0, function () use ($body) {
+    $body->end("hello world");
+});
+
+$browser->patch($url, array('Content-Length' => '11'), $body);
+```
+
+#### put()
+
+The `put(string|UriInterface $url, array $headers = array()): PromiseInterface<ResponseInterface>` method can be used to
+send an HTTP PUT request.
+
+```php
+$browser->put(
+    $url,
+    [
+        'Content-Type' => 'text/xml'
+    ],
+    $xml->asXML()
+)->then(function (Psr\Http\Message\ResponseInterface $response) {
+    var_dump((string)$response->getBody());
+});
+```
+
+See also [example 05](examples/05-put-xml.php).
+
+This method will automatically add a matching `Content-Length` request
+header if the outgoing request body is a `string`. If you're using a
+streaming request body (`ReadableStreamInterface`), it will default to
+using `Transfer-Encoding: chunked` or you have to explicitly pass in a
+matching `Content-Length` request header like so:
+
+```php
+$body = new React\Stream\ThroughStream();
+$loop->addTimer(1.0, function () use ($body) {
+    $body->end("hello world");
+});
+
+$browser->put($url, array('Content-Length' => '11'), $body);
+```
+
+#### delete()
+
+The `delete(string|UriInterface $url, array $headers = array()): PromiseInterface<ResponseInterface>` method can be used to
+send an HTTP DELETE request.
+
+```php
+$browser->delete($url)->then(function (Psr\Http\Message\ResponseInterface $response) {
+    var_dump((string)$response->getBody());
+});
+```
+
 #### submit()
 
-The `submit($url, array $fields, $headers = array(), $method = 'POST'): PromiseInterface<ResponseInterface>` method can be used to
+The `submit(string|UriInterface $url, array $fields, array $headers = array(), string $method = 'POST'): PromiseInterface<ResponseInterface>` method can be used to
 submit an array of field values similar to submitting a form (`application/x-www-form-urlencoded`).
 
 ```php
@@ -579,7 +859,7 @@ $newBrowser = $browser->withOptions(array(
 ```
 
 See also [timeouts](#timeouts), [redirects](#redirects) and
-[streaming](#streaming) for more details.
+[streaming](#streaming-response) for more details.
 
 Notice that the [`Browser`](#browser) is an immutable object, i.e. this
 method actually returns a *new* [`Browser`](#browser) instance with the
@@ -587,22 +867,22 @@ options applied.
 
 #### withBase()
 
-The `withBase($baseUri): Browser` method can be used to
-change the base URI used to resolve relative URIs to.
+The `withBase(string|UriInterface $baseUri): Browser` method can be used to
+change the base URL used to resolve relative URLs to.
 
 ```php
 $newBrowser = $browser->withBase('http://api.example.com/v3');
 ```
 
 Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withBase()` method
-actually returns a *new* [`Browser`](#browser) instance with the given base URI applied.
+actually returns a *new* [`Browser`](#browser) instance with the given base URL applied.
 
-Any requests to relative URIs will then be processed by first prepending
-the (absolute) base URI.
-Please note that this merely prepends the base URI and does *not* resolve
+Any requests to relative URLs will then be processed by first prepending
+the (absolute) base URL.
+Please note that this merely prepends the base URL and does *not* resolve
 any relative path references (like `../` etc.).
-This is mostly useful for (RESTful) API calls where all endpoints (URIs)
-are located under a common base URI scheme.
+This is mostly useful for (RESTful) API calls where all endpoints (URLs)
+are located under a common base URL scheme.
 
 ```php
 // will request http://api.example.com/v3/example
@@ -612,14 +892,14 @@ $newBrowser->get('/example')->then(…);
 #### withoutBase()
 
 The `withoutBase(): Browser` method can be used to
-remove the base URI.
+remove the base URL.
 
 ```php
 $newBrowser = $browser->withoutBase();
 ```
 
 Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withoutBase()` method
-actually returns a *new* [`Browser`](#browser) instance without any base URI applied.
+actually returns a *new* [`Browser`](#browser) instance without any base URL applied.
 
 See also [`withBase()`](#withbase).
 
@@ -628,10 +908,11 @@ See also [`withBase()`](#withbase).
 The `withProtocolVersion(string $protocolVersion): Browser` method can be used to
 change the HTTP protocol version that will be used for all subsequent requests.
 
-All the above [request methods](#methods) default to sending requests as
-HTTP/1.1. This is the preferred HTTP protocol version which also provides
-decent backwards-compatibility with legacy HTTP/1.0 servers. As such,
-there should rarely be a need to explicitly change this protocol version.
+All the above [request methods](#request-methods) default to sending
+requests as HTTP/1.1. This is the preferred HTTP protocol version which
+also provides decent backwards-compatibility with legacy HTTP/1.0
+servers. As such, there should rarely be a need to explicitly change this
+protocol version.
 
 If you want to explicitly use the legacy HTTP/1.0 protocol version, you
 can use this method:
@@ -686,78 +967,6 @@ return the HTTP response status code.
 
 The `getResponse(): ResponseInterface` method can be used to
 access its underlying [`ResponseInterface`](#responseinterface) object.
-
-## Advanced
-
-### HTTP proxy
-
-You can also establish your outgoing connections through an HTTP CONNECT proxy server
-by adding a dependency to [clue/reactphp-http-proxy](https://github.com/clue/reactphp-http-proxy).
-
-HTTP CONNECT proxy servers (also commonly known as "HTTPS proxy" or "SSL proxy")
-are commonly used to tunnel HTTPS traffic through an intermediary ("proxy"), to
-conceal the origin address (anonymity) or to circumvent address blocking
-(geoblocking). While many (public) HTTP CONNECT proxy servers often limit this
-to HTTPS port`443` only, this can technically be used to tunnel any TCP/IP-based
-protocol, such as plain HTTP and TLS-encrypted HTTPS.
-
-See also the [HTTP CONNECT proxy example](examples/11-http-proxy.php).
-
-### SOCKS proxy
-
-You can also establish your outgoing connections through a SOCKS proxy server
-by adding a dependency to [clue/reactphp-socks](https://github.com/clue/reactphp-socks).
-
-The SOCKS proxy protocol family (SOCKS5, SOCKS4 and SOCKS4a) is commonly used to
-tunnel HTTP(S) traffic through an intermediary ("proxy"), to conceal the origin
-address (anonymity) or to circumvent address blocking (geoblocking). While many
-(public) SOCKS proxy servers often limit this to HTTP(S) port `80` and `443`
-only, this can technically be used to tunnel any TCP/IP-based protocol.
-
-See also the [SOCKS proxy example](examples/12-socks-proxy.php).
-
-### SSH proxy
-
-You can also establish your outgoing connections through an SSH server
-by adding a dependency to [clue/reactphp-ssh-proxy](https://github.com/clue/reactphp-ssh-proxy).
-
-[Secure Shell (SSH)](https://en.wikipedia.org/wiki/Secure_Shell) is a secure
-network protocol that is most commonly used to access a login shell on a remote
-server. Its architecture allows it to use multiple secure channels over a single
-connection. Among others, this can also be used to create an "SSH tunnel", which
-is commonly used to tunnel HTTP(S) traffic through an intermediary ("proxy"), to
-conceal the origin address (anonymity) or to circumvent address blocking
-(geoblocking). This can be used to tunnel any TCP/IP-based protocol (HTTP, SMTP,
-IMAP etc.), allows you to access local services that are otherwise not accessible
-from the outside (database behind firewall) and as such can also be used for
-plain HTTP and TLS-encrypted HTTPS.
-
-See also the [SSH proxy example](examples/13-ssh-proxy.php).
-
-### Unix domain sockets
-
-By default, this library supports transport over plaintext TCP/IP and secure
-TLS connections for the `http://` and `https://` URI schemes respectively.
-This library also supports Unix domain sockets (UDS) when explicitly configured.
-
-In order to use a UDS path, you have to explicitly configure the connector to
-override the destination URI so that the hostname given in the request URI will
-no longer be used to establish the connection:
-
-```php
-$connector = new \React\Socket\FixedUriConnector(
-    'unix:///var/run/docker.sock',
-    new \React\Socket\UnixConnector($loop)
-);
-
-$browser = new Browser($loop, $connector);
-
-$client->get('http://localhost/info')->then(function (ResponseInterface $response) {
-    var_dump($response->getHeaders(), (string)$response->getBody());
-});
-```
-
-See also the [Unix Domain Sockets (UDS) example](examples/14-unix-domain-sockets.php).
 
 ## Install
 
