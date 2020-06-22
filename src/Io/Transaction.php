@@ -105,8 +105,10 @@ class Transaction
         $body = $request->getBody();
         if ($body instanceof ReadableStreamInterface && $body->isReadable()) {
             $that = $this;
-            $body->on('close', function () use ($that, $deferred, $timeout) {
-                $that->applyTimeout($deferred, $timeout);
+            $body->on('close', function () use ($that, $deferred, &$timeout) {
+                if ($timeout >= 0) {
+                    $that->applyTimeout($deferred, $timeout);
+                }
             });
         } else {
             $this->applyTimeout($deferred, $timeout);

@@ -298,7 +298,7 @@ class TransactionTest extends TestCase
         $this->assertInstanceOf('React\Promise\PromiseInterface', $promise);
     }
 
-    public function testTimeoutExplicitOptionWillStartTimeoutTimerWhenStreamingRequestBodyCloses()
+    public function testTimeoutExplicitOptionWillStartTimeoutTimerWhenStreamingRequestBodyClosesWhileSenderIsStillPending()
     {
         $messageFactory = new MessageFactory();
 
@@ -317,6 +317,30 @@ class TransactionTest extends TestCase
         $transaction = $transaction->withOptions(array('timeout' => 2));
         $promise = $transaction->send($request);
 
+        $stream->close();
+
+        $this->assertInstanceOf('React\Promise\PromiseInterface', $promise);
+    }
+
+    public function testTimeoutExplicitOptionWillNotStartTimeoutTimerWhenStreamingRequestBodyClosesAfterSenderRejects()
+    {
+        $messageFactory = new MessageFactory();
+
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop->expects($this->never())->method('addTimer');
+
+        $stream = new ThroughStream();
+        $request = $messageFactory->request('POST', 'http://example.com', array(), $stream);
+
+        $deferred = new Deferred();
+        $sender = $this->getMockBuilder('Clue\React\Buzz\Io\Sender')->disableOriginalConstructor()->getMock();
+        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn($deferred->promise());
+
+        $transaction = new Transaction($sender, $messageFactory, $loop);
+        $transaction = $transaction->withOptions(array('timeout' => 2));
+        $promise = $transaction->send($request);
+
+        $deferred->reject(new \RuntimeException('Request failed'));
         $stream->close();
 
         $this->assertInstanceOf('React\Promise\PromiseInterface', $promise);
