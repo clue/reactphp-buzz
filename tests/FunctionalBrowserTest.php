@@ -10,6 +10,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use React\EventLoop\Factory;
 use React\Http\Response;
 use React\Http\StreamingServer;
+use React\Promise\Promise;
 use React\Promise\Stream;
 use React\Socket\Connector;
 use React\Stream\ThroughStream;
@@ -89,12 +90,33 @@ class FunctionalBrowserTest extends TestCase
      * $ curl -vL "http://httpbin.org/redirect-to?url=http://user:pass@httpbin.org/basic-auth/user/pass"
      * ```
      *
-     * @group online
      * @doesNotPerformAssertions
      */
     public function testRedirectToPageWithAuthenticationSucceeds()
     {
-        $target = str_replace('://', '://user:pass@', $this->base) . '/basic-auth/user/pass';
+        $server = new StreamingServer(function (ServerRequestInterface $request) {
+            if ($request->getUri()->getPath() === '/redirect-to') {
+                $params = $request->getQueryParams();
+                return new Response(
+                    302,
+                    array('Location' => $params['url'])
+                );
+            }
+
+            if ($request->getUri()->getPath() === '/basic-auth/user/pass' && $request->getHeaderLine('Authorization') === 'Basic dXNlcjpwYXNz') {
+                return new Response(
+                    200,
+                    array(),
+                    ''
+                );
+            }
+        });
+        $socket = new \React\Socket\Server(0, $this->loop);
+        $server->listen($socket);
+
+        $this->base = str_replace('tcp:', 'http:', $socket->getAddress()) . '/';
+
+        $target = str_replace('://', '://user:pass@', $this->base) . 'basic-auth/user/pass';
 
         Block\await($this->browser->get($this->base . 'redirect-to?url=' . urlencode($target)), $this->loop);
     }
@@ -104,13 +126,32 @@ class FunctionalBrowserTest extends TestCase
      * $ curl -vL "http://unknown:invalid@httpbin.org/redirect-to?url=http://user:pass@httpbin.org/basic-auth/user/pass"
      * ```
      *
-     * @group online
      * @doesNotPerformAssertions
      */
     public function testRedirectFromPageWithInvalidAuthToPageWithCorrectAuthenticationSucceeds()
     {
+        $server = new StreamingServer(function (ServerRequestInterface $request) {
+            if ($request->getUri()->getPath() === '/redirect-to') {
+                $params = $request->getQueryParams();
+                return new Response(
+                    302,
+                    array('Location' => $params['url'])
+                );
+            }
+
+            return new Response(
+                200,
+                array(),
+                'hello'
+            );
+        });
+        $socket = new \React\Socket\Server(0, $this->loop);
+        $server->listen($socket);
+
+        $this->base = str_replace('tcp:', 'http:', $socket->getAddress()) . '/';
+
         $base = str_replace('://', '://unknown:invalid@', $this->base);
-        $target = str_replace('://', '://user:pass@', $this->base) . '/basic-auth/user/pass';
+        $target = str_replace('://', '://user:pass@', $this->base) . 'basic-auth/user/pass';
 
         Block\await($this->browser->get($base . 'redirect-to?url=' . urlencode($target)), $this->loop);
     }
@@ -118,10 +159,25 @@ class FunctionalBrowserTest extends TestCase
     /**
      * @expectedException RuntimeException
      * @expectedExceptionMessage Request cancelled
-     * @group online
      */
     public function testCancelRedirectedRequestShouldReject()
     {
+        $server = new StreamingServer(function (ServerRequestInterface $request) {
+            if ($request->getUri()->getPath() === '/redirect-to') {
+                $params = $request->getQueryParams();
+                return new Response(
+                    302,
+                    array('Location' => $params['url'])
+                );
+            }
+
+            return new Promise(function () { });
+        });
+        $socket = new \React\Socket\Server(0, $this->loop);
+        $server->listen($socket);
+
+        $this->base = str_replace('tcp:', 'http:', $socket->getAddress()) . '/';
+
         $promise = $this->browser->get($this->base . 'redirect-to?url=delay%2F10');
 
         $this->loop->addTimer(0.1, function () use ($promise) {
@@ -167,40 +223,107 @@ class FunctionalBrowserTest extends TestCase
     }
 
     /**
-     * @group online
      * @doesNotPerformAssertions
      */
     public function testRedirectRequestRelative()
     {
+        $server = new StreamingServer(function (ServerRequestInterface $request) {
+            if ($request->getUri()->getPath() === '/redirect-to') {
+                $params = $request->getQueryParams();
+                return new Response(
+                    302,
+                    array('Location' => $params['url'])
+                );
+            }
+
+            return new Response(
+                200,
+                array(),
+                'hello'
+            );
+        });
+        $socket = new \React\Socket\Server(0, $this->loop);
+        $server->listen($socket);
+
+        $this->base = str_replace('tcp:', 'http:', $socket->getAddress()) . '/';
+
         Block\await($this->browser->get($this->base . 'redirect-to?url=get'), $this->loop);
     }
 
     /**
-     * @group online
      * @doesNotPerformAssertions
      */
     public function testRedirectRequestAbsolute()
     {
+        $server = new StreamingServer(function (ServerRequestInterface $request) {
+            if ($request->getUri()->getPath() === '/redirect-to') {
+                $params = $request->getQueryParams();
+                return new Response(
+                    302,
+                    array('Location' => $params['url'])
+                );
+            }
+
+            return new Response(
+                200,
+                array(),
+                'hello'
+            );
+        });
+        $socket = new \React\Socket\Server(0, $this->loop);
+        $server->listen($socket);
+
+        $this->base = str_replace('tcp:', 'http:', $socket->getAddress()) . '/';
+
         Block\await($this->browser->get($this->base . 'redirect-to?url=' . urlencode($this->base . 'get')), $this->loop);
     }
 
     /**
-     * @group online
      * @doesNotPerformAssertions
      */
     public function testNotFollowingRedirectsResolvesWithRedirectResult()
     {
+        $server = new StreamingServer(function (ServerRequestInterface $request) {
+            if ($request->getUri()->getPath() === '/redirect-to') {
+                $params = $request->getQueryParams();
+                return new Response(
+                    302,
+                    array('Location' => $params['url'])
+                );
+            }
+
+            return new Response(
+                200,
+                array(),
+                'hello'
+            );
+        });
+        $socket = new \React\Socket\Server(0, $this->loop);
+        $server->listen($socket);
+
+        $this->base = str_replace('tcp:', 'http:', $socket->getAddress()) . '/';
+
         $browser = $this->browser->withOptions(array('followRedirects' => false));
 
         Block\await($browser->get($this->base . 'redirect/3'), $this->loop);
     }
 
     /**
-     * @group online
      * @expectedException RuntimeException
      */
     public function testRejectingRedirectsRejects()
     {
+        $server = new StreamingServer(function (ServerRequestInterface $request) {
+            return new Response(
+                302,
+                array('Location' => 'foo')
+            );
+        });
+        $socket = new \React\Socket\Server(0, $this->loop);
+        $server->listen($socket);
+
+        $this->base = str_replace('tcp:', 'http:', $socket->getAddress()) . '/';
+
         $browser = $this->browser->withOptions(array('maxRedirects' => 0));
 
         Block\await($browser->get($this->base . 'redirect/3'), $this->loop);
