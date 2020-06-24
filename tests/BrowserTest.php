@@ -4,7 +4,6 @@ namespace Clue\Tests\React\Buzz;
 
 use Clue\React\Block;
 use Clue\React\Buzz\Browser;
-use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 use React\Promise\Promise;
 use RingCentral\Psr7\Uri;
@@ -15,7 +14,10 @@ class BrowserTest extends TestCase
     private $sender;
     private $browser;
 
-    public function setUp()
+    /**
+     * @before
+     */
+    public function setUpBrowser()
     {
         $this->loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $this->sender = $this->getMockBuilder('Clue\React\Buzz\Io\Transaction')->disableOriginalConstructor()->getMock();
@@ -226,7 +228,6 @@ class BrowserTest extends TestCase
     /**
      * @param string $other
      * @dataProvider provideOtherBaseUris
-     * @expectedException UnexpectedValueException
      */
     public function testRequestingUrlsNotBelowBaseWillRejectBeforeSending($other)
     {
@@ -234,14 +235,13 @@ class BrowserTest extends TestCase
 
         $this->sender->expects($this->never())->method('send');
 
+        $this->setExpectedException('UnexpectedValueException');
         Block\await($browser->get($other), $this->loop);
     }
 
-    /**
-     * @expectedException InvalidArgumentException
-     */
     public function testWithBaseUriNotAbsoluteFails()
     {
+        $this->setExpectedException('InvalidArgumentException');
         $this->browser->withBase('hello');
     }
 
@@ -271,11 +271,9 @@ class BrowserTest extends TestCase
         $this->browser->submit('http://example.com/', array());
     }
 
-    /**
-     * @expectedException InvalidArgumentException
-     */
     public function testWithProtocolVersionInvalidThrows()
     {
+        $this->setExpectedException('InvalidArgumentException');
         $this->browser->withProtocolVersion('1.2');
     }
 
@@ -290,20 +288,5 @@ class BrowserTest extends TestCase
 
         $promise = $this->browser->get('http://example.com/');
         $promise->cancel();
-    }
-
-    protected function expectCallableOnce()
-    {
-        $mock = $this->createCallableMock();
-        $mock
-            ->expects($this->once())
-            ->method('__invoke');
-
-        return $mock;
-    }
-
-    protected function createCallableMock()
-    {
-        return $this->getMockBuilder('stdClass')->setMethods(array('__invoke'))->getMock();
     }
 }

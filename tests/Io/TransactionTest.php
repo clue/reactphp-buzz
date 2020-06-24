@@ -6,8 +6,8 @@ use Clue\React\Block;
 use Clue\React\Buzz\Io\Transaction;
 use Clue\React\Buzz\Message\MessageFactory;
 use Clue\React\Buzz\Message\ResponseException;
+use Clue\Tests\React\Buzz\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 use React\EventLoop\Factory;
 use React\Promise;
@@ -409,9 +409,6 @@ class TransactionTest extends TestCase
         $this->assertEquals('hello world', (string)$response->getBody());
     }
 
-    /**
-     * @expectedException RuntimeException
-     */
     public function testCancelBufferingResponseWillCloseStreamAndReject()
     {
         $messageFactory = new MessageFactory();
@@ -432,6 +429,7 @@ class TransactionTest extends TestCase
         $promise = $transaction->send($request);
         $promise->cancel();
 
+        $this->setExpectedException('RuntimeException');
         Block\await($promise, $loop, 0.001);
     }
 
@@ -812,31 +810,5 @@ class TransactionTest extends TestCase
     private function makeSenderMock()
     {
         return $this->getMockBuilder('Clue\React\Buzz\Io\Sender')->disableOriginalConstructor()->getMock();
-    }
-
-    protected function expectCallableOnce()
-    {
-        $mock = $this->createCallableMock();
-        $mock
-            ->expects($this->once())
-            ->method('__invoke');
-
-        return $mock;
-    }
-
-    protected function expectCallableOnceWith($value)
-    {
-        $mock = $this->createCallableMock();
-        $mock
-            ->expects($this->once())
-            ->method('__invoke')
-            ->with($value);
-
-        return $mock;
-    }
-
-    protected function createCallableMock()
-    {
-        return $this->getMockBuilder('stdClass')->setMethods(array('__invoke'))->getMock();
     }
 }

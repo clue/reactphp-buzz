@@ -3,7 +3,7 @@
 namespace Clue\Tests\React\Buzz\Message;
 
 use Clue\React\Buzz\Message\ReadableBodyStream;
-use PHPUnit\Framework\TestCase;
+use Clue\Tests\React\Buzz\TestCase;
 use React\Stream\ThroughStream;
 
 class ReadableBodyStreamTest extends TestCase
@@ -11,7 +11,10 @@ class ReadableBodyStreamTest extends TestCase
     private $input;
     private $stream;
 
-    public function setUp()
+    /**
+     * @before
+     */
+    public function setUpStream()
     {
         $this->input = $this->getMockBuilder('React\Stream\ReadableStreamInterface')->getMock();
         $this->stream = new ReadableBodyStream($this->input);
@@ -183,11 +186,9 @@ class ReadableBodyStreamTest extends TestCase
         $this->assertEquals('', (string)$this->stream);
     }
 
-    /**
-     * @expectedException BadMethodCallException
-     */
     public function testPointlessDetachThrows()
     {
+        $this->setExpectedException('BadMethodCallException');
         $this->stream->detach();
     }
 
@@ -196,11 +197,9 @@ class ReadableBodyStreamTest extends TestCase
         $this->assertEquals(null, $this->stream->getSize());
     }
 
-    /**
-     * @expectedException BadMethodCallException
-     */
     public function testPointlessTellThrows()
     {
+        $this->setExpectedException('BadMethodCallException');
         $this->stream->tell();
     }
 
@@ -209,19 +208,15 @@ class ReadableBodyStreamTest extends TestCase
         $this->assertEquals(false, $this->stream->isSeekable());
     }
 
-    /**
-     * @expectedException BadMethodCallException
-     */
     public function testPointlessSeekThrows()
     {
+        $this->setExpectedException('BadMethodCallException');
         $this->stream->seek(0);
     }
 
-    /**
-     * @expectedException BadMethodCallException
-     */
     public function testPointlessRewindThrows()
     {
+        $this->setExpectedException('BadMethodCallException');
         $this->stream->rewind();
     }
 
@@ -230,27 +225,21 @@ class ReadableBodyStreamTest extends TestCase
         $this->assertEquals(false, $this->stream->isWritable());
     }
 
-    /**
-     * @expectedException BadMethodCallException
-     */
     public function testPointlessWriteThrows()
     {
+        $this->setExpectedException('BadMethodCallException');
         $this->stream->write('');
     }
 
-    /**
-     * @expectedException BadMethodCallException
-     */
     public function testPointlessReadThrows()
     {
+        $this->setExpectedException('BadMethodCallException');
         $this->stream->read(8192);
     }
 
-    /**
-     * @expectedException BadMethodCallException
-     */
     public function testPointlessGetContentsThrows()
     {
+        $this->setExpectedException('BadMethodCallException');
         $this->stream->getContents();
     }
 

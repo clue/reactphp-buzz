@@ -9,7 +9,10 @@ class MessageFactoryTest extends TestCase
 {
     private $messageFactory;
 
-    public function setUp()
+    /**
+     * @before
+     */
+    public function setUpMessageFactory()
     {
         $this->messageFactory = new MessageFactory();
     }

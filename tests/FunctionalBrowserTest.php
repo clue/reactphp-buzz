@@ -5,7 +5,6 @@ namespace Clue\Tests\React\Buzz;
 use Clue\React\Block;
 use Clue\React\Buzz\Browser;
 use Clue\React\Buzz\Message\ResponseException;
-use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use React\EventLoop\Factory;
 use React\Http\Response;
@@ -23,7 +22,10 @@ class FunctionalBrowserTest extends TestCase
     private $browser;
     private $base;
 
-    public function setUp()
+    /**
+     * @before
+     */
+    public function setUpBrowserAndServer()
     {
         $this->loop = $loop = Factory::create();
         $this->browser = new Browser($this->loop);
@@ -143,20 +145,15 @@ class FunctionalBrowserTest extends TestCase
         Block\await($this->browser->get($this->base . 'get'), $this->loop);
     }
 
-    /**
-     * @expectedException RuntimeException
-     */
     public function testCancelGetRequestWillRejectRequest()
     {
         $promise = $this->browser->get($this->base . 'get');
         $promise->cancel();
 
+        $this->setExpectedException('RuntimeException');
         Block\await($promise, $this->loop);
     }
 
-    /**
-     * @expectedException RuntimeException
-     */
     public function testCancelSendWithPromiseFollowerWillRejectRequest()
     {
         $promise = $this->browser->send(new Request('GET', $this->base . 'get'))->then(function () {
@@ -164,14 +161,13 @@ class FunctionalBrowserTest extends TestCase
         });
         $promise->cancel();
 
+        $this->setExpectedException('RuntimeException');
         Block\await($promise, $this->loop);
     }
 
-    /**
-     * @expectedException RuntimeException
-     */
     public function testRequestWithoutAuthenticationFails()
     {
+        $this->setExpectedException('RuntimeException');
         Block\await($this->browser->get($this->base . 'basic-auth/user/pass'), $this->loop);
     }
 
@@ -214,10 +210,6 @@ class FunctionalBrowserTest extends TestCase
         Block\await($this->browser->get($base . 'redirect-to?url=' . urlencode($target)), $this->loop);
     }
 
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Request cancelled
-     */
     public function testCancelRedirectedRequestShouldReject()
     {
         $promise = $this->browser->get($this->base . 'redirect-to?url=delay%2F10');
@@ -226,30 +218,25 @@ class FunctionalBrowserTest extends TestCase
             $promise->cancel();
         });
 
+        $this->setExpectedException('RuntimeException', 'Request cancelled');
         Block\await($promise, $this->loop);
     }
 
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Request timed out after 0.1 seconds
-     */
     public function testTimeoutDelayedResponseShouldReject()
     {
         $promise = $this->browser->withOptions(array('timeout' => 0.1))->get($this->base . 'delay/10');
 
+        $this->setExpectedException('RuntimeException', 'Request timed out after 0.1 seconds');
         Block\await($promise, $this->loop);
     }
 
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Request timed out after 0.1 seconds
-     */
     public function testTimeoutDelayedResponseAfterStreamingRequestShouldReject()
     {
         $stream = new ThroughStream();
         $promise = $this->browser->withOptions(array('timeout' => 0.1))->post($this->base . 'delay/10', array(), $stream);
         $stream->end();
 
+        $this->setExpectedException('RuntimeException', 'Request timed out after 0.1 seconds');
         Block\await($promise, $this->loop);
     }
 
@@ -287,13 +274,11 @@ class FunctionalBrowserTest extends TestCase
         Block\await($browser->get($this->base . 'redirect-to?url=get'), $this->loop);
     }
 
-    /**
-     * @expectedException RuntimeException
-     */
     public function testRejectingRedirectsRejects()
     {
         $browser = $this->browser->withOptions(array('maxRedirects' => 0));
 
+        $this->setExpectedException('RuntimeException');
         Block\await($browser->get($this->base . 'redirect-to?url=get'), $this->loop);
     }
 
@@ -320,7 +305,6 @@ class FunctionalBrowserTest extends TestCase
 
     /**
      * @group online
-     * @expectedException RuntimeException
      */
     public function testVerifyPeerEnabledForBadSslRejects()
     {
@@ -336,6 +320,7 @@ class FunctionalBrowserTest extends TestCase
 
         $browser = new Browser($this->loop, $connector);
 
+        $this->setExpectedException('RuntimeException');
         Block\await($browser->get('https://self-signed.badssl.com/'), $this->loop);
     }
 
@@ -362,10 +347,10 @@ class FunctionalBrowserTest extends TestCase
 
     /**
      * @group online
-     * @expectedException RuntimeException
      */
     public function testInvalidPort()
     {
+        $this->setExpectedException('RuntimeException');
         Block\await($this->browser->get('http://www.google.com:443/'), $this->loop);
     }
 

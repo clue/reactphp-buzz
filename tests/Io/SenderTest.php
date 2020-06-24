@@ -5,7 +5,7 @@ namespace Clue\Tests\React\Buzz\Io;
 use Clue\React\Block;
 use Clue\React\Buzz\Io\Sender;
 use Clue\React\Buzz\Message\ReadableBodyStream;
-use PHPUnit\Framework\TestCase;
+use Clue\Tests\React\Buzz\TestCase;
 use React\HttpClient\Client as HttpClient;
 use React\HttpClient\RequestData;
 use React\Promise;
@@ -16,7 +16,10 @@ class SenderTest extends TestCase
 {
     private $loop;
 
-    public function setUp()
+    /**
+     * @before
+     */
+    public function setUpLoop()
     {
         $this->loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
     }
@@ -28,9 +31,6 @@ class SenderTest extends TestCase
         $this->assertInstanceOf('Clue\React\Buzz\Io\Sender', $sender);
     }
 
-    /**
-     * @expectedException InvalidArgumentException
-     */
     public function testSenderRejectsInvalidUri()
     {
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
@@ -42,12 +42,10 @@ class SenderTest extends TestCase
 
         $promise = $sender->send($request);
 
+        $this->setExpectedException('InvalidArgumentException');
         Block\await($promise, $this->loop);
     }
 
-    /**
-     * @expectedException RuntimeException
-     */
     public function testSenderConnectorRejection()
     {
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
@@ -59,6 +57,7 @@ class SenderTest extends TestCase
 
         $promise = $sender->send($request);
 
+        $this->setExpectedException('RuntimeException');
         Block\await($promise, $this->loop);
     }
 
@@ -303,9 +302,6 @@ class SenderTest extends TestCase
         $sender->send($request);
     }
 
-    /**
-     * @expectedException RuntimeException
-     */
     public function testCancelRequestWillCancelConnector()
     {
         $promise = new \React\Promise\Promise(function () { }, function () {
@@ -322,12 +318,10 @@ class SenderTest extends TestCase
         $promise = $sender->send($request);
         $promise->cancel();
 
+        $this->setExpectedException('RuntimeException');
         Block\await($promise, $this->loop);
     }
 
-    /**
-     * @expectedException RuntimeException
-     */
     public function testCancelRequestWillCloseConnection()
     {
         $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
@@ -343,6 +337,7 @@ class SenderTest extends TestCase
         $promise = $sender->send($request);
         $promise->cancel();
 
+        $this->setExpectedException('RuntimeException');
         Block\await($promise, $this->loop);
     }
 
