@@ -3,7 +3,7 @@
 namespace Clue\Tests\React\Buzz\Io;
 
 use Clue\React\Buzz\Io\ChunkedEncoder;
-use PHPUnit\Framework\TestCase;
+use Clue\Tests\React\Buzz\TestCase;
 use React\Stream\ThroughStream;
 
 class ChunkedEncoderTest extends TestCase
@@ -11,7 +11,10 @@ class ChunkedEncoderTest extends TestCase
     private $input;
     private $chunkedStream;
 
-    public function setUp()
+    /**
+     * @before
+     */
+    public function setUpStream()
     {
         $this->input = new ThroughStream();
         $this->chunkedStream = new ChunkedEncoder($this->input);
@@ -80,41 +83,5 @@ class ChunkedEncoderTest extends TestCase
         $ret = $this->chunkedStream->pipe($dest);
 
         $this->assertSame($dest, $ret);
-    }
-
-    protected function expectCallableOnce()
-    {
-        $mock = $this->createCallableMock();
-        $mock
-            ->expects($this->once())
-            ->method('__invoke');
-
-        return $mock;
-    }
-
-    protected function expectCallableOnceWith($value)
-    {
-        $mock = $this->createCallableMock();
-        $mock
-            ->expects($this->once())
-            ->method('__invoke')
-            ->with($value);
-
-        return $mock;
-    }
-
-    protected function expectCallableNever()
-    {
-        $mock = $this->createCallableMock();
-        $mock
-            ->expects($this->never())
-            ->method('__invoke');
-
-        return $mock;
-    }
-
-    protected function createCallableMock()
-    {
-        return $this->getMockBuilder('stdClass')->setMethods(array('__invoke'))->getMock();
     }
 }

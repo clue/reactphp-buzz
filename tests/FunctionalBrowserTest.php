@@ -5,13 +5,14 @@ namespace Clue\Tests\React\Buzz;
 use Clue\React\Block;
 use Clue\React\Buzz\Browser;
 use Clue\React\Buzz\Message\ResponseException;
-use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use React\EventLoop\Factory;
 use React\Http\Response;
 use React\Http\StreamingServer;
+use React\Promise\Promise;
 use React\Promise\Stream;
 use React\Socket\Connector;
+use React\Stream\ReadableStreamInterface;
 use React\Stream\ThroughStream;
 use RingCentral\Psr7\Request;
 
@@ -19,18 +20,124 @@ class FunctionalBrowserTest extends TestCase
 {
     private $loop;
     private $browser;
+    private $base;
 
-    /** base url to the httpbin service  **/
-    private $base = 'http://httpbin.org/';
-
-    public function setUp()
+    /**
+     * @before
+     */
+    public function setUpBrowserAndServer()
     {
-        $this->loop = Factory::create();
+        $this->loop = $loop = Factory::create();
         $this->browser = new Browser($this->loop);
+
+        $server = new StreamingServer(function (ServerRequestInterface $request) use ($loop) {
+            $path = $request->getUri()->getPath();
+
+            $headers = array();
+            foreach ($request->getHeaders() as $name => $values) {
+                $headers[$name] = implode(', ', $values);
+            }
+
+            if ($path === '/get') {
+                return new Response(
+                    200,
+                    array(),
+                    'hello'
+                );
+            }
+
+            if ($path === '/redirect-to') {
+                $params = $request->getQueryParams();
+                return new Response(
+                    302,
+                    array('Location' => $params['url'])
+                );
+            }
+
+            if ($path === '/basic-auth/user/pass') {
+                return new Response(
+                    $request->getHeaderLine('Authorization') === 'Basic dXNlcjpwYXNz' ? 200 : 401,
+                    array(),
+                    ''
+                );
+            }
+
+            if ($path === '/status/300') {
+                return new Response(
+                    300,
+                    array(),
+                    ''
+                );
+            }
+
+            if ($path === '/status/404') {
+                return new Response(
+                    404,
+                    array(),
+                    ''
+                );
+            }
+
+            if ($path === '/delay/10') {
+                return new Promise(function ($resolve) use ($loop) {
+                    $loop->addTimer(10, function () use ($resolve) {
+                        $resolve(new Response(
+                            200,
+                            array(),
+                            'hello'
+                        ));
+                    });
+                });
+            }
+
+            if ($path === '/post') {
+                return new Promise(function ($resolve) use ($request, $headers) {
+                    $body = $request->getBody();
+                    assert($body instanceof ReadableStreamInterface);
+
+                    $buffer = '';
+                    $body->on('data', function ($data) use (&$buffer) {
+                        $buffer .= $data;
+                    });
+
+                    $body->on('close', function () use (&$buffer, $resolve, $headers) {
+                        $resolve(new Response(
+                            200,
+                            array(),
+                            json_encode(array(
+                                'data' => $buffer,
+                                'headers' => $headers
+                            ))
+                        ));
+                    });
+                });
+            }
+
+            if ($path === '/stream/1') {
+                $stream = new ThroughStream();
+
+                $loop->futureTick(function () use ($stream, $headers) {
+                    $stream->end(json_encode(array(
+                        'headers' => $headers
+                    )));
+                });
+
+                return new Response(
+                    200,
+                    array(),
+                    $stream
+                );
+            }
+
+            var_dump($path);
+        });
+        $socket = new \React\Socket\Server(0, $this->loop);
+        $server->listen($socket);
+
+        $this->base = str_replace('tcp:', 'http:', $socket->getAddress()) . '/';
     }
 
     /**
-     * @group online
      * @doesNotPerformAssertions
      */
     public function testSimpleRequest()
@@ -38,22 +145,15 @@ class FunctionalBrowserTest extends TestCase
         Block\await($this->browser->get($this->base . 'get'), $this->loop);
     }
 
-    /**
-     * @expectedException RuntimeException
-     * @group online
-     */
     public function testCancelGetRequestWillRejectRequest()
     {
         $promise = $this->browser->get($this->base . 'get');
         $promise->cancel();
 
+        $this->setExpectedException('RuntimeException');
         Block\await($promise, $this->loop);
     }
 
-    /**
-     * @expectedException RuntimeException
-     * @group online
-     */
     public function testCancelSendWithPromiseFollowerWillRejectRequest()
     {
         $promise = $this->browser->send(new Request('GET', $this->base . 'get'))->then(function () {
@@ -61,20 +161,17 @@ class FunctionalBrowserTest extends TestCase
         });
         $promise->cancel();
 
+        $this->setExpectedException('RuntimeException');
         Block\await($promise, $this->loop);
     }
 
-    /**
-     * @expectedException RuntimeException
-     * @group online
-     */
     public function testRequestWithoutAuthenticationFails()
     {
+        $this->setExpectedException('RuntimeException');
         Block\await($this->browser->get($this->base . 'basic-auth/user/pass'), $this->loop);
     }
 
     /**
-     * @group online
      * @doesNotPerformAssertions
      */
     public function testRequestWithAuthenticationSucceeds()
@@ -89,12 +186,11 @@ class FunctionalBrowserTest extends TestCase
      * $ curl -vL "http://httpbin.org/redirect-to?url=http://user:pass@httpbin.org/basic-auth/user/pass"
      * ```
      *
-     * @group online
      * @doesNotPerformAssertions
      */
-    public function testRedirectToPageWithAuthenticationSucceeds()
+    public function testRedirectToPageWithAuthenticationSendsAuthenticationFromLocationHeader()
     {
-        $target = str_replace('://', '://user:pass@', $this->base) . '/basic-auth/user/pass';
+        $target = str_replace('://', '://user:pass@', $this->base) . 'basic-auth/user/pass';
 
         Block\await($this->browser->get($this->base . 'redirect-to?url=' . urlencode($target)), $this->loop);
     }
@@ -104,22 +200,16 @@ class FunctionalBrowserTest extends TestCase
      * $ curl -vL "http://unknown:invalid@httpbin.org/redirect-to?url=http://user:pass@httpbin.org/basic-auth/user/pass"
      * ```
      *
-     * @group online
      * @doesNotPerformAssertions
      */
     public function testRedirectFromPageWithInvalidAuthToPageWithCorrectAuthenticationSucceeds()
     {
         $base = str_replace('://', '://unknown:invalid@', $this->base);
-        $target = str_replace('://', '://user:pass@', $this->base) . '/basic-auth/user/pass';
+        $target = str_replace('://', '://user:pass@', $this->base) . 'basic-auth/user/pass';
 
         Block\await($this->browser->get($base . 'redirect-to?url=' . urlencode($target)), $this->loop);
     }
 
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Request cancelled
-     * @group online
-     */
     public function testCancelRedirectedRequestShouldReject()
     {
         $promise = $this->browser->get($this->base . 'redirect-to?url=delay%2F10');
@@ -128,37 +218,29 @@ class FunctionalBrowserTest extends TestCase
             $promise->cancel();
         });
 
+        $this->setExpectedException('RuntimeException', 'Request cancelled');
         Block\await($promise, $this->loop);
     }
 
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Request timed out after 0.1 seconds
-     * @group online
-     */
     public function testTimeoutDelayedResponseShouldReject()
     {
         $promise = $this->browser->withOptions(array('timeout' => 0.1))->get($this->base . 'delay/10');
 
+        $this->setExpectedException('RuntimeException', 'Request timed out after 0.1 seconds');
         Block\await($promise, $this->loop);
     }
 
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Request timed out after 0.1 seconds
-     * @group online
-     */
     public function testTimeoutDelayedResponseAfterStreamingRequestShouldReject()
     {
         $stream = new ThroughStream();
         $promise = $this->browser->withOptions(array('timeout' => 0.1))->post($this->base . 'delay/10', array(), $stream);
         $stream->end();
 
+        $this->setExpectedException('RuntimeException', 'Request timed out after 0.1 seconds');
         Block\await($promise, $this->loop);
     }
 
     /**
-     * @group online
      * @doesNotPerformAssertions
      */
     public function testTimeoutNegativeShouldResolveSuccessfully()
@@ -167,7 +249,6 @@ class FunctionalBrowserTest extends TestCase
     }
 
     /**
-     * @group online
      * @doesNotPerformAssertions
      */
     public function testRedirectRequestRelative()
@@ -176,7 +257,6 @@ class FunctionalBrowserTest extends TestCase
     }
 
     /**
-     * @group online
      * @doesNotPerformAssertions
      */
     public function testRedirectRequestAbsolute()
@@ -185,29 +265,24 @@ class FunctionalBrowserTest extends TestCase
     }
 
     /**
-     * @group online
      * @doesNotPerformAssertions
      */
     public function testNotFollowingRedirectsResolvesWithRedirectResult()
     {
         $browser = $this->browser->withOptions(array('followRedirects' => false));
 
-        Block\await($browser->get($this->base . 'redirect/3'), $this->loop);
+        Block\await($browser->get($this->base . 'redirect-to?url=get'), $this->loop);
     }
 
-    /**
-     * @group online
-     * @expectedException RuntimeException
-     */
     public function testRejectingRedirectsRejects()
     {
         $browser = $this->browser->withOptions(array('maxRedirects' => 0));
 
-        Block\await($browser->get($this->base . 'redirect/3'), $this->loop);
+        $this->setExpectedException('RuntimeException');
+        Block\await($browser->get($this->base . 'redirect-to?url=get'), $this->loop);
     }
 
     /**
-     * @group online
      * @doesNotPerformAssertions
      */
     public function testResponseStatus300WithoutLocationShouldResolveWithoutFollowingRedirect()
@@ -230,7 +305,6 @@ class FunctionalBrowserTest extends TestCase
 
     /**
      * @group online
-     * @expectedException RuntimeException
      */
     public function testVerifyPeerEnabledForBadSslRejects()
     {
@@ -246,6 +320,7 @@ class FunctionalBrowserTest extends TestCase
 
         $browser = new Browser($this->loop, $connector);
 
+        $this->setExpectedException('RuntimeException');
         Block\await($browser->get('https://self-signed.badssl.com/'), $this->loop);
     }
 
@@ -272,14 +347,13 @@ class FunctionalBrowserTest extends TestCase
 
     /**
      * @group online
-     * @expectedException RuntimeException
      */
     public function testInvalidPort()
     {
+        $this->setExpectedException('RuntimeException');
         Block\await($this->browser->get('http://www.google.com:443/'), $this->loop);
     }
 
-    /** @group online */
     public function testErrorStatusCodeRejectsWithResponseException()
     {
         try {
@@ -293,7 +367,6 @@ class FunctionalBrowserTest extends TestCase
         }
     }
 
-    /** @group online */
     public function testPostString()
     {
         $response = Block\await($this->browser->post($this->base . 'post', array(), 'hello world'), $this->loop);
@@ -304,58 +377,18 @@ class FunctionalBrowserTest extends TestCase
 
     public function testReceiveStreamUntilConnectionsEndsForHttp10()
     {
-        $loop = $this->loop;
-        $server = new StreamingServer(function (ServerRequestInterface $request) use ($loop) {
-            $stream = new ThroughStream();
-
-            $loop->futureTick(function () use ($stream) {
-                $stream->end('hello');
-            });
-
-            return new Response(
-                200,
-                array(),
-                $stream
-            );
-        });
-
-        $socket = new \React\Socket\Server(0, $this->loop);
-        $server->listen($socket);
-
-        $this->base = str_replace('tcp:', 'http:', $socket->getAddress()) . '/';
-
-        $response = Block\await($this->browser->withProtocolVersion('1.0')->get($this->base . 'get', array()), $this->loop);
+        $response = Block\await($this->browser->withProtocolVersion('1.0')->get($this->base . 'stream/1'), $this->loop);
 
         $this->assertEquals('1.0', $response->getProtocolVersion());
         $this->assertFalse($response->hasHeader('Transfer-Encoding'));
-        $this->assertEquals('hello', (string)$response->getBody());
 
-        $socket->close();
+        $this->assertStringStartsWith('{', (string) $response->getBody());
+        $this->assertStringEndsWith('}', (string) $response->getBody());
     }
 
     public function testReceiveStreamChunkedForHttp11()
     {
-        $loop = $this->loop;
-        $server = new StreamingServer(function (ServerRequestInterface $request) use ($loop) {
-            $stream = new ThroughStream();
-
-            $loop->futureTick(function () use ($stream) {
-                $stream->end('hello');
-            });
-
-            return new Response(
-                200,
-                array(),
-                $stream
-            );
-        });
-
-        $socket = new \React\Socket\Server(0, $this->loop);
-        $server->listen($socket);
-
-        $this->base = str_replace('tcp:', 'http:', $socket->getAddress()) . '/';
-
-        $response = Block\await($this->browser->send(new Request('GET', $this->base . 'get', array(), null, '1.1')), $this->loop);
+        $response = Block\await($this->browser->send(new Request('GET', $this->base . 'stream/1', array(), null, '1.1')), $this->loop);
 
         $this->assertEquals('1.1', $response->getProtocolVersion());
 
@@ -364,9 +397,8 @@ class FunctionalBrowserTest extends TestCase
         // $this->assertEquals('chunked', $response->getHeaderLine('Transfer-Encoding'));
         $this->assertFalse($response->hasHeader('Transfer-Encoding'));
 
-        $this->assertEquals('hello', (string)$response->getBody());
-
-        $socket->close();
+        $this->assertStringStartsWith('{', (string) $response->getBody());
+        $this->assertStringEndsWith('}', (string) $response->getBody());
     }
 
     public function testReceiveStreamAndExplicitlyCloseConnectionEvenWhenServerKeepsConnectionOpen()
@@ -395,28 +427,6 @@ class FunctionalBrowserTest extends TestCase
 
     public function testPostStreamChunked()
     {
-        // httpbin used to support `Transfer-Encoding: chunked` for requests,
-        // but now rejects these, so let's start our own server instance
-        $that = $this;
-        $server = new StreamingServer(function (ServerRequestInterface $request) use ($that) {
-            $that->assertFalse($request->hasHeader('Content-Length'));
-            $that->assertNull($request->getBody()->getSize());
-
-            return Stream\buffer($request->getBody())->then(function ($body) {
-                return new Response(
-                    200,
-                    array(),
-                    json_encode(array(
-                        'data' => $body
-                    ))
-                );
-            });
-        });
-        $socket = new \React\Socket\Server(0, $this->loop);
-        $server->listen($socket);
-
-        $this->base = str_replace('tcp:', 'http:', $socket->getAddress()) . '/';
-
         $stream = new ThroughStream();
 
         $this->loop->addTimer(0.001, function () use ($stream) {
@@ -427,11 +437,10 @@ class FunctionalBrowserTest extends TestCase
         $data = json_decode((string)$response->getBody(), true);
 
         $this->assertEquals('hello world', $data['data']);
-
-        $socket->close();
+        $this->assertFalse(isset($data['headers']['Content-Length']));
+        $this->assertEquals('chunked', $data['headers']['Transfer-Encoding']);
     }
 
-    /** @group online */
     public function testPostStreamKnownLength()
     {
         $stream = new ThroughStream();
@@ -465,7 +474,6 @@ class FunctionalBrowserTest extends TestCase
         $socket->close();
     }
 
-    /** @group online */
     public function testPostStreamClosed()
     {
         $stream = new ThroughStream();
@@ -519,23 +527,9 @@ class FunctionalBrowserTest extends TestCase
 
     public function testHeadRequestReceivesResponseWithEmptyBodyButWithContentLengthResponseHeader()
     {
-        $server = new StreamingServer(function (ServerRequestInterface $request) {
-            return new Response(
-                200,
-                array(),
-                'hello'
-            );
-        });
-        $socket = new \React\Socket\Server(0, $this->loop);
-        $server->listen($socket);
-
-        $this->base = str_replace('tcp:', 'http:', $socket->getAddress()) . '/';
-
         $response = Block\await($this->browser->head($this->base . 'get'), $this->loop);
         $this->assertEquals('', (string)$response->getBody());
         $this->assertEquals(0, $response->getBody()->getSize());
         $this->assertEquals('5', $response->getHeaderLine('Content-Length'));
-
-        $socket->close();
     }
 }
