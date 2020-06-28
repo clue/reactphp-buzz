@@ -146,6 +146,30 @@ class FunctionalBrowserTest extends TestCase
         Block\await($this->browser->get($this->base . 'get'), $this->loop);
     }
 
+    public function testGetRequestWithRelativeAddressRejects()
+    {
+        $promise = $this->browser->get('delay');
+
+        $this->setExpectedException('InvalidArgumentException', 'Invalid request URL given');
+        Block\await($promise, $this->loop);
+    }
+
+    /**
+     * @doesNotPerformAssertions
+     */
+    public function testGetRequestWithBaseAndRelativeAddressResolves()
+    {
+        Block\await($this->browser->withBase($this->base)->get('get'), $this->loop);
+    }
+
+    /**
+     * @doesNotPerformAssertions
+     */
+    public function testGetRequestWithBaseAndFullAddressResolves()
+    {
+        Block\await($this->browser->withBase('http://example.com/')->get($this->base . 'get'), $this->loop);
+    }
+
     public function testCancelGetRequestWillRejectRequest()
     {
         $promise = $this->browser->get($this->base . 'get');

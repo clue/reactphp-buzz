@@ -618,64 +618,57 @@ class Browser
     /**
      * Changes the base URL used to resolve relative URLs to.
      *
+     * If you configure a base URL, any requests to relative URLs will be
+     * processed by first prepending this absolute base URL. Note that this
+     * merely prepends the base URL and does *not* resolve any relative path
+     * references (like `../` etc.). This is mostly useful for (RESTful) API
+     * calls where all endpoints (URLs) are located under a common base URL.
+     *
      * ```php
-     * $newBrowser = $browser->withBase('http://api.example.com/v3');
+     * $browser = $browser->withBase('http://api.example.com/v3');
+     *
+     * // will request http://api.example.com/v3/example
+     * $browser->get('/example')->then(…);
      * ```
+     *
+     * You can pass in a `null` base URL to return a new instance that does not
+     * use a base URL:
+     *
+     * ```php
+     * $browser = $browser->withBase(null);
+     * ```
+     *
+     * Accordingly, any requests using relative URLs to a browser that does not
+     * use a base URL can not be completed and will be rejected without sending
+     * a request.
+     *
+     * This method will throw an `InvalidArgumentException` if the given
+     * `$baseUrl` argument is not a valid URL.
      *
      * Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withBase()` method
      * actually returns a *new* [`Browser`](#browser) instance with the given base URL applied.
      *
-     * Any requests to relative URLs will then be processed by first prepending
-     * the (absolute) base URL.
-     * Please note that this merely prepends the base URL and does *not* resolve
-     * any relative path references (like `../` etc.).
-     * This is mostly useful for (RESTful) API calls where all endpoints (URLs)
-     * are located under a common base URL scheme.
+     * > Changelog: As of v2.9.0 this method accepts a `null` value to reset the
+     *   base URL. Earlier versions had to use the deprecated `withoutBase()`
+     *   method to reset the base URL.
      *
-     * ```php
-     * // will request http://api.example.com/v3/example
-     * $newBrowser->get('/example')->then(…);
-     * ```
-     *
-     * By definition of this library, a given base URL MUST always absolute and
-     * can not contain any placeholders.
-     *
-     * @param string|UriInterface $baseUrl absolute base URL
+     * @param string|null|UriInterface $baseUrl absolute base URL
      * @return self
-     * @throws InvalidArgumentException if the given $baseUri is not a valid absolute URL
+     * @throws InvalidArgumentException if the given $baseUrl is not a valid absolute URL
      * @see self::withoutBase()
      */
     public function withBase($baseUrl)
     {
         $browser = clone $this;
-        $browser->baseUrl = $this->messageFactory->uri($baseUrl);
-
-        if ($browser->baseUrl->getScheme() === '' || $browser->baseUrl->getHost() === '') {
-            throw new \InvalidArgumentException('Base URL must be absolute');
+        if ($baseUrl === null) {
+            $browser->baseUrl = null;
+            return $browser;
         }
 
-        return $browser;
-    }
-
-    /**
-     * Removes the base URL.
-     *
-     * ```php
-     * $newBrowser = $browser->withoutBase();
-     * ```
-     *
-     * Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withoutBase()` method
-     * actually returns a *new* [`Browser`](#browser) instance without any base URL applied.
-     *
-     * See also [`withBase()`](#withbase).
-     *
-     * @return self
-     * @see self::withBase()
-     */
-    public function withoutBase()
-    {
-        $browser = clone $this;
-        $browser->baseUrl = null;
+        $browser->baseUrl = $this->messageFactory->uri($baseUrl);
+        if (!\in_array($browser->baseUrl->getScheme(), array('http', 'https')) || $browser->baseUrl->getHost() === '') {
+            throw new \InvalidArgumentException('Base URL must be absolute');
+        }
 
         return $browser;
     }
@@ -758,6 +751,28 @@ class Browser
         $browser->transaction = $this->transaction->withOptions($options);
 
         return $browser;
+    }
+
+    /**
+     * [Deprecated] Removes the base URL.
+     *
+     * ```php
+     * // deprecated: see withBase() instead
+     * $newBrowser = $browser->withoutBase();
+     * ```
+     *
+     * Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withoutBase()` method
+     * actually returns a *new* [`Browser`](#browser) instance without any base URL applied.
+     *
+     * See also [`withBase()`](#withbase).
+     *
+     * @return self
+     * @deprecated 2.9.0 See self::withBase() instead.
+     * @see self::withBase()
+     */
+    public function withoutBase()
+    {
+        return $this->withBase(null);
     }
 
     /**

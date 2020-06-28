@@ -111,20 +111,15 @@ class MessageFactory
      *
      * If the given $uri is a relative URI, it will simply be appended behind $base URI.
      *
-     * If the given $uri is an absolute URI, it will simply be verified to
-     * be *below* the given $base URI.
+     * If the given $uri is an absolute URI, it will simply be returned as-is.
      *
      * @param UriInterface $uri
      * @param UriInterface $base
      * @return UriInterface
-     * @throws \UnexpectedValueException
      */
     public function expandBase(UriInterface $uri, UriInterface $base)
     {
         if ($uri->getScheme() !== '') {
-            if (strpos((string)$uri, (string)$base) !== 0) {
-                throw new \UnexpectedValueException('Invalid base, "' . $uri . '" does not appear to be below "' . $base . '"');
-            }
             return $uri;
         }
 
