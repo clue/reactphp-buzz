@@ -57,8 +57,10 @@ mess with most of the low-level details.
         * [patch()](#patch)
         * [put()](#put)
         * [delete()](#delete)
+        * [request()](#request)
+        * [requestStreaming()](#requeststreaming)
         * [submit()](#submit)
-        * [send()](#send)
+        * [~~send()~~](#send)
         * [withOptions()](#withoptions)
         * [withBase()](#withbase)
         * [withoutBase()](#withoutbase)
@@ -136,7 +138,7 @@ By default, all of the above methods default to sending requests using the
 HTTP/1.1 protocol version. If you want to explicitly use the legacy HTTP/1.0
 protocol version, you can use the [`withProtocolVersion()`](#withprotocolversion)
 method. If you want to use any other or even custom HTTP request method, you can
-use the [`send()`](#send) method.
+use the [`request()`](#request) method.
 
 Each of the above methods supports async operation and either *fulfills* with a
 [`ResponseInterface`](#responseinterface) or *rejects* with an `Exception`.
@@ -402,25 +404,23 @@ streaming approach, where only small chunks have to be kept in memory:
 * If you're expecting a big response body size (1 MiB or more, for example when downloading binary files) or
 * If you're unsure about the response body size (better be safe than sorry when accessing arbitrary remote HTTP endpoints and the response body size is unknown in advance). 
 
-The streaming API uses the same HTTP message API, but does not buffer the response
-message body in memory.
-It only processes the response body in small chunks as data is received and
-forwards this data through [React's Stream API](https://github.com/reactphp/stream).
-This works for (any number of) responses of arbitrary sizes.
+You can use the [`requestStreaming()`](#requeststreaming) method to send an
+arbitrary HTTP request and receive a streaming response. It uses the same HTTP
+message API, but does not buffer the response body in memory. It only processes
+the response body in small chunks as data is received and forwards this data
+through [ReactPHP's Stream API](https://github.com/reactphp/stream). This works
+for (any number of) responses of arbitrary sizes.
 
-This resolves with a normal [`ResponseInterface`](#responseinterface), which
-can be used to access the response message parameters as usual.
+This means it resolves with a normal [`ResponseInterface`](#responseinterface),
+which can be used to access the response message parameters as usual.
 You can access the message body as usual, however it now also
 implements ReactPHP's [`ReadableStreamInterface`](https://github.com/reactphp/stream#readablestreaminterface)
 as well as parts of the PSR-7's [`StreamInterface`](https://www.php-fig.org/psr/psr-7/#3-4-psr-http-message-streaminterface).
 
 ```php
-// turn on streaming responses (does no longer buffer response body)
-$streamingBrowser = $browser->withOptions(array('streaming' => true));
-
-// issue a normal GET request
-$streamingBrowser->get($url)->then(function (Psr\Http\Message\ResponseInterface $response) {
+$browser->requestStreaming('GET', $url)->then(function (Psr\Http\Message\ResponseInterface $response) {
     $body = $response->getBody();
+    assert($body instanceof Psr\Http\Message\StreamInterface);
     assert($body instanceof React\Stream\ReadableStreamInterface);
 
     $body->on('data', function ($chunk) {
@@ -485,7 +485,7 @@ use React\Promise\Stream;
 
 function download(Browser $browser, string $url): React\Stream\ReadableStreamInterface {
     return Stream\unwrapReadable(
-        $browser->withOptions(['streaming' => true])->get($url)->then(function (Psr\Http\Message\ResponseInterface $response) {
+        $browser->requestStreaming('GET', $url)->then(function (Psr\Http\Message\ResponseInterface $response) {
             return $response->getBody();
         })
     );
@@ -496,6 +496,12 @@ $stream->on('data', function ($data) {
     echo $data;
 });
 ```
+
+See also the [`requestStreaming()`](#requeststreaming) method for more details.
+
+> Legacy info: Legacy versions prior to v2.9.0 used the legacy
+  [`streaming` option](#withoptions). This option is now deprecated but otherwise
+  continues to show the exact same behavior.
 
 ### Streaming request
 
@@ -806,6 +812,117 @@ $browser->delete($url)->then(function (Psr\Http\Message\ResponseInterface $respo
 });
 ```
 
+#### request()
+
+The `request(string $method, string $url, array $headers = array(), string|ReadableStreamInterface $body = ''): PromiseInterface<ResponseInterface>` method can be used to
+send an arbitrary HTTP request.
+
+The preferred way to send an HTTP request is by using the above
+[request methods](#request-methods), for example the [`get()`](#get)
+method to send an HTTP `GET` request.
+
+As an alternative, if you want to use a custom HTTP request method, you
+can use this method:
+
+```php
+$browser->request('OPTIONS', $url)->then(function (Psr\Http\Message\ResponseInterface $response) {
+    var_dump((string)$response->getBody());
+});
+```
+
+This method will automatically add a matching `Content-Length` request
+header if the size of the outgoing request body is known and non-empty.
+For an empty request body, if will only include a `Content-Length: 0`
+request header if the request method usually expects a request body (only
+applies to `POST`, `PUT` and `PATCH`).
+
+If you're using a streaming request body (`ReadableStreamInterface`), it
+will default to using `Transfer-Encoding: chunked` or you have to
+explicitly pass in a matching `Content-Length` request header like so:
+
+```php
+$body = new React\Stream\ThroughStream();
+$loop->addTimer(1.0, function () use ($body) {
+    $body->end("hello world");
+});
+
+$browser->request('POST', $url, array('Content-Length' => '11'), $body);
+```
+
+> Note that this method is available as of v2.9.0 and always buffers the
+  response body before resolving.
+  It does not respect the deprecated [`streaming` option](#withoptions).
+  If you want to stream the response body, you can use the
+  [`requestStreaming()`](#requeststreaming) method instead.
+
+#### requestStreaming()
+
+The `requestStreaming(string $method, string $url, array $headers = array(), string|ReadableStreamInterface $body = ''): PromiseInterface<ResponseInterface>` method can be used to
+send an arbitrary HTTP request and receive a streaming response without buffering the response body.
+
+The preferred way to send an HTTP request is by using the above
+[request methods](#request-methods), for example the [`get()`](#get)
+method to send an HTTP `GET` request. Each of these methods will buffer
+the whole response body in memory by default. This is easy to get started
+and works reasonably well for smaller responses.
+
+In some situations, it's a better idea to use a streaming approach, where
+only small chunks have to be kept in memory. You can use this method to
+send an arbitrary HTTP request and receive a streaming response. It uses
+the same HTTP message API, but does not buffer the response body in
+memory. It only processes the response body in small chunks as data is
+received and forwards this data through [ReactPHP's Stream API](https://github.com/reactphp/stream).
+This works for (any number of) responses of arbitrary sizes.
+
+```php
+$browser->requestStreaming('GET', $url)->then(function (Psr\Http\Message\ResponseInterface $response) {
+    $body = $response->getBody();
+    assert($body instanceof Psr\Http\Message\StreamInterface);
+    assert($body instanceof React\Stream\ReadableStreamInterface);
+
+    $body->on('data', function ($chunk) {
+        echo $chunk;
+    });
+
+    $body->on('error', function (Exception $error) {
+        echo 'Error: ' . $error->getMessage() . PHP_EOL;
+    });
+
+    $body->on('close', function () {
+        echo '[DONE]' . PHP_EOL;
+    });
+});
+```
+
+See also [`ReadableStreamInterface`](https://github.com/reactphp/stream#readablestreaminterface)
+and the [streaming response](#streaming-response) for more details,
+examples and possible use-cases.
+
+This method will automatically add a matching `Content-Length` request
+header if the size of the outgoing request body is known and non-empty.
+For an empty request body, if will only include a `Content-Length: 0`
+request header if the request method usually expects a request body (only
+applies to `POST`, `PUT` and `PATCH`).
+
+If you're using a streaming request body (`ReadableStreamInterface`), it
+will default to using `Transfer-Encoding: chunked` or you have to
+explicitly pass in a matching `Content-Length` request header like so:
+
+```php
+$body = new React\Stream\ThroughStream();
+$loop->addTimer(1.0, function () use ($body) {
+    $body->end("hello world");
+});
+
+$browser->requestStreaming('POST', $url, array('Content-Length' => '11'), $body);
+```
+
+> Note that this method is available as of v2.9.0 and always resolves the
+  response without buffering the response body.
+  It does not respect the deprecated [`streaming` option](#withoptions).
+  If you want to buffer the response body, use can use the
+  [`request()`](#request) method instead.
+
 #### submit()
 
 The `submit(string|UriInterface $url, array $fields, array $headers = array(), string $method = 'POST'): PromiseInterface<ResponseInterface>` method can be used to
@@ -815,13 +932,16 @@ submit an array of field values similar to submitting a form (`application/x-www
 $browser->submit($url, array('user' => 'test', 'password' => 'secret'));
 ```
 
-#### send()
+#### ~~send()~~
 
-The `send(RequestInterface $request): PromiseInterface<ResponseInterface>` method can be used to
+> Deprecated since v2.9.0, see [`request()`](#request) instead.
+
+The deprecated `send(RequestInterface $request): PromiseInterface<ResponseInterface>` method can be used to
 send an arbitrary instance implementing the [`RequestInterface`](#requestinterface) (PSR-7).
 
-The preferred way to send an HTTP request is by using the above request
-methods, for example the `get()` method to send an HTTP `GET` request.
+The preferred way to send an HTTP request is by using the above
+[request methods](#request-methods), for example the [`get()`](#get)
+method to send an HTTP `GET` request.
 
 As an alternative, if you want to use a custom HTTP request method, you
 can use this method:
@@ -829,6 +949,7 @@ can use this method:
 ```php
 $request = new Request('OPTIONS', $url);
 
+// deprecated: see request() instead
 $browser->send($request)->then(…);
 ```
 
@@ -854,7 +975,7 @@ $newBrowser = $browser->withOptions(array(
     'followRedirects' => true,
     'maxRedirects' => 10,
     'obeySuccessCode' => true,
-    'streaming' => false,
+    'streaming' => false, // deprecated, see requestStreaming() instead
 ));
 ```
 

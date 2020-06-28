@@ -10,7 +10,7 @@
 // $ php examples/99-benchmark-download.php 8080
 //
 // b2) run HTTP client receiving a 10 GB download:
-// $ php examples/92-benchmark-download.php http://localhost:8080/ 10000
+// $ php examples/91-benchmark-download.php http://localhost:8080/10g.bin
 
 use Clue\React\Buzz\Browser;
 use Psr\Http\Message\ResponseInterface;
@@ -29,14 +29,12 @@ $client = new Browser($loop);
 
 echo 'Requesting ' . $url . '…' . PHP_EOL;
 
-$client->withOptions(array('streaming' => true))->get($url)->then(function (ResponseInterface $response) use ($loop) {
+$client->requestStreaming('GET', $url)->then(function (ResponseInterface $response) use ($loop) {
     echo 'Headers received' . PHP_EOL;
     echo RingCentral\Psr7\str($response);
 
     $stream = $response->getBody();
-    if (!$stream instanceof ReadableStreamInterface) {
-        throw new UnexpectedValueException();
-    }
+    assert($stream instanceof ReadableStreamInterface);
 
     // count number of bytes received
     $bytes = 0;
