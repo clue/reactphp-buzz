@@ -101,6 +101,23 @@ class Browser
      *
      * See also [example 04](../examples/04-post-json.php).
      *
+     * This method is also commonly used to submit HTML form data:
+     *
+     * ```php
+     * $data = [
+     *     'user' => 'Alice',
+     *     'password' => 'secret'
+     * ];
+     *
+     * $browser->post(
+     *     $url,
+     *     [
+     *         'Content-Type' => 'application/x-www-form-urlencoded'
+     *     ],
+     *     http_build_query($data)
+     * );
+     * ```
+     *
      * This method will automatically add a matching `Content-Length` request
      * header if the outgoing request body is a `string`. If you're using a
      * streaming request body (`ReadableStreamInterface`), it will default to
@@ -377,9 +394,10 @@ class Browser
     }
 
     /**
-     * Submits an array of field values similar to submitting a form (`application/x-www-form-urlencoded`).
+     * [Deprecated] Submits an array of field values similar to submitting a form (`application/x-www-form-urlencoded`).
      *
      * ```php
+     * // deprecated: see post() instead
      * $browser->submit($url, array('user' => 'test', 'password' => 'secret'));
      * ```
      *
@@ -391,6 +409,8 @@ class Browser
      * @param array               $headers
      * @param string              $method
      * @return PromiseInterface<ResponseInterface>
+     * @deprecated 2.9.0 See self::post() instead.
+     * @see self::post()
      */
     public function submit($url, array $fields, $headers = array(), $method = 'POST')
     {
