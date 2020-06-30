@@ -9,7 +9,7 @@ use Psr\Http\Message\ResponseInterface;
  * The `ResponseException` is an `Exception` sub-class that will be used to reject
  * a request promise if the remote server returns a non-success status code
  * (anything but 2xx or 3xx).
- * You can control this behavior via the ["obeySuccessCode" option](#options).
+ * You can control this behavior via the [`withRejectErrorResponse()` method](#withrejecterrorresponse).
  *
  * The `getCode(): int` method can be used to
  * return the HTTP response status code.

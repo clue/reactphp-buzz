@@ -244,9 +244,9 @@ class FunctionalBrowserTest extends TestCase
     /**
      * @doesNotPerformAssertions
      */
-    public function testTimeoutNegativeShouldResolveSuccessfully()
+    public function testTimeoutFalseShouldResolveSuccessfully()
     {
-        Block\await($this->browser->withTimeout(-1)->get($this->base . 'get'), $this->loop);
+        Block\await($this->browser->withTimeout(false)->get($this->base . 'get'), $this->loop);
     }
 
     /**
@@ -268,16 +268,16 @@ class FunctionalBrowserTest extends TestCase
     /**
      * @doesNotPerformAssertions
      */
-    public function testNotFollowingRedirectsResolvesWithRedirectResult()
+    public function testFollowingRedirectsFalseResolvesWithRedirectResult()
     {
         $browser = $this->browser->withFollowRedirects(false);
 
         Block\await($browser->get($this->base . 'redirect-to?url=get'), $this->loop);
     }
 
-    public function testRejectingRedirectsRejects()
+    public function testFollowRedirectsZeroRejectsOnRedirect()
     {
-        $browser = $this->browser->withMaxRedirects(0);
+        $browser = $this->browser->withFollowRedirects(0);
 
         $this->setExpectedException('RuntimeException');
         Block\await($browser->get($this->base . 'redirect-to?url=get'), $this->loop);
@@ -366,6 +366,13 @@ class FunctionalBrowserTest extends TestCase
             $this->assertInstanceOf('Psr\Http\Message\ResponseInterface', $e->getResponse());
             $this->assertEquals(404, $e->getResponse()->getStatusCode());
         }
+    }
+
+    public function testErrorStatusCodeDoesNotRejectWithRejectErrorResponseFalse()
+    {
+        $response = Block\await($this->browser->withRejectErrorResponse(false)->get($this->base . 'status/404'), $this->loop);
+
+        $this->assertEquals(404, $response->getStatusCode());
     }
 
     public function testPostString()
