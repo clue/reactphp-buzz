@@ -133,6 +133,76 @@ class BrowserTest extends TestCase
         $this->browser->submit('http://example.com/', array());
     }
 
+    public function testWithTimeoutTrueSetsDefaultTimeoutOption()
+    {
+        $this->sender->expects($this->once())->method('withOptions')->with(array('timeout' => null))->willReturnSelf();
+
+        $this->browser->withTimeout(true);
+    }
+
+    public function testWithTimeoutFalseSetsNegativeTimeoutOption()
+    {
+        $this->sender->expects($this->once())->method('withOptions')->with(array('timeout' => -1))->willReturnSelf();
+
+        $this->browser->withTimeout(false);
+    }
+
+    public function testWithTimeout10SetsTimeoutOption()
+    {
+        $this->sender->expects($this->once())->method('withOptions')->with(array('timeout' => 10))->willReturnSelf();
+
+        $this->browser->withTimeout(10);
+    }
+
+    public function testWithTimeoutNegativeSetsZeroTimeoutOption()
+    {
+        $this->sender->expects($this->once())->method('withOptions')->with(array('timeout' => null))->willReturnSelf();
+
+        $this->browser->withTimeout(-10);
+    }
+
+    public function testWithFollowRedirectsTrueSetsSenderOption()
+    {
+        $this->sender->expects($this->once())->method('withOptions')->with(array('followRedirects' => true, 'maxRedirects' => null))->willReturnSelf();
+
+        $this->browser->withFollowRedirects(true);
+    }
+
+    public function testWithFollowRedirectsFalseSetsSenderOption()
+    {
+        $this->sender->expects($this->once())->method('withOptions')->with(array('followRedirects' => false, 'maxRedirects' => null))->willReturnSelf();
+
+        $this->browser->withFollowRedirects(false);
+    }
+
+    public function testWithFollowRedirectsTenSetsSenderOption()
+    {
+        $this->sender->expects($this->once())->method('withOptions')->with(array('followRedirects' => true, 'maxRedirects' => 10))->willReturnSelf();
+
+        $this->browser->withFollowRedirects(10);
+    }
+
+    public function testWithFollowRedirectsZeroSetsSenderOption()
+    {
+        $this->sender->expects($this->once())->method('withOptions')->with(array('followRedirects' => true, 'maxRedirects' => 0))->willReturnSelf();
+
+        $this->browser->withFollowRedirects(0);
+    }
+
+    public function testWithRejectErrorResponseTrueSetsSenderOption()
+    {
+        $this->sender->expects($this->once())->method('withOptions')->with(array('obeySuccessCode' => true))->willReturnSelf();
+
+        $this->browser->withRejectErrorResponse(true);
+    }
+
+    public function testWithRejectErrorResponseFalseSetsSenderOption()
+    {
+        $this->sender->expects($this->once())->method('withOptions')->with(array('obeySuccessCode' => false))->willReturnSelf();
+
+        $this->browser->withRejectErrorResponse(false);
+    }
+
     public function testWithBase()
     {
         $browser = $this->browser->withBase('http://example.com/root');

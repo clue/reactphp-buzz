@@ -61,10 +61,13 @@ mess with most of the low-level details.
         * [requestStreaming()](#requeststreaming)
         * [~~submit()~~](#submit)
         * [~~send()~~](#send)
-        * [withOptions()](#withoptions)
+        * [withTimeout()](#withtimeout)
+        * [withFollowRedirects()](#withfollowredirects)
+        * [withRejectErrorResponse()](#withrejecterrorresponse)
         * [withBase()](#withbase)
         * [withoutBase()](#withoutbase)
         * [withProtocolVersion()](#withprotocolversion)
+        * [~~withOptions()~~](#withoptions)
     * [ResponseInterface](#responseinterface)
     * [RequestInterface](#requestinterface)
     * [UriInterface](#uriinterface)
@@ -211,13 +214,11 @@ response body and following any eventual [redirects](#redirects). See also
 disable following redirects altogether) and also [streaming](#streaming-response)
 below to not take receiving large response bodies into account for this timeout.
 
-You can use the [`timeout` option](#withoptions) to pass a custom timeout value
-in seconds like this:
+You can use the [`withTimeout()` method](#withtimeout) to pass a custom timeout
+value in seconds like this:
 
 ```php
-$browser = $browser->withOptions(array(
-    'timeout' => 10.0
-));
+$browser = $browser->withTimeout(10.0);
 
 $browser->get($url)->then(function (Psr\Http\Message\ResponseInterface $response) {
     // response received within 10 seconds maximum
@@ -225,9 +226,9 @@ $browser->get($url)->then(function (Psr\Http\Message\ResponseInterface $response
 });
 ```
 
-Similarly, you can use a negative timeout value to not apply a timeout at all
-or use a `null` value to restore the default handling.
-See also [`withOptions()`](#withoptions) for more details.
+Similarly, you can use a bool `false` to not apply a timeout at all
+or use a bool `true` value to restore the default handling.
+See [`withTimeout()`](#withtimeout) for more details.
 
 If you're using a [streaming response body](#streaming-response), the time it
 takes to receive the response body stream will not be included in the timeout.
@@ -267,8 +268,8 @@ using the `Authorization: Basic …` request header or allows you to set an expl
 
 By default, this library does not include an outgoing `Authorization` request
 header. If the server requires authentication, if may return a `401` (Unauthorized)
-status code which will reject the request by default (see also
-[`obeySuccessCode` option](#withoptions) below).
+status code which will reject the request by default (see also the
+[`withRejectErrorResponse()` method](#withrejecterrorresponse) below).
 
 In order to pass authentication details, you can simple pass the username and
 password as part of the request URL like this:
@@ -329,15 +330,12 @@ possible privacy/security concerns. When following a redirect where the `Locatio
 response header contains authentication details, these details will be sent for
 following requests.
 
-You can use the [`maxRedirects` option](#withoptions) to control the maximum
-number of redirects to follow or the [`followRedirects` option](#withoptions)
-to return any redirect responses as-is and apply custom redirection logic
-like this:
+You can use the [`withFollowRedirects()`](#withfollowredirects) method to
+control the maximum number of redirects to follow or to return any redirect
+responses as-is and apply custom redirection logic like this:
 
 ```php
-$browser = $browser->withOptions(array(
-    'followRedirects' => false
-));
+$browser = $browser->withFollowRedirects(false);
 
 $browser->get($url)->then(function (Psr\Http\Message\ResponseInterface $response) {
     // any redirects will now end up here
@@ -345,7 +343,7 @@ $browser->get($url)->then(function (Psr\Http\Message\ResponseInterface $response
 });
 ```
 
-See also [`withOptions()`](#withoptions) for more details.
+See also [`withFollowRedirects()`](#withfollowredirects) for more details.
 
 ### Blocking
 
@@ -979,32 +977,129 @@ For an empty request body, if will only include a `Content-Length: 0`
 request header if the request method usually expects a request body (only
 applies to `POST`, `PUT` and `PATCH`).
 
-#### withOptions()
+#### withTimeout()
 
-The `withOptions(array $options): Browser` method can be used to
-change the options to use:
+The `withTimeout(bool|number $timeout): Browser` method can be used to
+change the maximum timeout used for waiting for pending requests.
 
-The [`Browser`](#browser) class exposes several options for the handling of
-HTTP transactions. These options resemble some of PHP's
-[HTTP context options](https://www.php.net/manual/en/context.http.php) and
-can be controlled via the following API (and their defaults):
+You can pass in the number of seconds to use as a new timeout value:
 
 ```php
-$newBrowser = $browser->withOptions(array(
-    'timeout' => null,
-    'followRedirects' => true,
-    'maxRedirects' => 10,
-    'obeySuccessCode' => true,
-    'streaming' => false, // deprecated, see requestStreaming() instead
-));
+$browser = $browser->withTimeout(10.0);
 ```
 
-See also [timeouts](#timeouts), [redirects](#redirects) and
-[streaming](#streaming-response) for more details.
+You can pass in a bool `false` to disable any timeouts. In this case,
+requests can stay pending forever:
+
+```php
+$browser = $browser->withTimeout(false);
+```
+
+You can pass in a bool `true` to re-enable default timeout handling. This
+will respects PHP's `default_socket_timeout` setting (default 60s):
+
+```php
+$browser = $browser->withTimeout(true);
+```
+
+See also [timeouts](#timeouts) for more details about timeout handling.
 
 Notice that the [`Browser`](#browser) is an immutable object, i.e. this
 method actually returns a *new* [`Browser`](#browser) instance with the
-options applied.
+given timeout value applied.
+
+#### withFollowRedirects()
+
+The `withTimeout(bool|int $$followRedirects): Browser` method can be used to
+change how HTTP redirects will be followed.
+
+You can pass in the maximum number of redirects to follow:
+
+```php
+$new = $browser->withFollowRedirects(5);
+```
+
+The request will automatically be rejected when the number of redirects
+is exceeded. You can pass in a `0` to reject the request for any
+redirects encountered:
+
+```php
+$browser = $browser->withFollowRedirects(0);
+
+$browser->get($url)->then(function (Psr\Http\Message\ResponseInterface $response) {
+    // only non-redirected responses will now end up here
+    var_dump($response->getHeaders());
+});
+```
+
+You can pass in a bool `false` to disable following any redirects. In
+this case, requests will resolve with the redirection response instead
+of following the `Location` response header:
+
+```php
+$browser = $browser->withFollowRedirects(false);
+
+$browser->get($url)->then(function (Psr\Http\Message\ResponseInterface $response) {
+    // any redirects will now end up here
+    var_dump($response->getHeaderLine('Location'));
+});
+```
+
+You can pass in a bool `true` to re-enable default redirect handling.
+This defaults to following a maximum of 10 redirects:
+
+```php
+$browser = $browser->withFollowRedirects(true);
+```
+
+See also [redirects](#redirects) for more details about redirect handling.
+
+Notice that the [`Browser`](#browser) is an immutable object, i.e. this
+method actually returns a *new* [`Browser`](#browser) instance with the
+given redirect setting applied.
+
+#### withRejectErrorResponse()
+
+The `withRejectErrorResponse(bool $obeySuccessCode): Browser` method can be used to
+change whether non-successful HTTP response status codes (4xx and 5xx) will be rejected.
+
+You can pass in a bool `false` to disable rejecting incoming responses
+that use a 4xx or 5xx response status code. In this case, requests will
+resolve with the response message indicating an error condition:
+
+```php
+$browser = $browser->withRejectErrorResponse(false);
+
+$browser->get($url)->then(function (Psr\Http\Message\ResponseInterface $response) {
+    // any HTTP response will now end up here
+    var_dump($response->getStatusCode(), $response->getReasonPhrase());
+});
+```
+
+You can pass in a bool `true` to re-enable default status code handling.
+This defaults to rejecting any response status codes in the 4xx or 5xx
+range with a [`ResponseException`](#responseexception):
+
+```php
+$browser = $browser->withRejectErrorResponse(true);
+
+$browser->get($url)->then(function (Psr\Http\Message\ResponseInterface $response) {
+    // any successful HTTP response will now end up here
+    var_dump($response->getStatusCode(), $response->getReasonPhrase());
+}, function (Exception $e) {
+    if ($e instanceof Clue\React\Buzz\Message\ResponseException) {
+        // any HTTP response error message will now end up here
+        $response = $e->getResponse();
+        var_dump($response->getStatusCode(), $response->getReasonPhrase());
+    } else {
+        var_dump($e->getMessage());
+    }
+});
+```
+
+Notice that the [`Browser`](#browser) is an immutable object, i.e. this
+method actually returns a *new* [`Browser`](#browser) instance with the
+given setting applied.
 
 #### withBase()
 
@@ -1068,6 +1163,37 @@ Notice that the [`Browser`](#browser) is an immutable object, i.e. this
 method actually returns a *new* [`Browser`](#browser) instance with the
 new protocol version applied.
 
+#### ~~withOptions()~~
+
+> Deprecated since v2.9.0, see [`withTimeout()`](#withtimeout), [`withFollowRedirects()`](#withfollowredirects)
+  and [`withRejectErrorResponse()`](#withrejecterrorresponse) instead.
+
+The deprecated `withOptions(array $options): Browser` method can be used to
+change the options to use:
+
+The [`Browser`](#browser) class exposes several options for the handling of
+HTTP transactions. These options resemble some of PHP's
+[HTTP context options](https://www.php.net/manual/en/context.http.php) and
+can be controlled via the following API (and their defaults):
+
+```php
+// deprecated
+$newBrowser = $browser->withOptions(array(
+    'timeout' => null, // see withTimeout() instead
+    'followRedirects' => true, // see withFollowRedirects() instead
+    'maxRedirects' => 10, // see withFollowRedirects() instead
+    'obeySuccessCode' => true, // see withRejectErrorResponse() instead
+    'streaming' => false, // deprecated, see requestStreaming() instead
+));
+```
+
+See also [timeouts](#timeouts), [redirects](#redirects) and
+[streaming](#streaming-response) for more details.
+
+Notice that the [`Browser`](#browser) is an immutable object, i.e. this
+method actually returns a *new* [`Browser`](#browser) instance with the
+options applied.
+
 ### ResponseInterface
 
 The `Psr\Http\Message\ResponseInterface` represents the incoming response received from the [`Browser`](#browser).
@@ -1101,7 +1227,7 @@ This is a standard interface defined in
 The `ResponseException` is an `Exception` sub-class that will be used to reject
 a request promise if the remote server returns a non-success status code
 (anything but 2xx or 3xx).
-You can control this behavior via the ["obeySuccessCode" option](#withoptions).
+You can control this behavior via the [`withRejectErrorResponse()` method](#withrejecterrorresponse).
 
 The `getCode(): int` method can be used to
 return the HTTP response status code.
