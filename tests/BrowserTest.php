@@ -203,6 +203,13 @@ class BrowserTest extends TestCase
         $this->browser->withRejectErrorResponse(false);
     }
 
+    public function testWithResponseBufferThousandSetsSenderOption()
+    {
+        $this->sender->expects($this->once())->method('withOptions')->with(array('maximumSize' => 1000))->willReturnSelf();
+
+        $this->browser->withResponseBuffer(1000);
+    }
+
     public function testWithBase()
     {
         $browser = $this->browser->withBase('http://example.com/root');

@@ -66,6 +66,7 @@ mess with most of the low-level details.
         * [withRejectErrorResponse()](#withrejecterrorresponse)
         * [withBase()](#withbase)
         * [withProtocolVersion()](#withprotocolversion)
+        * [withResponseBuffer()](#withresponsebuffer)
         * [~~withOptions()~~](#withoptions)
         * [~~withoutBase()~~](#withoutbase)
     * [ResponseInterface](#responseinterface)
@@ -1195,6 +1196,43 @@ $newBrowser->get($url)->then(…);
 Notice that the [`Browser`](#browser) is an immutable object, i.e. this
 method actually returns a *new* [`Browser`](#browser) instance with the
 new protocol version applied.
+
+#### withResponseBuffer()
+
+The `withRespomseBuffer(int $maximumSize): Browser` method can be used to
+change the maximum size for buffering a response body.
+
+The preferred way to send an HTTP request is by using the above
+[request methods](#request-methods), for example the [`get()`](#get)
+method to send an HTTP `GET` request. Each of these methods will buffer
+the whole response body in memory by default. This is easy to get started
+and works reasonably well for smaller responses.
+
+By default, the response body buffer will be limited to 16 MiB. If the
+response body exceeds this maximum size, the request will be rejected.
+
+You can pass in the maximum number of bytes to buffer:
+
+```php
+$browser = $browser->withResponseBuffer(1024 * 1024);
+
+$browser->get($url)->then(function (Psr\Http\Message\ResponseInterface $response) {
+    // response body will not exceed 1 MiB
+    var_dump($response->getHeaders(), (string) $response->getBody());
+});
+```
+
+Note that the response body buffer has to be kept in memory for each
+pending request until its transfer is completed and it will only be freed
+after a pending request is fulfilled. As such, increasing this maximum
+buffer size to allow larger response bodies is usually not recommended.
+Instead, you can use the [`requestStreaming()` method](#requeststreaming)
+to receive responses with arbitrary sizes without buffering. Accordingly,
+this maximum buffer size setting has no effect on streaming responses.
+
+Notice that the [`Browser`](#browser) is an immutable object, i.e. this
+method actually returns a *new* [`Browser`](#browser) instance with the
+given setting applied.
 
 #### ~~withOptions()~~
 

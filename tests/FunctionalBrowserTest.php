@@ -316,6 +316,40 @@ class FunctionalBrowserTest extends TestCase
     }
 
     /**
+     * @doesNotPerformAssertions
+     */
+    public function testGetRequestWithResponseBufferMatchedExactlyResolves()
+    {
+        $promise = $this->browser->withResponseBuffer(5)->get($this->base . 'get');
+
+        Block\await($promise, $this->loop);
+    }
+
+    public function testGetRequestWithResponseBufferExceededRejects()
+    {
+        $promise = $this->browser->withResponseBuffer(4)->get($this->base . 'get');
+
+        $this->setExpectedException(
+            'OverflowException',
+            'Response body size of 5 bytes exceeds maximum of 4 bytes',
+            defined('SOCKET_EMSGSIZE') ? SOCKET_EMSGSIZE : 0
+        );
+        Block\await($promise, $this->loop);
+    }
+
+    public function testGetRequestWithResponseBufferExceededDuringStreamingRejects()
+    {
+        $promise = $this->browser->withResponseBuffer(4)->get($this->base . 'stream/1');
+
+        $this->setExpectedException(
+            'OverflowException',
+            'Response body size exceeds maximum of 4 bytes',
+            defined('SOCKET_EMSGSIZE') ? SOCKET_EMSGSIZE : 0
+        );
+        Block\await($promise, $this->loop);
+    }
+
+    /**
      * @group online
      * @doesNotPerformAssertions
      */
@@ -594,5 +628,17 @@ class FunctionalBrowserTest extends TestCase
         );
         $this->assertInstanceOf('React\Stream\ReadableStreamInterface', $response->getBody());
         $this->assertEquals('', (string)$response->getBody());
+    }
+
+    public function testRequestStreamingGetReceivesStreamingResponseBodyEvenWhenResponseBufferExceeded()
+    {
+        $buffer = Block\await(
+            $this->browser->withResponseBuffer(4)->requestStreaming('GET', $this->base . 'get')->then(function (ResponseInterface $response) {
+                return Stream\buffer($response->getBody());
+            }),
+            $this->loop
+        );
+
+        $this->assertEquals('hello', $buffer);
     }
 }
