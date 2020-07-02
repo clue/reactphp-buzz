@@ -35,6 +35,8 @@ class Transaction
 
     private $streaming = false;
 
+    private $maximumSize = 16777216; // 16 MiB = 2^24 bytes
+
     public function __construct(Sender $sender, MessageFactory $messageFactory, LoopInterface $loop)
     {
         $this->sender = $sender;
@@ -169,6 +171,15 @@ class Transaction
     {
         $stream = $response->getBody();
 
+        $size = $stream->getSize();
+        if ($size !== null && $size > $this->maximumSize) {
+            $stream->close();
+            return \React\Promise\reject(new \OverflowException(
+                'Response body size of ' . $size . ' bytes exceeds maximum of ' . $this->maximumSize . ' bytes',
+                \defined('SOCKET_EMSGSIZE') ? \SOCKET_EMSGSIZE : 0
+            ));
+        }
+
         // body is not streaming => already buffered
         if (!$stream instanceof ReadableStreamInterface) {
             return \React\Promise\resolve($response);
@@ -176,13 +187,21 @@ class Transaction
 
         // buffer stream and resolve with buffered body
         $messageFactory = $this->messageFactory;
-        $promise = \React\Promise\Stream\buffer($stream)->then(
+        $maximumSize = $this->maximumSize;
+        $promise = \React\Promise\Stream\buffer($stream, $maximumSize)->then(
             function ($body) use ($response, $messageFactory) {
                 return $response->withBody($messageFactory->body($body));
             },
-            function ($e) use ($stream) {
+            function ($e) use ($stream, $maximumSize) {
                 // try to close stream if buffering fails (or is cancelled)
                 $stream->close();
+
+                if ($e instanceof \OverflowException) {
+                    $e = new \OverflowException(
+                        'Response body size exceeds maximum of ' . $maximumSize . ' bytes',
+                        \defined('SOCKET_EMSGSIZE') ? \SOCKET_EMSGSIZE : 0
+                    );
+                }
 
                 throw $e;
             }

@@ -433,6 +433,29 @@ class TransactionTest extends TestCase
         $this->assertEquals('hello world', (string)$response->getBody());
     }
 
+    public function testReceivingStreamingBodyWithSizeExceedingMaximumResponseBufferWillRejectAndCloseResponseStream()
+    {
+        $messageFactory = new MessageFactory();
+        $loop = Factory::create();
+
+        $stream = new ThroughStream();
+        $stream->on('close', $this->expectCallableOnce());
+
+        $request = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
+
+        $response = $messageFactory->response(1.0, 200, 'OK', array('Content-Length' => '100000000'), $stream);
+
+        // mock sender to resolve promise with the given $response in response to the given $request
+        $sender = $this->makeSenderMock();
+        $sender->expects($this->once())->method('send')->with($this->equalTo($request))->willReturn(Promise\resolve($response));
+
+        $transaction = new Transaction($sender, $messageFactory, $loop);
+        $promise = $transaction->send($request);
+
+        $this->setExpectedException('OverflowException');
+        Block\await($promise, $loop, 0.001);
+    }
+
     public function testCancelBufferingResponseWillCloseStreamAndReject()
     {
         $messageFactory = new MessageFactory();
