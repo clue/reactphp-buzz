@@ -688,6 +688,10 @@ $browser->get($url)->then(function (Psr\Http\Message\ResponseInterface $response
 
 See also [example 01](examples/01-google.php).
 
+> For BC reasons, this method accepts the `$url` as either a `string`
+  value or as an `UriInterface`. It's recommended to explicitly cast any
+  objects implementing `UriInterface` to `string`.
+
 #### post()
 
 The `post(string|UriInterface $url, array $headers = array(), string|ReadableStreamInterface $contents = ''): PromiseInterface<ResponseInterface>` method can be used to
@@ -739,6 +743,10 @@ $loop->addTimer(1.0, function () use ($body) {
 $browser->post($url, array('Content-Length' => '11'), $body);
 ```
 
+> For BC reasons, this method accepts the `$url` as either a `string`
+  value or as an `UriInterface`. It's recommended to explicitly cast any
+  objects implementing `UriInterface` to `string`.
+
 #### head()
 
 The `head(string|UriInterface $url, array $headers = array()): PromiseInterface<ResponseInterface>` method can be used to
@@ -749,6 +757,10 @@ $browser->head($url)->then(function (Psr\Http\Message\ResponseInterface $respons
     var_dump($response->getHeaders());
 });
 ```
+
+> For BC reasons, this method accepts the `$url` as either a `string`
+  value or as an `UriInterface`. It's recommended to explicitly cast any
+  objects implementing `UriInterface` to `string`.
 
 #### patch()
 
@@ -781,6 +793,10 @@ $loop->addTimer(1.0, function () use ($body) {
 
 $browser->patch($url, array('Content-Length' => '11'), $body);
 ```
+
+> For BC reasons, this method accepts the `$url` as either a `string`
+  value or as an `UriInterface`. It's recommended to explicitly cast any
+  objects implementing `UriInterface` to `string`.
 
 #### put()
 
@@ -816,6 +832,10 @@ $loop->addTimer(1.0, function () use ($body) {
 $browser->put($url, array('Content-Length' => '11'), $body);
 ```
 
+> For BC reasons, this method accepts the `$url` as either a `string`
+  value or as an `UriInterface`. It's recommended to explicitly cast any
+  objects implementing `UriInterface` to `string`.
+
 #### delete()
 
 The `delete(string|UriInterface $url, array $headers = array()): PromiseInterface<ResponseInterface>` method can be used to
@@ -826,6 +846,10 @@ $browser->delete($url)->then(function (Psr\Http\Message\ResponseInterface $respo
     var_dump((string)$response->getBody());
 });
 ```
+
+> For BC reasons, this method accepts the `$url` as either a `string`
+  value or as an `UriInterface`. It's recommended to explicitly cast any
+  objects implementing `UriInterface` to `string`.
 
 #### request()
 
@@ -949,6 +973,10 @@ submit an array of field values similar to submitting a form (`application/x-www
 // deprecated: see post() instead
 $browser->submit($url, array('user' => 'test', 'password' => 'secret'));
 ```
+
+> For BC reasons, this method accepts the `$url` as either a `string`
+  value or as an `UriInterface`. It's recommended to explicitly cast any
+  objects implementing `UriInterface` to `string`.
 
 #### ~~send()~~
 
@@ -1136,6 +1164,10 @@ This method will throw an `InvalidArgumentException` if the given
 Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withBase()` method
 actually returns a *new* [`Browser`](#browser) instance with the given base URL applied.
 
+> For BC reasons, this method accepts the `$baseUrl` as either a `string`
+  value or as an `UriInterface`. It's recommended to explicitly cast any
+  objects implementing `UriInterface` to `string`.
+
 > Changelog: As of v2.9.0 this method accepts a `null` value to reset the
   base URL. Earlier versions had to use the deprecated `withoutBase()`
   method to reset the base URL.
@@ -1239,6 +1271,10 @@ The `Psr\Http\Message\UriInterface` represents an absolute or relative URI (aka 
 This is a standard interface defined in
 [PSR-7: HTTP message interfaces](https://www.php-fig.org/psr/psr-7/), see its
 [`UriInterface` definition](https://www.php-fig.org/psr/psr-7/#3-5-psr-http-message-uriinterface).
+
+> For BC reasons, the request methods accept the URL as either a `string`
+  value or as an `UriInterface`. It's recommended to explicitly cast any
+  objects implementing `UriInterface` to `string`.
 
 ### ResponseException
 

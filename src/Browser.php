@@ -75,6 +75,10 @@ class Browser
      *
      * See also [example 01](../examples/01-google.php).
      *
+     * > For BC reasons, this method accepts the `$url` as either a `string`
+     *   value or as an `UriInterface`. It's recommended to explicitly cast any
+     *   objects implementing `UriInterface` to `string`.
+     *
      * @param string|UriInterface $url URL for the request.
      * @param array               $headers
      * @return PromiseInterface<ResponseInterface>
@@ -133,6 +137,10 @@ class Browser
      * $browser->post($url, array('Content-Length' => '11'), $body);
      * ```
      *
+     * > For BC reasons, this method accepts the `$url` as either a `string`
+     *   value or as an `UriInterface`. It's recommended to explicitly cast any
+     *   objects implementing `UriInterface` to `string`.
+     *
      * @param string|UriInterface            $url     URL for the request.
      * @param array                          $headers
      * @param string|ReadableStreamInterface $contents
@@ -151,6 +159,10 @@ class Browser
      *     var_dump($response->getHeaders());
      * });
      * ```
+     *
+     * > For BC reasons, this method accepts the `$url` as either a `string`
+     *   value or as an `UriInterface`. It's recommended to explicitly cast any
+     *   objects implementing `UriInterface` to `string`.
      *
      * @param string|UriInterface $url     URL for the request.
      * @param array               $headers
@@ -190,6 +202,10 @@ class Browser
      *
      * $browser->patch($url, array('Content-Length' => '11'), $body);
      * ```
+     *
+     * > For BC reasons, this method accepts the `$url` as either a `string`
+     *   value or as an `UriInterface`. It's recommended to explicitly cast any
+     *   objects implementing `UriInterface` to `string`.
      *
      * @param string|UriInterface            $url     URL for the request.
      * @param array                          $headers
@@ -233,6 +249,10 @@ class Browser
      * $browser->put($url, array('Content-Length' => '11'), $body);
      * ```
      *
+     * > For BC reasons, this method accepts the `$url` as either a `string`
+     *   value or as an `UriInterface`. It's recommended to explicitly cast any
+     *   objects implementing `UriInterface` to `string`.
+     *
      * @param string|UriInterface            $url     URL for the request.
      * @param array                          $headers
      * @param string|ReadableStreamInterface $contents
@@ -251,6 +271,10 @@ class Browser
      *     var_dump((string)$response->getBody());
      * });
      * ```
+     *
+     * > For BC reasons, this method accepts the `$url` as either a `string`
+     *   value or as an `UriInterface`. It's recommended to explicitly cast any
+     *   objects implementing `UriInterface` to `string`.
      *
      * @param string|UriInterface            $url     URL for the request.
      * @param array                          $headers
@@ -403,6 +427,10 @@ class Browser
      *
      * This method will automatically add a matching `Content-Length` request
      * header for the encoded length of the given `$fields`.
+     *
+     * > For BC reasons, this method accepts the `$url` as either a `string`
+     *   value or as an `UriInterface`. It's recommended to explicitly cast any
+     *   objects implementing `UriInterface` to `string`.
      *
      * @param string|UriInterface $url     URL for the request.
      * @param array               $fields
@@ -647,6 +675,10 @@ class Browser
      *
      * Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withBase()` method
      * actually returns a *new* [`Browser`](#browser) instance with the given base URL applied.
+     *
+     * > For BC reasons, this method accepts the `$baseUrl` as either a `string`
+     *   value or as an `UriInterface`. It's recommended to explicitly cast any
+     *   objects implementing `UriInterface` to `string`.
      *
      * > Changelog: As of v2.9.0 this method accepts a `null` value to reset the
      *   base URL. Earlier versions had to use the deprecated `withoutBase()`
