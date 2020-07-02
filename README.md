@@ -65,9 +65,9 @@ mess with most of the low-level details.
         * [withFollowRedirects()](#withfollowredirects)
         * [withRejectErrorResponse()](#withrejecterrorresponse)
         * [withBase()](#withbase)
-        * [withoutBase()](#withoutbase)
         * [withProtocolVersion()](#withprotocolversion)
         * [~~withOptions()~~](#withoptions)
+        * [~~withoutBase()~~](#withoutbase)
     * [ResponseInterface](#responseinterface)
     * [RequestInterface](#requestinterface)
     * [UriInterface](#uriinterface)
@@ -1103,41 +1103,42 @@ given setting applied.
 
 #### withBase()
 
-The `withBase(string|UriInterface $baseUri): Browser` method can be used to
+The `withBase(string|null|UriInterface $baseUrl): Browser` method can be used to
 change the base URL used to resolve relative URLs to.
 
+If you configure a base URL, any requests to relative URLs will be
+processed by first prepending this absolute base URL. Note that this
+merely prepends the base URL and does *not* resolve any relative path
+references (like `../` etc.). This is mostly useful for (RESTful) API
+calls where all endpoints (URLs) are located under a common base URL.
+
 ```php
-$newBrowser = $browser->withBase('http://api.example.com/v3');
+$browser = $browser->withBase('http://api.example.com/v3');
+
+// will request http://api.example.com/v3/example
+$browser->get('/example')->then(…);
 ```
+
+You can pass in a `null` base URL to return a new instance that does not
+use a base URL:
+
+```php
+$browser = $browser->withBase(null);
+```
+
+Accordingly, any requests using relative URLs to a browser that does not
+use a base URL can not be completed and will be rejected without sending
+a request.
+
+This method will throw an `InvalidArgumentException` if the given
+`$baseUrl` argument is not a valid URL.
 
 Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withBase()` method
 actually returns a *new* [`Browser`](#browser) instance with the given base URL applied.
 
-Any requests to relative URLs will then be processed by first prepending
-the (absolute) base URL.
-Please note that this merely prepends the base URL and does *not* resolve
-any relative path references (like `../` etc.).
-This is mostly useful for (RESTful) API calls where all endpoints (URLs)
-are located under a common base URL scheme.
-
-```php
-// will request http://api.example.com/v3/example
-$newBrowser->get('/example')->then(…);
-```
-
-#### withoutBase()
-
-The `withoutBase(): Browser` method can be used to
-remove the base URL.
-
-```php
-$newBrowser = $browser->withoutBase();
-```
-
-Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withoutBase()` method
-actually returns a *new* [`Browser`](#browser) instance without any base URL applied.
-
-See also [`withBase()`](#withbase).
+> Changelog: As of v2.9.0 this method accepts a `null` value to reset the
+  base URL. Earlier versions had to use the deprecated `withoutBase()`
+  method to reset the base URL.
 
 #### withProtocolVersion()
 
@@ -1193,6 +1194,23 @@ See also [timeouts](#timeouts), [redirects](#redirects) and
 Notice that the [`Browser`](#browser) is an immutable object, i.e. this
 method actually returns a *new* [`Browser`](#browser) instance with the
 options applied.
+
+#### ~~withoutBase()~~
+
+> Deprecated since v2.9.0, see [`withBase()`](#withbase) instead.
+
+The deprecated `withoutBase(): Browser` method can be used to
+remove the base URL.
+
+```php
+// deprecated: see withBase() instead
+$newBrowser = $browser->withoutBase();
+```
+
+Notice that the [`Browser`](#browser) is an immutable object, i.e. the `withoutBase()` method
+actually returns a *new* [`Browser`](#browser) instance without any base URL applied.
+
+See also [`withBase()`](#withbase).
 
 ### ResponseInterface
 

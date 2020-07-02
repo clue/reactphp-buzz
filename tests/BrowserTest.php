@@ -289,6 +289,31 @@ class BrowserTest extends TestCase
                 '',
                 'http://example.com/%7Bversion%7D/'
             ),
+            'other domain' => array(
+                'http://example.com/base/',
+                'http://example.org/base/',
+                'http://example.org/base/'
+            ),
+            'other scheme' => array(
+                'http://example.com/base/',
+                'https://example.com/base/',
+                'https://example.com/base/'
+            ),
+            'other port' => array(
+                'http://example.com/base/',
+                'http://example.com:81/base/',
+                'http://example.com:81/base/'
+            ),
+            'other path' => array(
+                'http://example.com/base/',
+                'http://example.com/other/',
+                'http://example.com/other/'
+            ),
+            'other path due to missing slash' => array(
+                'http://example.com/base/',
+                'http://example.com/other',
+                'http://example.com/other'
+            ),
         );
     }
 
@@ -310,35 +335,29 @@ class BrowserTest extends TestCase
         $browser->get($uri);
     }
 
-    public function provideOtherBaseUris()
-    {
-        return array(
-            'other domain' => array('http://example.org/base/'),
-            'other scheme' => array('https://example.com/base/'),
-            'other port' => array('http://example.com:81/base/'),
-            'other path' => array('http://example.com/other/'),
-            'other path due to missing slash' => array('http://example.com/other'),
-        );
-    }
-
-    /**
-     * @param string $other
-     * @dataProvider provideOtherBaseUris
-     */
-    public function testRequestingUrlsNotBelowBaseWillRejectBeforeSending($other)
-    {
-        $browser = $this->browser->withBase('http://example.com/base/');
-
-        $this->sender->expects($this->never())->method('send');
-
-        $this->setExpectedException('UnexpectedValueException');
-        Block\await($browser->get($other), $this->loop);
-    }
-
-    public function testWithBaseUriNotAbsoluteFails()
+    public function testWithBaseUrlNotAbsoluteFails()
     {
         $this->setExpectedException('InvalidArgumentException');
         $this->browser->withBase('hello');
+    }
+
+    public function testWithBaseUrlInvalidSchemeFails()
+    {
+        $this->setExpectedException('InvalidArgumentException');
+        $this->browser->withBase('ftp://example.com');
+    }
+
+    public function testWithoutBaseFollowedByGetRequestTriesToSendIncompleteRequestUrl()
+    {
+        $this->browser = $this->browser->withBase('http://example.com')->withoutBase();
+
+        $that = $this;
+        $this->sender->expects($this->once())->method('send')->with($this->callback(function (RequestInterface $request) use ($that) {
+            $that->assertEquals('path', $request->getUri());
+            return true;
+        }))->willReturn(new Promise(function () { }));
+
+        $this->browser->get('path');
     }
 
     public function testWithProtocolVersionFollowedByGetRequestSendsRequestWithProtocolVersion()
