@@ -43,6 +43,7 @@ mess with most of the low-level details.
     * [Authentication](#authentication)
     * [Redirects](#redirects)
     * [Blocking](#blocking)
+    * [Concurrency](#concurrency)
     * [Streaming response](#streaming-response)
     * [Streaming request](#streaming-request)
     * [HTTP proxy](#http-proxy)
@@ -385,8 +386,59 @@ $responses = Block\awaitAll($promises, $loop);
 Please refer to [clue/reactphp-block](https://github.com/clue/reactphp-block#readme) for more details.
 
 Keep in mind the above remark about buffering the whole response message in memory.
-As an alternative, you may also see the following chapter for the
+As an alternative, you may also see one of the following chapters for the
 [streaming API](#streaming-response).
+
+### Concurrency
+
+As stated above, this library provides you a powerful, async API. Being able to
+send a large number of requests at once is one of the core features of this
+project. For instance, you can easily send 100 requests concurrently while
+processing SQL queries at the same time.
+
+Remember, with great power comes great responsibility. Sending an excessive
+number of requests may either take up all resources on your side or it may even
+get you banned by the remote side if it sees an unreasonable number of requests
+from your side.
+
+```php
+// watch out if array contains many elements
+foreach ($urls as $url) {
+    $browser->get($url)->then(function (Psr\Http\Message\ResponseInterface $response) {
+        var_dump($response->getHeaders());
+    });
+}
+```
+
+As a consequence, it's usually recommended to limit concurrency on the sending
+side to a reasonable value. It's common to use a rather small limit, as doing
+more than a dozen of things at once may easily overwhelm the receiving side. You
+can use [clue/reactphp-mq](https://github.com/clue/reactphp-mq) as a lightweight
+in-memory queue to concurrently do many (but not too many) things at once:
+
+```php
+// wraps Browser in a Queue object that executes no more than 10 operations at once
+$q = new Clue\React\Mq\Queue(10, null, function ($url) use ($browser) {
+    return $browser->get($url);
+});
+
+foreach ($urls as $url) {
+    $q($url)->then(function (Psr\Http\Message\ResponseInterface $response) {
+        var_dump($response->getHeaders());
+    });
+}
+```
+
+Additional requests that exceed the concurrency limit will automatically be
+enqueued until one of the pending requests completes. This integrates nicely
+with the existing [Promise-based API](#promises). Please refer to
+[clue/reactphp-mq](https://github.com/clue/reactphp-mq) for more details.
+
+This in-memory approach works reasonably well for some thousand outstanding
+requests. If you're processing a very large input list (think millions of rows
+in a CSV or NDJSON file), you may want to look into using a streaming approach
+instead. See [clue/reactphp-flux](https://github.com/clue/reactphp-flux) for
+more details.
 
 ### Streaming response
 
