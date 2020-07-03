@@ -1388,7 +1388,7 @@ This project follows [SemVer](https://semver.org/).
 This will install the latest supported version:
 
 ```bash
-$ composer require clue/buzz-react:^2.8.2
+$ composer require clue/buzz-react:^2.9
 ```
 
 See also the [CHANGELOG](CHANGELOG.md) for details about version upgrades.
