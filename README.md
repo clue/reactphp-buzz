@@ -1,4 +1,35 @@
-# clue/reactphp-buzz [![Build Status](https://travis-ci.org/clue/reactphp-buzz.svg?branch=master)](https://travis-ci.org/clue/reactphp-buzz)
+# Deprecation notice
+
+This package has now been migrated over to
+[react/http](https://github.com/reactphp/http)
+and only exists for BC reasons.
+
+```bash
+$ composer require react/http
+```
+
+If you've previously used this package, upgrading should take no longer than a few minutes.
+All classes have been merged as-is from the latest `v2.9.0` release with no other significant changes,
+so you can simply update your code to use the updated namespace like this:
+
+```php
+// old
+$browser = new Clue\React\Buzz\Browser($loop);
+$browser->get($url);
+
+// new
+$browser = new React\Http\Browser($loop);
+$browser->get($url);
+```
+
+See [react/http](https://github.com/reactphp/http#client-usage) for more details.
+
+The below documentation applies to the last release of this package.
+Further development will take place in the updated
+[react/http](https://github.com/reactphp/http),
+so you're highly recommended to upgrade as soon as possible.
+
+# Legacy clue/reactphp-buzz [![Build Status](https://travis-ci.org/clue/reactphp-buzz.svg?branch=master)](https://travis-ci.org/clue/reactphp-buzz)
 
 Simple, async PSR-7 HTTP client for concurrently processing any number of HTTP requests,
 built on top of [ReactPHP](https://reactphp.org/).
